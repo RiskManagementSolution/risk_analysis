@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monte Carlo Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1218;
+    --bg-2:#0A0D12;
+    --surface:#171D26;
+    --surface-2:#1E2631;
+    --border:#293240;
+    --text:#E9EDF3;
+    --text-dim:#8A96A8;
+    --text-faint:#5C6779;
+    --accent:#FF7A50;
+    --accent-dim:#7A3B29;
+    --accent-2:#43C6B0;
+    --accent-2-dim:#1F4B44;
+    --accent-3:#FFC857;
+    --danger:#FF5470;
+    --radius:16px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:radial-gradient(ellipse 120% 80% at 50% -10%, #1A2029 0%, var(--bg) 45%, var(--bg-2) 100%);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:48px;
+  }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    padding:0 18px;
+  }
+  /* Header */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 0 6px;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg, var(--accent), #C4451F);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 14px -4px rgba(255,122,80,0.55);
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:18px; height:18px;}
+  .brand-name{font-family:var(--font-display); font-weight:700; font-size:16.5px; letter-spacing:-0.01em;}
+  .brand-sub{font-size:10.5px; color:var(--text-faint); font-family:var(--font-mono); letter-spacing:0.04em; text-transform:uppercase; margin-top:1px;}
+  .live-dot{
+    width:7px; height:7px; border-radius:50%; background:var(--accent-2);
+    box-shadow:0 0 0 0 rgba(67,198,176,0.6);
+    animation:pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(67,198,176,0.55);}
+    70%{box-shadow:0 0 0 6px rgba(67,198,176,0);}
+    100%{box-shadow:0 0 0 0 rgba(67,198,176,0);}
+  }
+  .hero-line{
+    font-size:13px; color:var(--text-dim); line-height:1.5; margin:10px 0 20px; max-width:38ch;
+  }
+
+  /* Section labels */
+  .section-label{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-faint); margin:26px 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  .section-label .n{color:var(--accent);}
+
+  /* Distribution selector (list / bottom sheet) */
+  .dist-select{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px 16px;
+    color:var(--text);
+    text-align:left;
+    transition:border-color .15s;
+  }
+  .dist-select:active{border-color:var(--accent);}
+  .dist-select-info{display:flex; flex-direction:column; gap:3px;}
+  .dist-select-name{font-family:var(--font-display); font-size:15.5px; font-weight:600;}
+  .dist-select-tag{
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.04em; text-transform:uppercase;
+    color:var(--accent); background:rgba(255,122,80,0.12); padding:2px 7px; border-radius:6px; width:fit-content;
+  }
+  .dist-select .chevron{width:20px; height:20px; flex-shrink:0; color:var(--text-faint); transition:transform .2s;}
+  .dist-select.open .chevron{transform:rotate(180deg);}
+
+  .sheet-backdrop{
+    position:fixed; inset:0; background:rgba(6,8,11,0.6);
+    opacity:0; pointer-events:none; transition:opacity .22s ease;
+    z-index:40;
+  }
+  .sheet-backdrop.show{opacity:1; pointer-events:auto;}
+
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0;
+    max-width:480px; margin:0 auto;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-bottom:none;
+    border-radius:22px 22px 0 0;
+    padding:10px 8px calc(18px + env(safe-area-inset-bottom));
+    transform:translateY(100%);
+    transition:transform .28s cubic-bezier(.32,.72,0,1);
+    z-index:41;
+    max-height:78vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 -10px 40px -10px rgba(0,0,0,0.5);
+  }
+  .sheet.show{transform:translateY(0);}
+  .sheet-handle{
+    width:36px; height:4px; border-radius:3px; background:var(--border);
+    margin:2px auto 12px;
+  }
+  .sheet-title{
+    font-family:var(--font-display); font-weight:600; font-size:15px;
+    padding:0 12px 10px; border-bottom:1px solid var(--border); margin-bottom:4px;
+  }
+  .sheet-list{overflow-y:auto; padding:2px 4px;}
+  .sheet-item{
+    width:100%; display:flex; align-items:center; gap:12px;
+    padding:12px 10px; border-radius:12px;
+    background:transparent; border:none; text-align:left;
+    transition:background .12s;
+  }
+  .sheet-item:active{background:var(--surface-2);}
+  .sheet-item.active{background:rgba(255,122,80,0.1);}
+  .sheet-item-check{
+    width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  }
+  .sheet-item.active .sheet-item-check{background:var(--accent); border-color:var(--accent);}
+  .sheet-item-check svg{width:12px; height:12px; opacity:0;}
+  .sheet-item.active .sheet-item-check svg{opacity:1;}
+  .sheet-item-body{flex:1; min-width:0;}
+  .sheet-item-top{display:flex; align-items:center; gap:8px;}
+  .sheet-item-name{font-family:var(--font-display); font-weight:600; font-size:14.5px; color:var(--text);}
+  .sheet-item-tag{
+    font-family:var(--font-mono); font-size:9px; letter-spacing:0.04em; text-transform:uppercase;
+    color:var(--text-faint); border:1px solid var(--border); padding:1px 6px; border-radius:5px;
+  }
+  .sheet-item-desc{font-size:11.5px; color:var(--text-faint); margin-top:2px; line-height:1.4;}
+
+  /* Card */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+  }
+  .dist-desc{
+    font-size:12.5px; color:var(--text-dim); line-height:1.55; margin:0 0 16px;
+    border-left:2px solid var(--accent-dim); padding-left:10px;
+  }
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; font-weight:500;
+  }
+  .field input[type=number]{
+    width:100%;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:11px 12px;
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:500;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input[type=number]:focus{border-color:var(--accent);}
+  .field-error{font-size:11px; color:var(--danger); margin-top:5px; display:none;}
+  .field.invalid input{border-color:var(--danger);}
+  .field.invalid .field-error{display:block;}
+
+  .custom-row-header{display:flex; gap:8px; padding:0 4px 6px; font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.05em;}
+  .custom-row-header span{flex:1;}
+  .custom-row-header span:last-child{flex:0 0 32px;}
+  .custom-rows{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+  .custom-row{display:flex; gap:8px; align-items:center;}
+  .custom-row input{
+    flex:1; min-width:0;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:9px;
+    padding:9px 10px; color:var(--text); font-family:var(--font-mono); font-size:13.5px; outline:none;
+  }
+  .custom-row input:focus{border-color:var(--accent);}
+  .row-remove{
+    flex:0 0 32px; height:36px; border-radius:9px; border:1px solid var(--border);
+    background:var(--surface-2); color:var(--text-faint); font-size:13px;
+  }
+  .row-remove:disabled{opacity:0.3;}
+  .add-row-btn{
+    width:100%; margin-top:2px; padding:10px; border-radius:10px;
+    border:1px dashed var(--border); background:transparent; color:var(--accent-2);
+    font-size:13px; font-weight:600; font-family:var(--font-mono);
+  }
+  .custom-hint{font-size:11px; color:var(--text-faint); margin-top:12px; line-height:1.5;}
+  .custom-error{display:block; color:var(--danger); font-size:11.5px; margin-top:8px; min-height:14px;}
+
+  /* Segmented control */
+  .segmented{
+    display:flex; background:var(--surface-2); border-radius:11px; padding:3px; border:1px solid var(--border);
+  }
+  .segmented button{
+    flex:1; border:none; background:transparent; color:var(--text-dim);
+    padding:9px 4px; border-radius:9px; font-family:var(--font-mono); font-size:12.5px; font-weight:600;
+    transition:all .15s;
+  }
+  .segmented button.active{background:var(--accent-2); color:#06201C;}
+
+  /* Run button */
+  .run-btn{
+    width:100%; margin-top:20px;
+    background:linear-gradient(135deg, var(--accent), #E85A32);
+    color:#1A0E08;
+    border:none; border-radius:13px;
+    padding:15px; font-size:15.5px; font-weight:700; font-family:var(--font-display);
+    letter-spacing:0.01em;
+    box-shadow:0 8px 22px -8px rgba(255,122,80,0.55);
+    transition:transform .12s;
+  }
+  .run-btn:active{transform:scale(0.98);}
+  .run-btn:disabled{opacity:0.55;}
+
+  /* Results */
+  #results{display:none; margin-top:28px;}
+  .stat-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px;
+  }
+  .stat-box{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:11px 8px; text-align:center;
+  }
+  .stat-box .v{font-family:var(--font-mono); font-size:15px; font-weight:700; color:var(--text);}
+  .stat-box .l{font-size:9.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.05em; margin-top:3px;}
+
+  .chart-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 14px 10px; margin-bottom:16px;}
+  .chart-title{font-family:var(--font-display); font-size:13.5px; font-weight:600; margin-bottom:2px;}
+  .chart-sub{font-size:11px; color:var(--text-faint); margin-bottom:10px;}
+  canvas{width:100%; display:block;}
+
+  .prob-block{
+    margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);
+  }
+  .prob-block-label{
+    font-size:11px; color:var(--text-faint); margin-bottom:9px;
+  }
+  .prob-controls{display:flex; gap:8px; align-items:stretch;}
+  .prob-dir{
+    display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:3px; flex:0 0 auto;
+  }
+  .prob-dir button{
+    border:none; background:transparent; color:var(--text-dim);
+    padding:9px 11px; border-radius:9px; font-family:var(--font-mono); font-size:13px; font-weight:600;
+    white-space:nowrap; transition:all .15s;
+  }
+  .prob-dir button.active{background:var(--accent-2); color:#06201C;}
+  .prob-controls input{
+    flex:1; min-width:0; background:var(--surface-2); border:1px solid var(--border); border-radius:11px;
+    padding:9px 12px; color:var(--text); font-family:var(--font-mono); font-size:14px; outline:none;
+  }
+  .prob-controls input:focus{border-color:var(--accent-2);}
+  .prob-result{
+    margin-top:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px;
+    padding:14px; text-align:center;
+  }
+  .prob-result .expr{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-bottom:4px;}
+  .prob-result .value{font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--accent-2);}
+  .prob-result .value.hi{color:var(--danger);}
+  .prob-result .sub{font-size:11px; color:var(--text-faint); margin-top:4px;}
+
+  table.pctl{width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:12.5px;}
+  table.pctl th, table.pctl td{padding:8px 4px; text-align:center; border-bottom:1px solid var(--border);}
+  table.pctl th{color:var(--text-faint); font-weight:500; font-size:10px; text-transform:uppercase;}
+  table.pctl td{color:var(--text); font-weight:600;}
+  table.pctl tr:last-child td{border-bottom:none;}
+
+  table.desc-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.desc-table tr{border-bottom:1px solid var(--border);}
+  table.desc-table tr:last-child{border-bottom:none;}
+  table.desc-table td{padding:9px 2px;}
+  table.desc-table td.dl{color:var(--text-dim); font-weight:500;}
+  table.desc-table td.dv{color:var(--text); font-weight:700; font-family:var(--font-mono); text-align:right;}
+
+  .footnote{
+    font-size:10.5px; color:var(--text-faint); text-align:center; margin-top:30px; line-height:1.6; padding:0 10px;
+  }
+  .footnote a{color:var(--text-dim);}
+
+  .counter{
+    font-family:var(--font-mono); font-size:11px; color:var(--accent-2); text-align:right; margin-top:8px; min-height:14px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="6" cy="17" r="1.6" fill="#1A0E08"/>
+          <circle cx="11" cy="8" r="1.6" fill="#1A0E08"/>
+          <circle cx="17" cy="14" r="1.6" fill="#1A0E08"/>
+          <circle cx="14" cy="19" r="1.6" fill="#1A0E08"/>
+          <circle cx="19" cy="6" r="1.6" fill="#1A0E08"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Monte Carlo Lab</div>
+        <div class="brand-sub">Simulación de riesgo</div>
+      </div>
+    </div>
+    <div class="live-dot" title="Simulación local en tu dispositivo"></div>
+  </div>
+
+  <p class="hero-line">Elige una función de distribución, define sus parámetros y genera miles de escenarios aleatorios al instante — el mismo principio que usan herramientas como @RISK, corriendo en tu teléfono.</p>
+
+  <div class="section-label"><span class="n">01</span> Distribución de probabilidad</div>
+  <button class="dist-select" id="distSelectBtn">
+    <div class="dist-select-info">
+      <div class="dist-select-name" id="distSelectName"></div>
+      <div class="dist-select-tag" id="distSelectTag"></div>
+    </div>
+    <svg class="chevron" viewBox="0 0 24 24" fill="none">
+      <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="card">
+    <p class="dist-desc" id="distDesc"></p>
+    <div id="paramFields"></div>
+  </div>
+
+  <div class="section-label"><span class="n">02</span> Iteraciones de la simulación</div>
+  <div class="segmented" id="iterSeg">
+    <button data-v="1000">1,000</button>
+    <button data-v="10000" class="active">10,000</button>
+    <button data-v="50000">50,000</button>
+    <button data-v="200000">200,000</button>
+  </div>
+
+  <button class="run-btn" id="runBtn">Ejecutar simulación →</button>
+  <div class="counter" id="counter"></div>
+
+  <div id="results">
+
+    <div class="section-label"><span class="n">03</span> Resultado — <span id="nLabel" style="color:var(--text-dim); text-transform:none; letter-spacing:0;"></span></div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Histograma de frecuencias</div>
+      <div class="chart-sub" id="histSub">Distribución de los valores simulados</div>
+      <canvas id="histCanvas" height="220"></canvas>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Probabilidad acumulada (CDF)</div>
+      <div class="chart-sub">Ajusta el umbral para calcular probabilidades, como en el panel de riesgo de @RISK</div>
+      <canvas id="cdfCanvas" height="180"></canvas>
+      <div class="prob-block">
+        <div class="prob-block-label">Calcular probabilidad — elige la dirección y el valor</div>
+        <div class="prob-controls">
+          <div class="prob-dir" id="probDir">
+            <button data-dir="le" class="active">≤ X</button>
+            <button data-dir="ge">≥ X</button>
+          </div>
+          <input type="number" id="threshold" placeholder="Valor">
+        </div>
+        <div class="prob-result" id="probResult">
+          <div class="expr" id="probExpr">P(X ≤ —)</div>
+          <div class="value" id="probValue">—</div>
+          <div class="sub" id="probSub"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Percentiles</div>
+      <div class="chart-sub">Valores de referencia para análisis de escenarios</div>
+      <table class="pctl" id="pctlTable"></table>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Estadísticas descriptivas</div>
+      <div class="chart-sub">Resumen completo de la muestra simulada</div>
+      <table class="desc-table" id="descTable"></table>
+    </div>
+
+  </div>
+
+  <p class="footnote">Simulación 100% local en tu iPhone (no se envían datos a ningún servidor). Herramienta educativa inspirada en el enfoque de @RISK de Lumivero — sin afiliación con Palisade/Lumivero.<br><br>
+  Consejo: toca <b>Compartir → Añadir a pantalla de inicio</b> en Safari para usarla como una app, a pantalla completa.</p>
+
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="distSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Elige una distribución</div>
+  <div class="sheet-list" id="sheetList"></div>
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   GENERADORES ALEATORIOS
+--------------------------------------------------------- */
+function randNormal(mean, sd){
+  let u=0, v=0;
+  while(u===0) u = Math.random();
+  while(v===0) v = Math.random();
+  const z = Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+  return mean + sd*z;
+}
+function randGamma(shape, scale){
+  if(shape < 1){
+    const u = Math.random();
+    return randGamma(shape+1, scale) * Math.pow(u, 1/shape);
+  }
+  const d = shape - 1/3;
+  const c = 1/Math.sqrt(9*d);
+  while(true){
+    let x, v;
+    do{
+      x = randNormal(0,1);
+      v = 1 + c*x;
+    } while(v <= 0);
+    v = v*v*v;
+    const u = Math.random();
+    if(Math.log(u) < 0.5*x*x + d - d*v + d*Math.log(v)){
+      return d*v*scale;
+    }
+  }
+}
+function randBeta(alpha, beta){
+  const x = randGamma(alpha, 1);
+  const y = randGamma(beta, 1);
+  return x/(x+y);
+}
+function randTriangular(min, mode, max){
+  const u = Math.random();
+  const c = (mode-min)/(max-min);
+  if(u < c) return min + Math.sqrt(u*(max-min)*(mode-min));
+  return max - Math.sqrt((1-u)*(max-min)*(max-mode));
+}
+function randPERT(min, mode, max){
+  const lambda = 4;
+  const alpha = 1 + lambda*(mode-min)/(max-min);
+  const beta = 1 + lambda*(max-mode)/(max-min);
+  return min + randBeta(alpha, beta) * (max-min);
+}
+function randLognormal(mean, sd){
+  const sigma2 = Math.log(1 + (sd*sd)/(mean*mean));
+  const mu = Math.log(mean) - sigma2/2;
+  return Math.exp(randNormal(mu, Math.sqrt(sigma2)));
+}
+function randPoisson(lambda){
+  if(lambda < 30){
+    const L = Math.exp(-lambda);
+    let k = 0, p = 1;
+    do{ k++; p *= Math.random(); } while(p > L);
+    return k-1;
+  }
+  return Math.max(0, Math.round(randNormal(lambda, Math.sqrt(lambda))));
+}
+function randBinomial(n, p){
+  if(n * Math.min(p, 1-p) < 2000){
+    let count = 0;
+    for(let i=0;i<n;i++){ if(Math.random() < p) count++; }
+    return count;
+  }
+  const mean = n*p, sd = Math.sqrt(n*p*(1-p));
+  return Math.min(n, Math.max(0, Math.round(randNormal(mean, sd))));
+}
+
+/* ---- Distribuciones personalizadas: Discreta y General ---- */
+function makeDiscreteSampler(items){
+  const total = items.reduce((s,it)=>s+it.weight, 0);
+  let cum = 0;
+  const table = items.map(it=>{ cum += it.weight/total; return {value: it.value, cum}; });
+  return function(){
+    const u = Math.random();
+    for(let i=0;i<table.length;i++){
+      if(u <= table[i].cum) return table[i].value;
+    }
+    return table[table.length-1].value;
+  };
+}
+
+function interpolateWeight(xs, ws, x){
+  if(x <= xs[0]) return ws[0];
+  if(x >= xs[xs.length-1]) return ws[ws.length-1];
+  for(let i=0;i<xs.length-1;i++){
+    if(x >= xs[i] && x <= xs[i+1]){
+      const t = (x-xs[i]) / ((xs[i+1]-xs[i]) || 1);
+      return ws[i] + (ws[i+1]-ws[i])*t;
+    }
+  }
+  return 0;
+}
+
+function makeGeneralSampler(points){
+  const xs = points.map(p=>p.x);
+  const ws = points.map(p=>p.weight);
+  const xmin = xs[0], xmax = xs[xs.length-1];
+  const N = 400;
+  const gridX = new Array(N+1);
+  const gridDensity = new Array(N+1);
+  for(let i=0;i<=N;i++){
+    const x = xmin + (xmax-xmin)*i/N;
+    gridX[i] = x;
+    gridDensity[i] = interpolateWeight(xs, ws, x);
+  }
+  const cdf = new Array(N+1);
+  cdf[0] = 0;
+  for(let i=1;i<=N;i++){
+    const dx = gridX[i]-gridX[i-1];
+    const avg = (gridDensity[i]+gridDensity[i-1])/2;
+    cdf[i] = cdf[i-1] + avg*dx;
+  }
+  const total = cdf[N] || 1;
+  for(let i=0;i<=N;i++) cdf[i] /= total;
+
+  return function(){
+    const u = Math.random();
+    let lo = 0, hi = N;
+    while(lo < hi){
+      const mid = (lo+hi) >> 1;
+      if(cdf[mid] < u) lo = mid+1; else hi = mid;
+    }
+    const i = Math.max(1, lo);
+    const c0 = cdf[i-1], c1 = cdf[i];
+    const x0 = gridX[i-1], x1 = gridX[i];
+    const frac = c1 > c0 ? (u-c0)/(c1-c0) : 0;
+    return x0 + (x1-x0)*frac;
+  };
+}
+
+/* ---------------------------------------------------------
+   CATÁLOGO DE DISTRIBUCIONES
+--------------------------------------------------------- */
+const DISTS = {
+  normal:{
+    name:'Normal', tag:'continua',
+    desc:'Simétrica en forma de campana. Ideal cuando conoces un valor central y una variabilidad típica.',
+    params:[
+      {key:'mean', label:'Media (μ)', default:100},
+      {key:'sd', label:'Desviación estándar (σ)', default:15, positive:true}
+    ],
+    sample:p=>randNormal(p.mean, p.sd)
+  },
+  uniform:{
+    name:'Uniforme', tag:'continua',
+    desc:'Todos los valores entre un mínimo y un máximo son igualmente probables.',
+    params:[
+      {key:'min', label:'Mínimo', default:0},
+      {key:'max', label:'Máximo', default:100}
+    ],
+    validate:p=>p.max>p.min ? null : 'El máximo debe ser mayor que el mínimo',
+    sample:p=>p.min + Math.random()*(p.max-p.min)
+  },
+  triangular:{
+    name:'Triangular', tag:'continua',
+    desc:'Definida por mínimo, moda (valor más probable) y máximo. Muy usada con estimaciones de expertos.',
+    params:[
+      {key:'min', label:'Mínimo', default:10},
+      {key:'mode', label:'Moda (más probable)', default:50},
+      {key:'max', label:'Máximo', default:90}
+    ],
+    validate:p=> (p.min<p.mode && p.mode<p.max) ? null : 'Debe cumplirse mínimo < moda < máximo',
+    sample:p=>randTriangular(p.min, p.mode, p.max)
+  },
+  pert:{
+    name:'PERT', tag:'continua',
+    desc:'Como la triangular, pero suaviza los extremos dando más peso a la moda. Estándar en gestión de proyectos y riesgo — la misma lógica que RiskPert en @RISK.',
+    params:[
+      {key:'min', label:'Mínimo', default:10},
+      {key:'mode', label:'Moda (más probable)', default:50},
+      {key:'max', label:'Máximo', default:90}
+    ],
+    validate:p=> (p.min<p.mode && p.mode<p.max) ? null : 'Debe cumplirse mínimo < moda < máximo',
+    sample:p=>randPERT(p.min, p.mode, p.max)
+  },
+  lognormal:{
+    name:'Lognormal', tag:'continua',
+    desc:'Asimétrica con cola larga a la derecha. Frecuente en costes, duraciones o precios que nunca son negativos.',
+    params:[
+      {key:'mean', label:'Media', default:100, positive:true},
+      {key:'sd', label:'Desviación estándar', default:30, positive:true}
+    ],
+    sample:p=>randLognormal(p.mean, p.sd)
+  },
+  exponential:{
+    name:'Exponencial', tag:'continua',
+    desc:'Modela el tiempo entre eventos independientes (fallas, llegadas, esperas).',
+    params:[
+      {key:'mean', label:'Media', default:10, positive:true}
+    ],
+    sample:p=> -p.mean*Math.log(Math.random())
+  },
+  gamma:{
+    name:'Gamma', tag:'continua',
+    desc:'Generaliza la exponencial. Útil para tiempos acumulados o variables siempre positivas y asimétricas.',
+    params:[
+      {key:'shape', label:'Forma (k)', default:2, positive:true},
+      {key:'scale', label:'Escala (θ)', default:5, positive:true}
+    ],
+    sample:p=>randGamma(p.shape, p.scale)
+  },
+  beta:{
+    name:'Beta', tag:'continua',
+    desc:'Acotada entre un mínimo y un máximo. Muy versátil para modelar proporciones o incertidumbre limitada.',
+    params:[
+      {key:'alpha', label:'Alfa (α)', default:2, positive:true},
+      {key:'beta', label:'Beta (β)', default:5, positive:true},
+      {key:'min', label:'Mínimo', default:0},
+      {key:'max', label:'Máximo', default:1}
+    ],
+    validate:p=>p.max>p.min ? null : 'El máximo debe ser mayor que el mínimo',
+    sample:p=>p.min + randBeta(p.alpha, p.beta)*(p.max-p.min)
+  },
+  weibull:{
+    name:'Weibull', tag:'continua',
+    desc:'Muy usada en análisis de fiabilidad y vida útil de componentes o equipos.',
+    params:[
+      {key:'shape', label:'Forma (k)', default:2, positive:true},
+      {key:'scale', label:'Escala (λ)', default:10, positive:true}
+    ],
+    sample:p=>p.scale*Math.pow(-Math.log(Math.random()), 1/p.shape)
+  },
+  poisson:{
+    name:'Poisson', tag:'discreta',
+    desc:'Cuenta el número de eventos en un intervalo fijo, dada una tasa media (λ).',
+    discrete:true,
+    params:[
+      {key:'lambda', label:'Tasa media (λ)', default:4, positive:true}
+    ],
+    sample:p=>randPoisson(p.lambda)
+  },
+  binomial:{
+    name:'Binomial', tag:'discreta',
+    desc:'Número de éxitos en n ensayos independientes con probabilidad p de éxito.',
+    discrete:true,
+    params:[
+      {key:'n', label:'Número de ensayos (n)', default:20, positive:true, integer:true},
+      {key:'p', label:'Probabilidad de éxito (p)', default:0.5, min:0, max:1}
+    ],
+    sample:p=>randBinomial(Math.round(p.n), p.p)
+  },
+  discreta:{
+    name:'Discreta', tag:'discreta',
+    desc:'Tú defines los valores posibles y su peso relativo (no es necesario que sumen 1). Ideal para escenarios o resultados discretos de una decisión. Equivale a RiskDiscrete en @RISK.',
+    discrete:true,
+    custom:'discrete',
+    rowFields:[
+      {key:'value', label:'Valor'},
+      {key:'weight', label:'Peso'}
+    ],
+    defaultRows:[
+      {value:50, weight:1},
+      {value:80, weight:3},
+      {value:120, weight:2},
+      {value:150, weight:1}
+    ],
+    makeSampler: params => makeDiscreteSampler(params.items)
+  },
+  general:{
+    name:'General', tag:'personalizada',
+    desc:'Curva de probabilidad totalmente personalizada: define puntos (X, peso relativo) y la simulación interpola la forma entre ellos. Útil cuando ninguna distribución estándar se ajusta a tu caso. Equivale a RiskGeneral en @RISK.',
+    custom:'general',
+    rowFields:[
+      {key:'x', label:'X'},
+      {key:'weight', label:'Peso relativo'}
+    ],
+    defaultRows:[
+      {x:0, weight:0},
+      {x:20, weight:0.3},
+      {x:50, weight:1},
+      {x:70, weight:0.8},
+      {x:100, weight:0.1},
+      {x:120, weight:0}
+    ],
+    makeSampler: params => makeGeneralSampler(params.points)
+  }
+};
+
+let activeDistKey = 'normal';
+let lastValues = {}; // per-dist saved param values
+let customRows = {};  // per-dist saved rows for distribuciones personalizadas (discreta / general)
+let iterations = 10000;
+let simData = null; // { sorted, raw, discrete }
+
+/* ---------------------------------------------------------
+   UI: SELECTOR DE DISTRIBUCIÓN (lista en hoja inferior)
+--------------------------------------------------------- */
+const distSelectBtn = document.getElementById('distSelectBtn');
+const distSheet = document.getElementById('distSheet');
+const sheetBackdrop = document.getElementById('sheetBackdrop');
+const sheetList = document.getElementById('sheetList');
+const checkSvg = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1A0E08" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+Object.keys(DISTS).forEach(key=>{
+  const d = DISTS[key];
+  const item = document.createElement('button');
+  item.className = 'sheet-item' + (key===activeDistKey ? ' active' : '');
+  item.dataset.key = key;
+  item.innerHTML = `
+    <div class="sheet-item-check">${checkSvg}</div>
+    <div class="sheet-item-body">
+      <div class="sheet-item-top">
+        <span class="sheet-item-name">${d.name}</span>
+        <span class="sheet-item-tag">${d.tag}</span>
+      </div>
+      <div class="sheet-item-desc">${d.desc}</div>
+    </div>
+  `;
+  item.onclick = ()=>{ selectDist(key); closeSheet(); };
+  sheetList.appendChild(item);
+});
+
+function openSheet(){
+  distSheet.classList.add('show');
+  sheetBackdrop.classList.add('show');
+  distSelectBtn.classList.add('open');
+}
+function closeSheet(){
+  distSheet.classList.remove('show');
+  sheetBackdrop.classList.remove('show');
+  distSelectBtn.classList.remove('open');
+}
+distSelectBtn.onclick = openSheet;
+sheetBackdrop.onclick = closeSheet;
+
+function updateSelectButton(){
+  const d = DISTS[activeDistKey];
+  document.getElementById('distSelectName').textContent = d.name;
+  document.getElementById('distSelectTag').textContent = d.tag;
+}
+
+function selectDist(key){
+  activeDistKey = key;
+  document.querySelectorAll('.sheet-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.key===key);
+  });
+  updateSelectButton();
+  renderParamForm();
+}
+updateSelectButton();
+
+function renderParamForm(){
+  const d = DISTS[activeDistKey];
+  document.getElementById('distDesc').textContent = d.desc;
+  const wrap = document.getElementById('paramFields');
+  wrap.innerHTML = '';
+
+  if(d.custom){
+    renderCustomEditor(d, wrap);
+    return;
+  }
+
+  const saved = lastValues[activeDistKey] || {};
+  d.params.forEach(p=>{
+    const val = saved[p.key] !== undefined ? saved[p.key] : p.default;
+    const field = document.createElement('div');
+    field.className = 'field';
+    field.dataset.key = p.key;
+    const step = p.integer ? '1' : 'any';
+    field.innerHTML = `
+      <label>${p.label}</label>
+      <input type="number" step="${step}" value="${val}" data-key="${p.key}">
+      <div class="field-error"></div>
+    `;
+    wrap.appendChild(field);
+  });
+}
+
+function renderCustomEditor(d, wrap){
+  if(!customRows[activeDistKey]){
+    customRows[activeDistKey] = d.defaultRows.map(r=>({...r}));
+  }
+  const rows = customRows[activeDistKey];
+  const [f1, f2] = d.rowFields;
+
+  const header = document.createElement('div');
+  header.className = 'custom-row-header';
+  header.innerHTML = `<span>${f1.label}</span><span>${f2.label}</span><span></span>`;
+  wrap.appendChild(header);
+
+  const container = document.createElement('div');
+  container.className = 'custom-rows';
+  rows.forEach((row, idx)=>{
+    const rowEl = document.createElement('div');
+    rowEl.className = 'custom-row';
+    rowEl.innerHTML = `
+      <input type="number" step="any" value="${row[f1.key]}" data-idx="${idx}" data-field="${f1.key}" placeholder="${f1.label}">
+      <input type="number" step="any" value="${row[f2.key]}" data-idx="${idx}" data-field="${f2.key}" placeholder="${f2.label}">
+      <button class="row-remove" data-idx="${idx}" ${rows.length<=2 ? 'disabled' : ''} aria-label="Quitar fila">✕</button>
+    `;
+    container.appendChild(rowEl);
+  });
+  wrap.appendChild(container);
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'add-row-btn';
+  addBtn.textContent = '+ Añadir punto';
+  addBtn.onclick = ()=>{
+    rows.push({ [f1.key]: 0, [f2.key]: 1 });
+    renderParamForm();
+  };
+  wrap.appendChild(addBtn);
+
+  const hint = document.createElement('div');
+  hint.className = 'custom-hint';
+  hint.textContent = d.custom === 'discrete'
+    ? 'Los pesos no necesitan sumar 1: se normalizan automáticamente entre sí.'
+    : 'Ordena los puntos de X de menor a mayor (se reordenan solos). El peso indica qué tan probable es esa zona; 0 en los extremos cierra la curva.';
+  wrap.appendChild(hint);
+
+  const errBox = document.createElement('div');
+  errBox.className = 'field-error custom-error';
+  errBox.id = 'customError';
+  wrap.appendChild(errBox);
+
+  container.querySelectorAll('input').forEach(inp=>{
+    inp.oninput = ()=>{
+      const idx = +inp.dataset.idx, field = inp.dataset.field;
+      rows[idx][field] = parseFloat(inp.value);
+    };
+  });
+  container.querySelectorAll('.row-remove').forEach(btn=>{
+    btn.onclick = ()=>{
+      rows.splice(+btn.dataset.idx, 1);
+      renderParamForm();
+    };
+  });
+}
+renderParamForm();
+
+/* ---------------------------------------------------------
+   ITERATIONS SEGMENTED CONTROL
+--------------------------------------------------------- */
+document.getElementById('iterSeg').querySelectorAll('button').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('#iterSeg button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    iterations = parseInt(btn.dataset.v, 10);
+  };
+});
+
+/* ---------------------------------------------------------
+   VALIDACIÓN Y LECTURA DE PARÁMETROS
+--------------------------------------------------------- */
+function readParams(){
+  const d = DISTS[activeDistKey];
+
+  if(d.custom){
+    return readCustomParams(d);
+  }
+
+  const params = {};
+  let valid = true;
+  const saved = {};
+
+  d.params.forEach(p=>{
+    const fieldEl = document.querySelector(`.field[data-key="${p.key}"]`);
+    const input = fieldEl.querySelector('input');
+    let v = parseFloat(input.value);
+    let err = '';
+    if(isNaN(v)){ err = 'Introduce un número'; }
+    else if(p.positive && v<=0){ err = 'Debe ser mayor que 0'; }
+    else if(p.min !== undefined && v < p.min){ err = 'Debe ser ≥ ' + p.min; }
+    else if(p.max !== undefined && v > p.max){ err = 'Debe ser ≤ ' + p.max; }
+
+    fieldEl.classList.toggle('invalid', !!err);
+    fieldEl.querySelector('.field-error').textContent = err;
+    if(err) valid = false;
+    params[p.key] = v;
+    saved[p.key] = v;
+  });
+
+  if(valid && d.validate){
+    const msg = d.validate(params);
+    if(msg){
+      valid = false;
+      // show error on first field as general notice
+      const firstField = document.querySelector(`.field[data-key="${d.params[0].key}"]`);
+      firstField.classList.add('invalid');
+      firstField.querySelector('.field-error').textContent = msg;
+    }
+  }
+
+  lastValues[activeDistKey] = saved;
+  return valid ? params : null;
+}
+
+function readCustomParams(d){
+  const [f1, f2] = d.rowFields;
+  const rows = customRows[activeDistKey] || [];
+  const errBox = document.getElementById('customError');
+  let err = null;
+
+  if(rows.length < 2){
+    err = 'Añade al menos 2 filas';
+  } else {
+    for(const r of rows){
+      if(isNaN(r[f1.key]) || isNaN(r[f2.key])){ err = 'Completa todos los campos con números'; break; }
+      if(r[f2.key] < 0){ err = 'Los pesos no pueden ser negativos'; break; }
+    }
+    if(!err){
+      const totalWeight = rows.reduce((s,r)=>s+r[f2.key], 0);
+      if(totalWeight <= 0) err = 'La suma de los pesos debe ser mayor que 0';
+    }
+    if(!err && d.custom === 'general'){
+      const sorted = rows.slice().sort((a,b)=>a[f1.key]-b[f1.key]);
+      for(let i=1;i<sorted.length;i++){
+        if(sorted[i][f1.key] === sorted[i-1][f1.key]){ err = 'Los valores de X deben ser distintos entre sí'; break; }
+      }
+    }
+  }
+
+  if(errBox) errBox.textContent = err || '';
+  if(err) return null;
+
+  if(d.custom === 'discrete'){
+    return { items: rows.map(r=>({ value:r[f1.key], weight:r[f2.key] })) };
+  }
+  const sorted = rows.slice().sort((a,b)=>a[f1.key]-b[f1.key]);
+  return { points: sorted.map(r=>({ x:r[f1.key], weight:r[f2.key] })) };
+}
+
+/* ---------------------------------------------------------
+   ESTADÍSTICAS
+--------------------------------------------------------- */
+function computeStats(data, discrete){
+  const n = data.length;
+  let sum=0, min=Infinity, max=-Infinity;
+  for(let i=0;i<n;i++){
+    const x = data[i];
+    sum += x;
+    if(x<min) min=x;
+    if(x>max) max=x;
+  }
+  const mean = sum/n;
+  let sq=0, cu=0, qt=0;
+  for(let i=0;i<n;i++){
+    const dlt = data[i]-mean;
+    sq += dlt*dlt;
+    cu += dlt*dlt*dlt;
+    qt += dlt*dlt*dlt*dlt;
+  }
+  const variance = sq/n;
+  const sd = Math.sqrt(variance);
+  const skew = sd>0 ? (cu/n)/Math.pow(sd,3) : 0;
+  const kurtosis = sd>0 ? (qt/n)/Math.pow(sd,4) - 3 : 0; // curtosis de exceso
+  const se = sd/Math.sqrt(n);
+  const cv = mean!==0 ? sd/Math.abs(mean) : NaN;
+  const range = max-min;
+
+  const sorted = data.slice().sort((a,b)=>a-b);
+  function pct(p){
+    const idx = (p/100)*(n-1);
+    const lo = Math.floor(idx), hi = Math.ceil(idx);
+    if(lo===hi) return sorted[lo];
+    return sorted[lo] + (sorted[hi]-sorted[lo])*(idx-lo);
+  }
+
+  // moda aproximada: centro del bin con mayor frecuencia
+  const {edges, counts} = buildBins(sorted, !!discrete);
+  let maxCount=-1, maxIdx=0;
+  counts.forEach((c,i)=>{ if(c>maxCount){ maxCount=c; maxIdx=i; } });
+  const mode = (edges[maxIdx]+edges[maxIdx+1])/2;
+
+  return {
+    n, sum, mean, sd, variance, skew, kurtosis, se, cv, range, mode, min, max,
+    median: pct(50),
+    p5: pct(5), p10: pct(10), p25: pct(25), p75: pct(75), p90: pct(90), p95: pct(95),
+    sorted
+  };
+}
+
+function probLE(sorted, x){
+  // proporción de valores <= x, vía búsqueda binaria
+  let lo=0, hi=sorted.length;
+  while(lo<hi){
+    const mid=(lo+hi)>>1;
+    if(sorted[mid] <= x) lo = mid+1; else hi = mid;
+  }
+  return lo / sorted.length;
+}
+
+function probGE(sorted, x){
+  // proporción de valores >= x, vía búsqueda binaria
+  let lo=0, hi=sorted.length;
+  while(lo<hi){
+    const mid=(lo+hi)>>1;
+    if(sorted[mid] < x) lo = mid+1; else hi = mid;
+  }
+  return (sorted.length - lo) / sorted.length;
+}
+
+function fmt(x){
+  if(Math.abs(x) >= 1000) return x.toLocaleString('es-ES', {maximumFractionDigits:1});
+  if(Math.abs(x) >= 1) return x.toLocaleString('es-ES', {maximumFractionDigits:3});
+  return x.toLocaleString('es-ES', {maximumFractionDigits:5});
+}
+
+/* ---------------------------------------------------------
+   SIMULACIÓN + ANIMACIÓN
+--------------------------------------------------------- */
+const runBtn = document.getElementById('runBtn');
+const counterEl = document.getElementById('counter');
+
+runBtn.onclick = ()=>{
+  const params = readParams();
+  if(!params) return;
+
+  runBtn.disabled = true;
+  runBtn.textContent = 'Simulando…';
+  counterEl.textContent = '';
+
+  setTimeout(()=>{
+    const d = DISTS[activeDistKey];
+    const n = iterations;
+    const data = new Array(n);
+    const sampler = d.makeSampler ? d.makeSampler(params) : (()=> d.sample(params));
+    for(let i=0;i<n;i++){
+      data[i] = sampler();
+    }
+    const stats = computeStats(data, d.discrete);
+    simData = { stats, discrete: !!d.discrete };
+
+    runBtn.disabled = false;
+    runBtn.textContent = 'Ejecutar simulación →';
+    counterEl.textContent = n.toLocaleString('es-ES') + ' iteraciones completadas';
+
+    document.getElementById('nLabel').textContent = d.name + ' · n = ' + n.toLocaleString('es-ES');
+    document.getElementById('results').style.display = 'block';
+    renderStats(stats);
+    animateHistogram(stats, simData.discrete);
+    setupThreshold(stats);
+    drawCDF(stats);
+    renderPercentiles(stats);
+    renderDescriptiveStats(stats);
+    document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+  }, 30);
+};
+
+function renderStats(s){
+  const grid = document.getElementById('statGrid');
+  const items = [
+    ['Media', fmt(s.mean)],
+    ['Mediana', fmt(s.median)],
+    ['Desv. Est.', fmt(s.sd)],
+    ['Mínimo', fmt(s.min)],
+    ['Máximo', fmt(s.max)],
+    ['Asimetría', fmt(s.skew)]
+  ];
+  grid.innerHTML = items.map(([l,v])=>`
+    <div class="stat-box"><div class="v">${v}</div><div class="l">${l}</div></div>
+  `).join('');
+}
+
+function renderPercentiles(s){
+  const rows = [['P5',s.p5],['P10',s.p10],['P25',s.p25],['P50',s.median],['P75',s.p75],['P90',s.p90],['P95',s.p95]];
+  const table = document.getElementById('pctlTable');
+  table.innerHTML = '<tr>' + rows.map(r=>`<th>${r[0]}</th>`).join('') + '</tr>' +
+                     '<tr>' + rows.map(r=>`<td>${fmt(r[1])}</td>`).join('') + '</tr>';
+}
+
+function renderDescriptiveStats(s){
+  const rows = [
+    ['Tamaño de muestra (n)', s.n.toLocaleString('es-ES')],
+    ['Suma', fmt(s.sum)],
+    ['Media', fmt(s.mean)],
+    ['Mediana', fmt(s.median)],
+    ['Moda (aprox.)', fmt(s.mode)],
+    ['Desviación estándar', fmt(s.sd)],
+    ['Varianza', fmt(s.variance)],
+    ['Error estándar de la media', fmt(s.se)],
+    ['Coeficiente de variación', isNaN(s.cv) ? '—' : (s.cv*100).toFixed(1) + '%'],
+    ['Mínimo', fmt(s.min)],
+    ['Máximo', fmt(s.max)],
+    ['Rango', fmt(s.range)],
+    ['Asimetría (skewness)', fmt(s.skew)],
+    ['Curtosis (exceso)', fmt(s.kurtosis)]
+  ];
+  const table = document.getElementById('descTable');
+  table.innerHTML = rows.map(r => `<tr><td class="dl">${r[0]}</td><td class="dv">${r[1]}</td></tr>`).join('');
+}
+
+/* ---- Histograma con animación de "lluvia de muestras" ---- */
+function buildBins(sorted, discrete){
+  const n = sorted.length;
+  const min = sorted[0], max = sorted[n-1];
+  let edges, counts;
+
+  if(discrete){
+    // Agrupar por valor exacto (categórico) — funciona para cualquier espaciado, sin límite de rango
+    const uniqueVals = [];
+    counts = [];
+    let i = 0;
+    while(i < n){
+      let j = i;
+      while(j < n && sorted[j] === sorted[i]) j++;
+      uniqueVals.push(sorted[i]);
+      counts.push(j-i);
+      i = j;
+    }
+    if(uniqueVals.length <= 80){
+      const m = uniqueVals.length;
+      let minGap = Infinity;
+      for(let k=1;k<m;k++) minGap = Math.min(minGap, uniqueVals[k]-uniqueVals[k-1]);
+      if(!isFinite(minGap) || minGap<=0) minGap = 1;
+      const half = minGap/2;
+      edges = new Array(m+1);
+      edges[0] = uniqueVals[0]-half;
+      for(let k=1;k<m;k++) edges[k] = (uniqueVals[k-1]+uniqueVals[k])/2;
+      edges[m] = uniqueVals[m-1]+half;
+      return {edges, counts};
+    }
+    // demasiados valores únicos (p. ej. binomial con n muy grande): se agrupan como continua
+  }
+
+  const nBins = Math.min(60, Math.max(20, Math.round(Math.sqrt(n))));
+  const width = (max-min)/nBins || 1;
+  counts = new Array(nBins).fill(0);
+  edges = new Array(nBins+1);
+  for(let i=0;i<=nBins;i++) edges[i] = min + i*width;
+  sorted.forEach(x=>{
+    let idx = Math.floor((x-min)/width);
+    if(idx>=nBins) idx = nBins-1;
+    if(idx<0) idx = 0;
+    counts[idx]++;
+  });
+  return {edges, counts};
+}
+
+function animateHistogram(stats, discrete){
+  const canvas = document.getElementById('histCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 420;
+  const cssH = 220;
+  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const {edges, counts} = buildBins(stats.sorted, discrete);
+  const maxCount = Math.max(...counts);
+  const padL = 6, padR = 6, padT = 16, padB = 18;
+  const plotW = cssW - padL - padR;
+  const plotH = cssH - padT - padB;
+  const barGap = 1.5;
+  const barW = plotW/counts.length - barGap;
+
+  document.getElementById('histSub').textContent =
+    `${counts.length} intervalos · rango [${fmt(stats.min)}, ${fmt(stats.max)}]`;
+
+  const duration = 650;
+  const start = performance.now();
+  const particles = Array.from({length:36}, ()=>({
+    x: Math.random()*plotW,
+    y: -Math.random()*40,
+    speed: 2.4 + Math.random()*3,
+    r: 1.2 + Math.random()*1.4,
+    delay: Math.random()*250
+  }));
+
+  function frame(now){
+    const t = Math.min(1, (now-start)/duration);
+    const ease = 1 - Math.pow(1-t, 3);
+    ctx.clearRect(0,0,cssW,cssH);
+
+    // baseline
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT+plotH);
+    ctx.lineTo(padL+plotW, padT+plotH);
+    ctx.stroke();
+
+    // bars
+    counts.forEach((c,i)=>{
+      const targetH = (c/maxCount)*plotH;
+      const h = targetH*ease;
+      const x = padL + i*(plotW/counts.length);
+      const y = padT+plotH-h;
+      const grad = ctx.createLinearGradient(0,y,0,padT+plotH);
+      grad.addColorStop(0, '#FF9C74');
+      grad.addColorStop(1, '#C4451F');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y, Math.max(barW,0.6), h);
+    });
+
+    // mean marker line
+    const meanX = padL + ((stats.mean - stats.min)/(stats.max-stats.min || 1))*plotW;
+    ctx.strokeStyle = 'rgba(67,198,176,0.85)';
+    ctx.setLineDash([3,3]);
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(meanX, padT);
+    ctx.lineTo(meanX, padT+plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // falling particles overlay (decorative)
+    if(t < 1){
+      particles.forEach(p=>{
+        const localT = Math.max(0, now-start-p.delay);
+        const py = -10 + localT*p.speed*0.28;
+        if(py < plotH+padT){
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(255,200,87,' + (0.85*(1-t)) + ')';
+          ctx.arc(padL + p.x, py, p.r, 0, Math.PI*2);
+          ctx.fill();
+        }
+      });
+    }
+
+    // axis labels
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(fmt(stats.min), padL, cssH-4);
+    ctx.textAlign = 'right';
+    ctx.fillText(fmt(stats.max), padL+plotW, cssH-4);
+
+    if(t < 1){
+      requestAnimationFrame(frame);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---- CDF ---- */
+function drawCDF(stats){
+  const canvas = document.getElementById('cdfCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 420;
+  const cssH = 180;
+  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const sorted = stats.sorted;
+  const n = sorted.length;
+  const padL=6, padR=6, padT=12, padB=18;
+  const plotW = cssW-padL-padR, plotH = cssH-padT-padB;
+  const nPts = Math.min(300, n);
+  const step = Math.max(1, Math.floor(n/nPts));
+
+  ctx.clearRect(0,0,cssW,cssH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth=1;
+  for(let g=0; g<=4; g++){
+    const y = padT + plotH*g/4;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#43C6B0';
+  ctx.lineWidth = 2;
+  for(let i=0, idx=0; idx<n; idx+=step, i++){
+    const x = padL + ((sorted[idx]-stats.min)/(stats.max-stats.min || 1))*plotW;
+    const y = padT + plotH*(1 - idx/n);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign='left'; ctx.fillText(fmt(stats.min), padL, cssH-4);
+  ctx.textAlign='right'; ctx.fillText(fmt(stats.max), padL+plotW, cssH-4);
+  ctx.textAlign='left'; ctx.fillText('100%', padL, padT+8);
+  ctx.fillText('0%', padL, padT+plotH);
+
+  canvas._geom = {padL, padT, plotW, plotH, min:stats.min, max:stats.max};
+}
+
+function drawThresholdLine(stats, xVal){
+  const canvas = document.getElementById('cdfCanvas');
+  drawCDF(stats); // redraw base
+  const ctx = canvas.getContext('2d');
+  const g = canvas._geom;
+  if(!g || xVal===null || isNaN(xVal)) return;
+  const clamped = Math.max(stats.min, Math.min(stats.max, xVal));
+  const x = g.padL + ((clamped-g.min)/(g.max-g.min || 1))*g.plotW;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,122,80,0.9)';
+  ctx.setLineDash([4,4]);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x, g.padT);
+  ctx.lineTo(x, g.padT+g.plotH);
+  ctx.stroke();
+  ctx.restore();
+}
+
+let probDirection = 'le';
+
+function setupThreshold(stats){
+  const input = document.getElementById('threshold');
+  input.value = fmt(stats.mean);
+
+  const dirBtns = document.querySelectorAll('#probDir button');
+  dirBtns.forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.dir === probDirection);
+    btn.onclick = ()=>{
+      probDirection = btn.dataset.dir;
+      dirBtns.forEach(b=>b.classList.toggle('active', b===btn));
+      updateProb(stats);
+    };
+  });
+
+  input.oninput = ()=> updateProb(stats);
+  updateProb(stats);
+}
+
+function updateProb(stats){
+  const input = document.getElementById('threshold');
+  const x = parseFloat(input.value);
+  const exprEl = document.getElementById('probExpr');
+  const valueEl = document.getElementById('probValue');
+  const subEl = document.getElementById('probSub');
+  const symbol = probDirection === 'le' ? '≤' : '≥';
+
+  if(isNaN(x)){
+    exprEl.textContent = `P(X ${symbol} —)`;
+    valueEl.textContent = '—';
+    valueEl.classList.remove('hi');
+    subEl.textContent = 'Introduce un valor';
+    drawThresholdLine(stats, null);
+    return;
+  }
+
+  const p = probDirection === 'le' ? probLE(stats.sorted, x) : probGE(stats.sorted, x);
+  const complementSymbol = probDirection === 'le' ? '>' : '<';
+  const complement = 1 - p;
+
+  exprEl.textContent = `P(X ${symbol} ${fmt(x)})`;
+  valueEl.textContent = (p*100).toFixed(1) + '%';
+  valueEl.classList.toggle('hi', p > 0.5 && probDirection === 'ge');
+  subEl.textContent = `P(X ${complementSymbol} ${fmt(x)}) = ${(complement*100).toFixed(1)}%  ·  basado en ${stats.n.toLocaleString('es-ES')} iteraciones`;
+  drawThresholdLine(stats, x);
+}
+
+window.addEventListener('resize', ()=>{
+  if(simData){
+    animateHistogram(simData.stats, simData.discrete);
+    drawThresholdLine(simData.stats, parseFloat(document.getElementById('threshold').value));
+  }
+});
+</script>
+</body>
+</html>
