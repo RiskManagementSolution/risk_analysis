@@ -134,6 +134,13 @@
     font-family:var(--font-display); font-weight:600; font-size:15px;
     padding:0 12px 10px; border-bottom:1px solid var(--border); margin-bottom:4px;
   }
+  .sheet-search{
+    width:calc(100% - 24px); margin:8px 12px 6px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px;
+    padding:9px 12px; color:var(--text); font-family:var(--font-body); font-size:13.5px; outline:none;
+  }
+  .sheet-search:focus{border-color:var(--accent);}
+  .sheet-empty{padding:20px 12px; text-align:center; color:var(--text-faint); font-size:12.5px;}
   .sheet-list{overflow-y:auto; padding:2px 4px;}
   .sheet-item{
     width:100%; display:flex; align-items:center; gap:12px;
@@ -419,6 +426,7 @@
 <div class="sheet" id="distSheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title">Elige una distribución</div>
+  <input type="text" id="sheetSearch" class="sheet-search" placeholder="Buscar (ej. beta, discreta, riesgo)...">
   <div class="sheet-list" id="sheetList"></div>
 </div>
 
@@ -494,7 +502,101 @@ function randBinomial(n, p){
   return Math.min(n, Math.max(0, Math.round(randNormal(mean, sd))));
 }
 
-/* ---- Distribuciones personalizadas: Discreta y General ---- */
+/* ---- Generadores adicionales (catálogo extendido estilo @RISK) ---- */
+function randChiSq(df){ return randGamma(df/2, 2); }
+function randCauchy(x0, gamma){ return x0 + gamma*Math.tan(Math.PI*(Math.random()-0.5)); }
+function randErlang(k, scale){ let s=0; for(let i=0;i<k;i++) s += -scale*Math.log(Math.random()); return s; }
+function randRayleigh(scale){ return scale*Math.sqrt(-2*Math.log(Math.random())); }
+function randLaplace(loc, scale){ const u = Math.random()-0.5; return loc - scale*Math.sign(u)*Math.log(1-2*Math.abs(u)); }
+function randLogistic(loc, scale){ const u = Math.random(); return loc + scale*Math.log(u/(1-u)); }
+function randLogLogistic(alpha, beta){ const u = Math.random(); return alpha*Math.pow(u/(1-u), 1/beta); }
+function randPareto(xm, alpha){ return xm/Math.pow(1-Math.random(), 1/alpha); }
+function randPareto2(loc, scale, shape){ return loc + scale*(Math.pow(1-Math.random(), -1/shape)-1); }
+function randF(d1, d2){ return (randChiSq(d1)/d1)/(randChiSq(d2)/d2); }
+function randStudentT(df){ return randNormal(0,1)/Math.sqrt(randChiSq(df)/df); }
+function randReciprocal(minV, maxV){ return minV*Math.pow(maxV/minV, Math.random()); }
+function randLevy(loc, scale){ const z = randNormal(0,1); return loc + scale/(z*z); }
+function randHypSecant(loc, scale){ const u = Math.random(); return loc + scale*(2/Math.PI)*Math.log(Math.tan(Math.PI*u/2)); }
+function randInvGauss(mu, lambda){
+  const v = randNormal(0,1);
+  const y = v*v;
+  const x = mu + (mu*mu*y)/(2*lambda) - (mu/(2*lambda))*Math.sqrt(4*mu*lambda*y + mu*mu*y*y);
+  const u = Math.random();
+  if(u <= mu/(mu+x)) return x;
+  return (mu*mu)/x;
+}
+function randFatigueLife(alpha, beta){ const z = randNormal(0,1); const t = alpha*z/2; return beta*Math.pow(t+Math.sqrt(t*t+1), 2); }
+function randFrechet(alpha, scale){ return scale*Math.pow(-Math.log(Math.random()), -1/alpha); }
+function randGumbelMax(loc, scale){ return loc - scale*Math.log(-Math.log(Math.random())); }
+function randGumbelMin(loc, scale){ return loc + scale*Math.log(-Math.log(1-Math.random())); }
+function randBurr12(k, c, scale){ const u = Math.random(); return scale*Math.pow(Math.pow(1-u, -1/k)-1, 1/c); }
+function randDagum(k, c, scale){ const u = Math.random(); return scale*Math.pow(Math.pow(u, -1/k)-1, -1/c); }
+function randKumaraswamy(a, b, minV, maxV){ const u = Math.random(); return minV + (maxV-minV)*Math.pow(1-Math.pow(1-u, 1/b), 1/a); }
+function randPearson5(alpha, beta){ return 1/randGamma(alpha, 1/beta); }
+function randPearson6(alpha1, alpha2, beta){ return beta*randGamma(alpha1,1)/randGamma(alpha2,1); }
+function randLognorm2(mu, sigma){ return Math.exp(randNormal(mu, sigma)); }
+function randJohnsonSU(gamma, delta, xi, lambda){ const z = randNormal(0,1); return xi + lambda*Math.sinh((z-gamma)/delta); }
+function randJohnsonSB(gamma, delta, xi, lambda){ const z = randNormal(0,1); const y = 1/(1+Math.exp(-(z-gamma)/delta)); return xi + lambda*y; }
+function betaSubjParams(minV, modaV, maxV){
+  const meanEst = (minV + 4*modaV + maxV)/6;
+  const sdEst = (maxV-minV)/6;
+  const meanStd = (meanEst-minV)/(maxV-minV);
+  const varStd = Math.pow(sdEst/(maxV-minV), 2);
+  const common = meanStd*(1-meanStd)/varStd - 1;
+  return { alpha: meanStd*common, beta: (1-meanStd)*common };
+}
+function randBetaSubj(minV, modaV, maxV){
+  const {alpha, beta} = betaSubjParams(minV, modaV, maxV);
+  return minV + randBeta(alpha, beta)*(maxV-minV);
+}
+
+/* ---- Discretas adicionales ---- */
+function randBernoulli(p){ return Math.random() < p ? 1 : 0; }
+function randIntUniform(minV, maxV){ return minV + Math.floor(Math.random()*(maxV-minV+1)); }
+function randGeometric(p){ return Math.ceil(Math.log(Math.random())/Math.log(1-p)); }
+function randNegBin(r, p){ let s=0; for(let i=0;i<r;i++) s += randGeometric(p)-1; return s; }
+function randHypergeo(popSize, successStates, sampleSize){
+  let remainingPop = popSize, remainingSuccess = successStates, drawn = 0;
+  for(let i=0;i<sampleSize;i++){
+    if(remainingPop<=0) break;
+    const u = Math.random();
+    if(u < remainingSuccess/remainingPop){ drawn++; remainingSuccess--; }
+    remainingPop--;
+  }
+  return drawn;
+}
+
+/* ---- Trigen: reconstruye min/max reales a partir de dos percentiles ---- */
+function triangularCDF(x, minV, modaV, maxV){
+  if(x<=minV) return 0;
+  if(x>=maxV) return 1;
+  if(x<=modaV) return ((x-minV)*(x-minV))/((maxV-minV)*(modaV-minV));
+  return 1-((maxV-x)*(maxV-x))/((maxV-minV)*(maxV-modaV));
+}
+function solveTrigenBounds(x1, moda, x2, p1, p2){
+  let minV = x1 - 1, maxV = x2 + 1;
+  for(let iter=0; iter<40; iter++){
+    // resolver minV para que CDF(x1)=p1 (funcion decreciente en minV)
+    let lo = -1e9, hi = x1 - 1e-9;
+    for(let i=0;i<70;i++){
+      const mid = (lo+hi)/2;
+      const c = triangularCDF(x1, mid, moda, maxV);
+      if(c > p1) lo = mid; else hi = mid;
+    }
+    minV = (lo+hi)/2;
+    // resolver maxV para que CDF(x2)=p2 (funcion decreciente en maxV)
+    lo = x2 + 1e-9; hi = 1e9;
+    for(let i=0;i<70;i++){
+      const mid = (lo+hi)/2;
+      const c = triangularCDF(x2, minV, moda, mid);
+      if(c > p2) lo = mid; else hi = mid;
+    }
+    maxV = (lo+hi)/2;
+  }
+  return {minV, maxV};
+}
+
+/* ---- Distribuciones personalizadas (filas editables): Discreta, General, Cumulativa, Histograma, Remuestreo ---- */
 function makeDiscreteSampler(items){
   const total = items.reduce((s,it)=>s+it.weight, 0);
   let cum = 0;
@@ -554,6 +656,54 @@ function makeGeneralSampler(points){
     const x0 = gridX[i-1], x1 = gridX[i];
     const frac = c1 > c0 ? (u-c0)/(c1-c0) : 0;
     return x0 + (x1-x0)*frac;
+  };
+}
+
+function makeCumulSampler(points){
+  // points: [{x, cum}] ordenados por x ascendente, cum reescalado a [0,1]
+  const minCum = points[0].cum, maxCum = points[points.length-1].cum;
+  const span = (maxCum-minCum) || 1;
+  const norm = points.map(p=>({x:p.x, cum:(p.cum-minCum)/span}));
+  return function(){
+    const u = Math.random();
+    for(let i=0;i<norm.length-1;i++){
+      if(u>=norm[i].cum && u<=norm[i+1].cum){
+        const t = (u-norm[i].cum)/((norm[i+1].cum-norm[i].cum)||1);
+        return norm[i].x + (norm[i+1].x-norm[i].x)*t;
+      }
+    }
+    return norm[norm.length-1].x;
+  };
+}
+
+function makeCumulDSampler(points){
+  // como Cumul pero sin interpolar: devuelve el X del primer punto cuya acumulada alcanza u
+  const minCum = points[0].cum, maxCum = points[points.length-1].cum;
+  const span = (maxCum-minCum) || 1;
+  const norm = points.map(p=>({x:p.x, cum:(p.cum-minCum)/span}));
+  return function(){
+    const u = Math.random();
+    for(let i=0;i<norm.length;i++){
+      if(u <= norm[i].cum) return norm[i].x;
+    }
+    return norm[norm.length-1].x;
+  };
+}
+
+function makeHistogramSampler(bins){
+  const total = bins.reduce((s,b)=>s+b.peso, 0);
+  let cum = 0;
+  const table = bins.map(b=>{ cum += b.peso/total; return {...b, cum}; });
+  return function(){
+    const u = Math.random();
+    for(const b of table){ if(u<=b.cum) return b.limInf + Math.random()*(b.limSup-b.limInf); }
+    return table[table.length-1].limSup;
+  };
+}
+
+function makeResampleSampler(values){
+  return function(){
+    return values[Math.floor(Math.random()*values.length)];
   };
 }
 
@@ -628,9 +778,18 @@ const DISTS = {
     ],
     sample:p=>randGamma(p.shape, p.scale)
   },
-  beta:{
+  betaEstandar:{
     name:'Beta', tag:'continua',
-    desc:'Acotada entre un mínimo y un máximo. Muy versátil para modelar proporciones o incertidumbre limitada.',
+    desc:'Acotada entre 0 y 1. Base de muchas otras distribuciones; útil para modelar proporciones o tasas.',
+    params:[
+      {key:'alpha', label:'Alfa (α)', default:2, positive:true},
+      {key:'beta', label:'Beta (β)', default:5, positive:true}
+    ],
+    sample:p=>randBeta(p.alpha, p.beta)
+  },
+  beta:{
+    name:'Beta General', tag:'continua',
+    desc:'Como la Beta estándar, pero acotada entre el mínimo y máximo que tú definas en vez de 0 y 1. Muy versátil para modelar proporciones o incertidumbre limitada. Equivale a RiskBetaGeneral en @RISK.',
     params:[
       {key:'alpha', label:'Alfa (α)', default:2, positive:true},
       {key:'beta', label:'Beta (β)', default:5, positive:true},
@@ -639,6 +798,17 @@ const DISTS = {
     ],
     validate:p=>p.max>p.min ? null : 'El máximo debe ser mayor que el mínimo',
     sample:p=>p.min + randBeta(p.alpha, p.beta)*(p.max-p.min)
+  },
+  betaSubjetiva:{
+    name:'Beta Subjetiva', tag:'continua',
+    desc:'Como la PERT: la defines con mínimo, moda y máximo, pero usa un ajuste de momentos distinto para la forma de la curva. Equivale a RiskBetaSubj en @RISK.',
+    params:[
+      {key:'min', label:'Mínimo', default:10},
+      {key:'mode', label:'Moda (más probable)', default:50},
+      {key:'max', label:'Máximo', default:90}
+    ],
+    validate:p=> (p.min<p.mode && p.mode<p.max) ? null : 'Debe cumplirse mínimo < moda < máximo',
+    sample:p=>randBetaSubj(p.min, p.mode, p.max)
   },
   weibull:{
     name:'Weibull', tag:'continua',
@@ -702,6 +872,417 @@ const DISTS = {
       {x:120, weight:0}
     ],
     makeSampler: params => makeGeneralSampler(params.points)
+  },
+
+  /* ---- Nuevas distribuciones continuas ---- */
+  cauchy:{
+    name:'Cauchy', tag:'continua',
+    desc:'Simétrica pero con colas muy pesadas (sin media ni varianza definidas en teoría). Útil para modelar valores atípicos frecuentes.',
+    params:[
+      {key:'x0', label:'Ubicación (x₀)', default:0},
+      {key:'gamma', label:'Escala (γ)', default:1, positive:true}
+    ],
+    sample:p=>randCauchy(p.x0, p.gamma)
+  },
+  chisq:{
+    name:'Chi-cuadrado', tag:'continua',
+    desc:'Suma de cuadrados de variables normales estándar. Muy usada en pruebas estadísticas y de bondad de ajuste.',
+    params:[
+      {key:'df', label:'Grados de libertad', default:10, positive:true}
+    ],
+    sample:p=>randChiSq(p.df)
+  },
+  erlang:{
+    name:'Erlang', tag:'continua',
+    desc:'Caso especial de la Gamma con forma entera. Modela el tiempo hasta que ocurren k eventos independientes.',
+    params:[
+      {key:'k', label:'Forma (k, entero)', default:3, positive:true, integer:true},
+      {key:'scale', label:'Escala', default:5, positive:true}
+    ],
+    sample:p=>randErlang(Math.round(p.k), p.scale)
+  },
+  rayleigh:{
+    name:'Rayleigh', tag:'continua',
+    desc:'Modela magnitudes de vectores con componentes normales (ej. velocidad del viento, distancias radiales).',
+    params:[
+      {key:'scale', label:'Escala (σ)', default:10, positive:true}
+    ],
+    sample:p=>randRayleigh(p.scale)
+  },
+  laplace:{
+    name:'Laplace', tag:'continua',
+    desc:'Como la Normal, pero con un pico más agudo y colas más pesadas. También llamada "doble exponencial".',
+    params:[
+      {key:'loc', label:'Ubicación (μ)', default:0},
+      {key:'scale', label:'Escala (b)', default:5, positive:true}
+    ],
+    sample:p=>randLaplace(p.loc, p.scale)
+  },
+  logistic:{
+    name:'Logística', tag:'continua',
+    desc:'Parecida a la Normal pero con colas algo más pesadas. Base matemática de la regresión logística.',
+    params:[
+      {key:'loc', label:'Ubicación (μ)', default:0},
+      {key:'scale', label:'Escala (s)', default:5, positive:true}
+    ],
+    sample:p=>randLogistic(p.loc, p.scale)
+  },
+  loglogistic:{
+    name:'Log-logística', tag:'continua',
+    desc:'Siempre positiva y asimétrica; alternativa a la Lognormal para tiempos de supervivencia o duraciones.',
+    params:[
+      {key:'alpha', label:'Escala (α)', default:5, positive:true},
+      {key:'beta', label:'Forma (β)', default:4, positive:true}
+    ],
+    sample:p=>randLogLogistic(p.alpha, p.beta)
+  },
+  lognorm2:{
+    name:'Lognormal 2', tag:'continua',
+    desc:'Igual que Lognormal, pero defines directamente la media y desviación de la variable normal subyacente (μ, σ de ln X) en vez de la media y desviación de la variable real.',
+    params:[
+      {key:'mu', label:'μ (de ln X)', default:4},
+      {key:'sigma', label:'σ (de ln X)', default:0.3, positive:true}
+    ],
+    sample:p=>randLognorm2(p.mu, p.sigma)
+  },
+  pareto:{
+    name:'Pareto', tag:'continua',
+    desc:'Cola pesada a la derecha; la clásica regla "80/20". Modela riqueza, tamaños de ciudades, pérdidas grandes.',
+    params:[
+      {key:'xm', label:'Mínimo (xₘ)', default:10, positive:true},
+      {key:'alpha', label:'Forma (α)', default:3, positive:true}
+    ],
+    sample:p=>randPareto(p.xm, p.alpha)
+  },
+  pareto2:{
+    name:'Pareto Tipo II', tag:'continua',
+    desc:'Variante de Pareto (Lomax) que puede empezar en cualquier ubicación, no solo en un mínimo positivo.',
+    params:[
+      {key:'loc', label:'Ubicación', default:0},
+      {key:'scale', label:'Escala', default:5, positive:true},
+      {key:'shape', label:'Forma (α)', default:3, positive:true}
+    ],
+    sample:p=>randPareto2(p.loc, p.scale, p.shape)
+  },
+  f:{
+    name:'F', tag:'continua',
+    desc:'Razón de dos distribuciones Chi-cuadrado. Base de las pruebas F en análisis de varianza (ANOVA).',
+    params:[
+      {key:'d1', label:'Grados de libertad 1', default:10, positive:true},
+      {key:'d2', label:'Grados de libertad 2', default:20, positive:true}
+    ],
+    sample:p=>randF(p.d1, p.d2)
+  },
+  student:{
+    name:'t de Student', tag:'continua',
+    desc:'Como la Normal pero con colas más pesadas cuando hay pocos grados de libertad. Base de la inferencia estadística con muestras pequeñas.',
+    params:[
+      {key:'df', label:'Grados de libertad', default:15, positive:true}
+    ],
+    sample:p=>randStudentT(p.df)
+  },
+  reciprocal:{
+    name:'Recíproca', tag:'continua',
+    desc:'También llamada log-uniforme: uniforme en escala logarítmica. Útil cuando el orden de magnitud es incierto.',
+    params:[
+      {key:'min', label:'Mínimo', default:1, positive:true},
+      {key:'max', label:'Máximo', default:100, positive:true}
+    ],
+    validate:p=>p.max>p.min ? null : 'El máximo debe ser mayor que el mínimo',
+    sample:p=>randReciprocal(p.min, p.max)
+  },
+  levy:{
+    name:'Lévy', tag:'continua',
+    desc:'Cola extremadamente pesada (varianza infinita). Aparece en procesos de difusión y algunos modelos financieros.',
+    params:[
+      {key:'loc', label:'Ubicación', default:0},
+      {key:'scale', label:'Escala', default:1, positive:true}
+    ],
+    sample:p=>randLevy(p.loc, p.scale)
+  },
+  hypsecant:{
+    name:'Secante Hiperbólica', tag:'continua',
+    desc:'Forma de campana similar a la Normal pero con colas algo más pesadas y pico más alto.',
+    params:[
+      {key:'loc', label:'Ubicación', default:0},
+      {key:'scale', label:'Escala', default:1, positive:true}
+    ],
+    sample:p=>randHypSecant(p.loc, p.scale)
+  },
+  invgauss:{
+    name:'Gaussiana Inversa', tag:'continua',
+    desc:'Siempre positiva y asimétrica. Modela tiempos de primer paso en procesos aleatorios (ej. tiempos de falla).',
+    params:[
+      {key:'mu', label:'Media (μ)', default:5, positive:true},
+      {key:'lambda', label:'Forma (λ)', default:10, positive:true}
+    ],
+    sample:p=>randInvGauss(p.mu, p.lambda)
+  },
+  fatiguelife:{
+    name:'Fatiga de Vida', tag:'continua',
+    desc:'También llamada Birnbaum-Saunders. Modela tiempo hasta la falla por fatiga acumulada de materiales.',
+    params:[
+      {key:'alpha', label:'Forma (α)', default:0.5, positive:true},
+      {key:'beta', label:'Escala (β)', default:10, positive:true}
+    ],
+    sample:p=>randFatigueLife(p.alpha, p.beta)
+  },
+  frechet:{
+    name:'Fréchet', tag:'continua',
+    desc:'Distribución de valores extremos (máximos). Usada en hidrología, seguros y análisis de riesgo extremo.',
+    params:[
+      {key:'alpha', label:'Forma (α)', default:5, positive:true},
+      {key:'scale', label:'Escala', default:10, positive:true}
+    ],
+    sample:p=>randFrechet(p.alpha, p.scale)
+  },
+  extvalue:{
+    name:'Valor Extremo (máx.)', tag:'continua',
+    desc:'También llamada Gumbel. Modela el máximo de muchas observaciones (ej. crecidas de un río, temperaturas récord).',
+    params:[
+      {key:'loc', label:'Ubicación', default:0},
+      {key:'scale', label:'Escala', default:1, positive:true}
+    ],
+    sample:p=>randGumbelMax(p.loc, p.scale)
+  },
+  extvaluemin:{
+    name:'Valor Extremo (mín.)', tag:'continua',
+    desc:'Versión de la Gumbel para modelar el mínimo de muchas observaciones (ej. resistencia mínima de materiales).',
+    params:[
+      {key:'loc', label:'Ubicación', default:0},
+      {key:'scale', label:'Escala', default:1, positive:true}
+    ],
+    sample:p=>randGumbelMin(p.loc, p.scale)
+  },
+  burr12:{
+    name:'Burr XII', tag:'continua',
+    desc:'Muy flexible, usada en ingeniería de confiabilidad y en modelos de ingresos y tamaños.',
+    params:[
+      {key:'k', label:'Forma (k)', default:2, positive:true},
+      {key:'c', label:'Forma (c)', default:3, positive:true},
+      {key:'scale', label:'Escala', default:5, positive:true}
+    ],
+    sample:p=>randBurr12(p.k, p.c, p.scale)
+  },
+  dagum:{
+    name:'Dagum', tag:'continua',
+    desc:'Similar a Burr XII, usada frecuentemente para modelar distribución de ingresos y riqueza.',
+    params:[
+      {key:'k', label:'Forma (k)', default:2, positive:true},
+      {key:'c', label:'Forma (c)', default:3, positive:true},
+      {key:'scale', label:'Escala', default:5, positive:true}
+    ],
+    sample:p=>randDagum(p.k, p.c, p.scale)
+  },
+  kumaraswamy:{
+    name:'Kumaraswamy', tag:'continua',
+    desc:'Similar a la Beta pero con fórmula más simple de invertir. Acotada entre un mínimo y un máximo.',
+    params:[
+      {key:'a', label:'Forma (a)', default:2, positive:true},
+      {key:'b', label:'Forma (b)', default:5, positive:true},
+      {key:'min', label:'Mínimo', default:0},
+      {key:'max', label:'Máximo', default:1}
+    ],
+    validate:p=>p.max>p.min ? null : 'El máximo debe ser mayor que el mínimo',
+    sample:p=>randKumaraswamy(p.a, p.b, p.min, p.max)
+  },
+  pearson5:{
+    name:'Pearson 5', tag:'continua',
+    desc:'También llamada Gamma inversa. Siempre positiva, con cola derecha pesada.',
+    params:[
+      {key:'alpha', label:'Forma (α)', default:5, positive:true},
+      {key:'beta', label:'Escala (β)', default:2, positive:true}
+    ],
+    sample:p=>randPearson5(p.alpha, p.beta)
+  },
+  pearson6:{
+    name:'Pearson 6', tag:'continua',
+    desc:'También llamada Beta Prima. Razón de dos variables Gamma; útil para modelar razones o tasas siempre positivas.',
+    params:[
+      {key:'alpha1', label:'Forma 1 (α₁)', default:5, positive:true},
+      {key:'alpha2', label:'Forma 2 (α₂)', default:6, positive:true},
+      {key:'beta', label:'Escala (β)', default:2, positive:true}
+    ],
+    sample:p=>randPearson6(p.alpha1, p.alpha2, p.beta)
+  },
+  johnsonsu:{
+    name:'Johnson SU', tag:'continua',
+    desc:'Familia muy flexible (transforma una Normal) capaz de tomar valores en toda la recta real, con asimetría y curtosis ajustables.',
+    params:[
+      {key:'gamma', label:'γ (forma)', default:0},
+      {key:'delta', label:'δ (forma)', default:1, positive:true},
+      {key:'xi', label:'ξ (ubicación)', default:0},
+      {key:'lambda', label:'λ (escala)', default:1, positive:true}
+    ],
+    sample:p=>randJohnsonSU(p.gamma, p.delta, p.xi, p.lambda)
+  },
+  johnsonsb:{
+    name:'Johnson SB', tag:'continua',
+    desc:'Como Johnson SU, pero acotada entre ξ y ξ+λ. Muy flexible para variables limitadas por ambos lados.',
+    params:[
+      {key:'gamma', label:'γ (forma)', default:0},
+      {key:'delta', label:'δ (forma)', default:1, positive:true},
+      {key:'xi', label:'ξ (mínimo)', default:0},
+      {key:'lambda', label:'λ (rango, máximo-mínimo)', default:1, positive:true}
+    ],
+    sample:p=>randJohnsonSB(p.gamma, p.delta, p.xi, p.lambda)
+  },
+  erf:{
+    name:'Erf', tag:'continua',
+    desc:'Distribución Normal parametrizada mediante la función de error — matemáticamente equivalente a la Normal estándar (mismos resultados que "Normal" con estos mismos parámetros).',
+    params:[
+      {key:'mean', label:'Media', default:100},
+      {key:'sd', label:'Desviación estándar', default:15, positive:true}
+    ],
+    sample:p=>randNormal(p.mean, p.sd)
+  },
+  trigen:{
+    name:'Trigen', tag:'continua',
+    desc:'Como la Triangular, pero en vez de mínimo/máximo exactos defines dos percentiles (ej. "20 es el percentil 5, 80 es el percentil 95"). Útil cuando no conoces los extremos absolutos. Equivale a RiskTrigen en @RISK.',
+    params:[
+      {key:'x1', label:'Valor en percentil inferior', default:20},
+      {key:'p1', label:'Percentil inferior (%)', default:5, min:0.01, max:49.99},
+      {key:'mode', label:'Moda (más probable)', default:50},
+      {key:'x2', label:'Valor en percentil superior', default:80},
+      {key:'p2', label:'Percentil superior (%)', default:95, min:50.01, max:99.99}
+    ],
+    validate:p=> (p.x1<p.mode && p.mode<p.x2 && p.p1<p.p2) ? null : 'Debe cumplirse: valor inferior < moda < valor superior, y percentil inferior < percentil superior',
+    makeSampler: params => {
+      const {minV, maxV} = solveTrigenBounds(params.x1, params.mode, params.x2, params.p1/100, params.p2/100);
+      return () => randTriangular(minV, params.mode, maxV);
+    }
+  },
+
+  /* ---- Nuevas distribuciones discretas ---- */
+  bernoulli:{
+    name:'Bernoulli', tag:'discreta',
+    desc:'Un solo ensayo con dos resultados posibles (0 o 1). El caso más simple de la Binomial (n=1).',
+    discrete:true,
+    params:[
+      {key:'p', label:'Probabilidad de éxito (p)', default:0.5, min:0, max:1}
+    ],
+    sample:p=>randBernoulli(p.p)
+  },
+  intuniforme:{
+    name:'Uniforme Entera', tag:'discreta',
+    desc:'Números enteros entre un mínimo y un máximo, todos igualmente probables (ej. tirar un dado).',
+    discrete:true,
+    params:[
+      {key:'min', label:'Mínimo (entero)', default:1, integer:true},
+      {key:'max', label:'Máximo (entero)', default:6, integer:true}
+    ],
+    validate:p=>p.max>p.min ? null : 'El máximo debe ser mayor que el mínimo',
+    sample:p=>randIntUniform(Math.round(p.min), Math.round(p.max))
+  },
+  geometrica:{
+    name:'Geométrica', tag:'discreta',
+    desc:'Número de ensayos hasta el primer éxito, dada una probabilidad de éxito p en cada intento.',
+    discrete:true,
+    params:[
+      {key:'p', label:'Probabilidad de éxito (p)', default:0.2, min:0.0001, max:1}
+    ],
+    sample:p=>randGeometric(p.p)
+  },
+  negbin:{
+    name:'Binomial Negativa', tag:'discreta',
+    desc:'Número de fallos antes de acumular r éxitos, dada una probabilidad p en cada intento.',
+    discrete:true,
+    params:[
+      {key:'r', label:'Éxitos necesarios (r)', default:5, positive:true, integer:true},
+      {key:'p', label:'Probabilidad de éxito (p)', default:0.3, min:0.0001, max:1}
+    ],
+    sample:p=>randNegBin(Math.round(p.r), p.p)
+  },
+  hipergeometrica:{
+    name:'Hipergeométrica', tag:'discreta',
+    desc:'Número de éxitos al extraer una muestra SIN reemplazo de una población con una cantidad conocida de éxitos.',
+    discrete:true,
+    params:[
+      {key:'pop', label:'Tamaño de la población', default:50, positive:true, integer:true},
+      {key:'success', label:'Éxitos en la población', default:20, positive:true, integer:true},
+      {key:'sample', label:'Tamaño de la muestra', default:10, positive:true, integer:true}
+    ],
+    validate:p=> (p.success<=p.pop && p.sample<=p.pop) ? null : 'Los éxitos y el tamaño de muestra no pueden superar el tamaño de la población',
+    sample:p=>randHypergeo(Math.round(p.pop), Math.round(p.success), Math.round(p.sample))
+  },
+
+  /* ---- Distribuciones personalizadas adicionales (filas editables) ---- */
+  cumul:{
+    name:'Cumulativa', tag:'personalizada',
+    desc:'Defines la curva mediante puntos (X, probabilidad acumulada) y la simulación interpola entre ellos. Equivale a RiskCumul en @RISK.',
+    custom:'cumul',
+    rowFields:[
+      {key:'x', label:'X'},
+      {key:'cum', label:'Prob. acumulada'}
+    ],
+    defaultRows:[
+      {x:0, cum:0},
+      {x:40, cum:0.3},
+      {x:70, cum:0.7},
+      {x:100, cum:1}
+    ],
+    makeSampler: params => makeCumulSampler(params.points)
+  },
+  cumuld:{
+    name:'Cumulativa Discreta', tag:'discreta',
+    desc:'Como Cumulativa, pero el resultado es siempre uno de los valores de X que definiste (sin interpolar). Equivale a RiskCumulD en @RISK.',
+    discrete:true,
+    custom:'cumuld',
+    rowFields:[
+      {key:'x', label:'X'},
+      {key:'cum', label:'Prob. acumulada'}
+    ],
+    defaultRows:[
+      {x:10, cum:0.2},
+      {x:20, cum:0.5},
+      {x:30, cum:0.8},
+      {x:40, cum:1}
+    ],
+    makeSampler: params => makeCumulDSampler(params.points)
+  },
+  histograma:{
+    name:'Histograma', tag:'personalizada',
+    desc:'Defines barras (límite inferior, límite superior, peso) y la simulación toma valores uniformemente dentro de cada barra según su peso. Equivale a RiskHistogrm en @RISK.',
+    custom:'histograma',
+    minRows:1,
+    rowFields:[
+      {key:'limInf', label:'Límite inferior'},
+      {key:'limSup', label:'Límite superior'},
+      {key:'peso', label:'Peso'}
+    ],
+    defaultRows:[
+      {limInf:0, limSup:20, peso:1},
+      {limInf:20, limSup:40, peso:3},
+      {limInf:40, limSup:60, peso:2}
+    ],
+    makeSampler: params => makeHistogramSampler(params.bins)
+  },
+  resample:{
+    name:'Remuestreo', tag:'personalizada',
+    desc:'Toma valores al azar (con reemplazo) directamente de un conjunto de datos históricos que tú ingreses. Equivale a RiskResample en @RISK.',
+    custom:'resample',
+    minRows:1,
+    rowFields:[
+      {key:'value', label:'Valor observado'}
+    ],
+    defaultRows:[
+      {value:12}, {value:15}, {value:14}, {value:18}, {value:11}, {value:16}
+    ],
+    makeSampler: params => makeResampleSampler(params.values)
+  },
+  duniform:{
+    name:'Uniforme Discreta', tag:'discreta',
+    desc:'Defines una lista de valores específicos, todos igualmente probables (a diferencia de Discreta, aquí no se asignan pesos distintos). Equivale a RiskDUniform en @RISK.',
+    discrete:true,
+    custom:'resample',
+    minRows:1,
+    rowFields:[
+      {key:'value', label:'Valor'}
+    ],
+    defaultRows:[
+      {value:10}, {value:20}, {value:30}, {value:40}
+    ],
+    makeSampler: params => makeResampleSampler(params.values)
   }
 };
 
@@ -725,6 +1306,7 @@ Object.keys(DISTS).forEach(key=>{
   const item = document.createElement('button');
   item.className = 'sheet-item' + (key===activeDistKey ? ' active' : '');
   item.dataset.key = key;
+  item.dataset.searchText = (d.name + ' ' + d.tag + ' ' + d.desc).toLowerCase();
   item.innerHTML = `
     <div class="sheet-item-check">${checkSvg}</div>
     <div class="sheet-item-body">
@@ -739,10 +1321,35 @@ Object.keys(DISTS).forEach(key=>{
   sheetList.appendChild(item);
 });
 
+const sheetSearch = document.getElementById('sheetSearch');
+sheetSearch.oninput = ()=>{
+  const q = sheetSearch.value.trim().toLowerCase();
+  let visibleCount = 0;
+  sheetList.querySelectorAll('.sheet-item').forEach(el=>{
+    const match = el.dataset.searchText.includes(q);
+    el.style.display = match ? '' : 'none';
+    if(match) visibleCount++;
+  });
+  let emptyMsg = sheetList.querySelector('.sheet-empty');
+  if(visibleCount === 0){
+    if(!emptyMsg){
+      emptyMsg = document.createElement('div');
+      emptyMsg.className = 'sheet-empty';
+      emptyMsg.textContent = 'No se encontró ninguna distribución con ese nombre.';
+      sheetList.appendChild(emptyMsg);
+    }
+  } else if(emptyMsg){
+    emptyMsg.remove();
+  }
+};
+
 function openSheet(){
   distSheet.classList.add('show');
   sheetBackdrop.classList.add('show');
   distSelectBtn.classList.add('open');
+  sheetSearch.value = '';
+  sheetSearch.oninput();
+  setTimeout(()=>sheetSearch.focus(), 250);
 }
 function closeSheet(){
   distSheet.classList.remove('show');
@@ -800,11 +1407,12 @@ function renderCustomEditor(d, wrap){
     customRows[activeDistKey] = d.defaultRows.map(r=>({...r}));
   }
   const rows = customRows[activeDistKey];
-  const [f1, f2] = d.rowFields;
+  const fields = d.rowFields;
+  const minRows = d.minRows || 2;
 
   const header = document.createElement('div');
   header.className = 'custom-row-header';
-  header.innerHTML = `<span>${f1.label}</span><span>${f2.label}</span><span></span>`;
+  header.innerHTML = fields.map(f=>`<span>${f.label}</span>`).join('') + '<span></span>';
   wrap.appendChild(header);
 
   const container = document.createElement('div');
@@ -812,11 +1420,10 @@ function renderCustomEditor(d, wrap){
   rows.forEach((row, idx)=>{
     const rowEl = document.createElement('div');
     rowEl.className = 'custom-row';
-    rowEl.innerHTML = `
-      <input type="number" step="any" value="${row[f1.key]}" data-idx="${idx}" data-field="${f1.key}" placeholder="${f1.label}">
-      <input type="number" step="any" value="${row[f2.key]}" data-idx="${idx}" data-field="${f2.key}" placeholder="${f2.label}">
-      <button class="row-remove" data-idx="${idx}" ${rows.length<=2 ? 'disabled' : ''} aria-label="Quitar fila">✕</button>
-    `;
+    const inputs = fields.map(f=>
+      `<input type="number" step="any" value="${row[f.key]}" data-idx="${idx}" data-field="${f.key}" placeholder="${f.label}">`
+    ).join('');
+    rowEl.innerHTML = inputs + `<button class="row-remove" data-idx="${idx}" ${rows.length<=minRows ? 'disabled' : ''} aria-label="Quitar fila">✕</button>`;
     container.appendChild(rowEl);
   });
   wrap.appendChild(container);
@@ -824,18 +1431,26 @@ function renderCustomEditor(d, wrap){
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.className = 'add-row-btn';
-  addBtn.textContent = '+ Añadir punto';
+  addBtn.textContent = '+ Añadir fila';
   addBtn.onclick = ()=>{
-    rows.push({ [f1.key]: 0, [f2.key]: 1 });
+    const newRow = {};
+    fields.forEach(f=>{ newRow[f.key] = 0; });
+    rows.push(newRow);
     renderParamForm();
   };
   wrap.appendChild(addBtn);
 
+  const hints = {
+    discrete: 'Los pesos no necesitan sumar 1: se normalizan automáticamente entre sí.',
+    general: 'Ordena los puntos de X de menor a mayor (se reordenan solos). El peso indica qué tan probable es esa zona; 0 en los extremos cierra la curva.',
+    cumul: 'Ordena los puntos de X de menor a mayor. La probabilidad acumulada debe ir aumentando; no hace falta que empiece en 0 ni termine en 1 exactos, se reescala automáticamente.',
+    cumuld: 'Ordena los puntos de X de menor a mayor. La probabilidad acumulada debe ir aumentando; el resultado siempre será uno de los valores de X que definas (no se interpola).',
+    histograma: 'Cada fila es una barra del histograma. El peso indica qué tan probable es esa barra frente a las demás; no hace falta que sumen 1.',
+    resample: 'Ingresa los valores observados; cada uno tiene la misma probabilidad de salir (se puede repetir el mismo valor varias veces si quieres que pese más).'
+  };
   const hint = document.createElement('div');
   hint.className = 'custom-hint';
-  hint.textContent = d.custom === 'discrete'
-    ? 'Los pesos no necesitan sumar 1: se normalizan automáticamente entre sí.'
-    : 'Ordena los puntos de X de menor a mayor (se reordenan solos). El peso indica qué tan probable es esa zona; 0 en los extremos cierra la curva.';
+  hint.textContent = hints[d.custom] || '';
   wrap.appendChild(hint);
 
   const errBox = document.createElement('div');
@@ -916,26 +1531,48 @@ function readParams(){
 }
 
 function readCustomParams(d){
-  const [f1, f2] = d.rowFields;
   const rows = customRows[activeDistKey] || [];
+  const fields = d.rowFields;
+  const minRows = d.minRows || 2;
   const errBox = document.getElementById('customError');
   let err = null;
 
-  if(rows.length < 2){
-    err = 'Añade al menos 2 filas';
+  if(rows.length < minRows){
+    err = `Añade al menos ${minRows} fila${minRows>1?'s':''}`;
   } else {
     for(const r of rows){
-      if(isNaN(r[f1.key]) || isNaN(r[f2.key])){ err = 'Completa todos los campos con números'; break; }
-      if(r[f2.key] < 0){ err = 'Los pesos no pueden ser negativos'; break; }
+      for(const f of fields){
+        if(isNaN(r[f.key])){ err = 'Completa todos los campos con números'; break; }
+      }
+      if(err) break;
     }
-    if(!err){
-      const totalWeight = rows.reduce((s,r)=>s+r[f2.key], 0);
-      if(totalWeight <= 0) err = 'La suma de los pesos debe ser mayor que 0';
+  }
+
+  if(!err){
+    if(d.custom === 'discrete' || d.custom === 'general' || d.custom === 'histograma'){
+      const wKey = d.custom === 'histograma' ? 'peso' : 'weight';
+      for(const r of rows){ if(r[wKey] < 0){ err = 'Los pesos no pueden ser negativos'; break; } }
+      if(!err){
+        const total = rows.reduce((s,r)=>s+r[wKey], 0);
+        if(total <= 0) err = 'La suma de los pesos debe ser mayor que 0';
+      }
     }
     if(!err && d.custom === 'general'){
-      const sorted = rows.slice().sort((a,b)=>a[f1.key]-b[f1.key]);
+      const sorted = rows.slice().sort((a,b)=>a.x-b.x);
       for(let i=1;i<sorted.length;i++){
-        if(sorted[i][f1.key] === sorted[i-1][f1.key]){ err = 'Los valores de X deben ser distintos entre sí'; break; }
+        if(sorted[i].x === sorted[i-1].x){ err = 'Los valores de X deben ser distintos entre sí'; break; }
+      }
+    }
+    if(!err && (d.custom === 'cumul' || d.custom === 'cumuld')){
+      const sorted = rows.slice().sort((a,b)=>a.x-b.x);
+      for(let i=1;i<sorted.length;i++){
+        if(sorted[i].x <= sorted[i-1].x){ err = 'Los valores de X deben ser estrictamente crecientes'; break; }
+        if(sorted[i].cum < sorted[i-1].cum){ err = 'La probabilidad acumulada debe ir aumentando (o mantenerse igual)'; break; }
+      }
+    }
+    if(!err && d.custom === 'histograma'){
+      for(const r of rows){
+        if(r.limSup <= r.limInf){ err = 'El límite superior debe ser mayor que el inferior en cada fila'; break; }
       }
     }
   }
@@ -943,11 +1580,25 @@ function readCustomParams(d){
   if(errBox) errBox.textContent = err || '';
   if(err) return null;
 
-  if(d.custom === 'discrete'){
-    return { items: rows.map(r=>({ value:r[f1.key], weight:r[f2.key] })) };
+  switch(d.custom){
+    case 'discrete':
+      return { items: rows.map(r=>({ value:r.value, weight:r.weight })) };
+    case 'general': {
+      const sorted = rows.slice().sort((a,b)=>a.x-b.x);
+      return { points: sorted.map(r=>({ x:r.x, weight:r.weight })) };
+    }
+    case 'cumul':
+    case 'cumuld': {
+      const sorted = rows.slice().sort((a,b)=>a.x-b.x);
+      return { points: sorted.map(r=>({ x:r.x, cum:r.cum })) };
+    }
+    case 'histograma':
+      return { bins: rows.slice().sort((a,b)=>a.limInf-b.limInf).map(r=>({ limInf:r.limInf, limSup:r.limSup, peso:r.peso })) };
+    case 'resample':
+      return { values: rows.map(r=>r.value) };
+    default:
+      return {};
   }
-  const sorted = rows.slice().sort((a,b)=>a[f1.key]-b[f1.key]);
-  return { points: sorted.map(r=>({ x:r[f1.key], weight:r[f2.key] })) };
 }
 
 /* ---------------------------------------------------------
