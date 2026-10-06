@@ -221,6 +221,55 @@
     border:1px dashed var(--border); background:transparent; color:var(--accent-2);
     font-size:13px; font-weight:600; font-family:var(--font-mono);
   }
+  .mix-method{margin-bottom:14px;}
+  .mix-method-desc{font-size:11.5px; color:var(--text-faint); line-height:1.5; margin-top:8px;}
+  .mix-list{display:flex; flex-direction:column; gap:12px; margin-bottom:10px;}
+  .mix-card{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px;}
+  .mix-card-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .mix-card-title{font-family:var(--font-display); font-weight:600; font-size:13.5px;}
+  .export-btn{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+    background:transparent; border:1px solid var(--accent-2); color:var(--accent-2);
+    border-radius:12px; padding:12px; font-family:var(--font-display); font-size:14px; font-weight:600;
+  }
+  .export-btn:active:not(:disabled){background:rgba(67,198,176,0.12);}
+  .export-btn:disabled{opacity:0.6;}
+  .export-opt{display:flex; align-items:flex-start; gap:9px; margin:11px 2px 0; font-size:12px; color:var(--text-dim); line-height:1.45;}
+  .export-opt input{margin-top:2px; accent-color:var(--accent-2); flex:0 0 auto;}
+  .export-opt b{color:var(--accent-2); font-family:var(--font-mono);}
+  .export-hint{font-size:11px; color:var(--text-faint); margin:7px 2px 16px; line-height:1.45;}
+  .mix-spacer{flex:1;}
+  .mix-view-btn{
+    display:inline-flex; align-items:center; gap:5px; flex:0 0 auto;
+    background:transparent; border:1px solid var(--accent-2-dim); color:var(--accent-2);
+    border-radius:8px; padding:5px 9px; font-family:var(--font-mono); font-size:11.5px; font-weight:600;
+  }
+  .mix-view-btn:active:not(:disabled){background:rgba(67,198,176,0.12);}
+  .mix-view-btn:disabled{opacity:0.4; border-color:var(--border); color:var(--text-faint);}
+  .comp-head{display:flex; align-items:center; gap:8px; padding:0 12px 8px; border-bottom:1px solid var(--border); margin-bottom:4px;}
+  .comp-head .sheet-title{flex:1; border-bottom:none; margin:0; padding:0;}
+  .comp-body{overflow-y:auto; padding:8px 14px 4px;}
+  .comp-sub{font-size:12px; color:var(--text-dim); margin-bottom:10px; line-height:1.45;}
+  .comp-body .stat-grid{margin-top:12px; margin-bottom:6px;}
+  .comp-note{display:none; font-size:11.5px; color:var(--accent-3); line-height:1.45; margin:6px 0 4px;}
+  .mix-share{font-family:var(--font-mono); font-size:12px; color:var(--accent-2);}
+  .mix-top{display:flex; gap:8px; margin-bottom:10px;}
+  .mix-weight{flex:0 0 92px;}
+  .mix-dist{flex:1; min-width:0;}
+  .mix-card label{display:block; font-size:11px; color:var(--text-dim); margin-bottom:4px;}
+  .mix-card input, .mix-card select{
+    width:100%; background:var(--surface); border:1px solid var(--border); border-radius:9px;
+    padding:8px 10px; color:var(--text); font-family:var(--font-mono); font-size:13px; outline:none;
+  }
+  .mix-card select{font-family:var(--font-body);}
+  .mix-card input:focus, .mix-card select:focus{border-color:var(--accent);}
+  .mix-params{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .mix-rows-header{display:flex; gap:8px; padding:0 2px 4px; font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.05em;}
+  .mix-rows-header span{flex:1;}
+  .mix-rows-header span:last-child{flex:0 0 32px;}
+  .mix-params + .mix-rows-header{margin-top:10px;}
+  .mix-card .custom-row{margin-bottom:6px;}
+  .mix-card .custom-row input{width:auto;}
   .custom-hint{font-size:11px; color:var(--text-faint); margin-top:12px; line-height:1.5;}
   .custom-error{display:block; color:var(--danger); font-size:11.5px; margin-top:8px; min-height:14px;}
 
@@ -374,6 +423,16 @@
 
     <div class="section-label"><span class="n">03</span> Resultado — <span id="nLabel" style="color:var(--text-dim); text-transform:none; letter-spacing:0;"></span></div>
 
+    <button type="button" class="export-btn" id="exportBtn">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span id="exportBtnText">Exportar a Excel (.xlsx)</span>
+    </button>
+    <label class="export-opt">
+      <input type="checkbox" id="exportSemicolon" checked>
+      <span>Texto de las funciones en formato Excel en español: <b>;</b> entre argumentos, coma decimal y <b>\</b> en las matrices. Las celdas con fórmula viva se adaptan solas al idioma de tu Excel.</span>
+    </label>
+    <div class="export-hint" id="exportHint">Incluye parámetros, estadísticas, percentiles, gráficas de Excel editables y todos los valores simulados.</div>
+
     <div class="stat-grid" id="statGrid"></div>
 
     <div class="chart-wrap">
@@ -428,6 +487,21 @@
   <div class="sheet-title">Elige una distribución</div>
   <input type="text" id="sheetSearch" class="sheet-search" placeholder="Buscar (ej. beta, discreta, riesgo)...">
   <div class="sheet-list" id="sheetList"></div>
+</div>
+
+<div class="sheet-backdrop" id="compBackdrop"></div>
+<div class="sheet" id="compSheet">
+  <div class="sheet-handle"></div>
+  <div class="comp-head">
+    <div class="sheet-title" id="compTitle"></div>
+    <button type="button" class="row-remove" id="compClose" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="comp-body">
+    <div class="comp-sub" id="compSub"></div>
+    <canvas id="compCanvas" height="220"></canvas>
+    <div class="stat-grid" id="compStats"></div>
+    <div class="comp-note" id="compNote"></div>
+  </div>
 </div>
 
 <script>
@@ -537,24 +611,22 @@ function randPearson6(alpha1, alpha2, beta){ return beta*randGamma(alpha1,1)/ran
 function randLognorm2(mu, sigma){ return Math.exp(randNormal(mu, sigma)); }
 function randJohnsonSU(gamma, delta, xi, lambda){ const z = randNormal(0,1); return xi + lambda*Math.sinh((z-gamma)/delta); }
 function randJohnsonSB(gamma, delta, xi, lambda){ const z = randNormal(0,1); const y = 1/(1+Math.exp(-(z-gamma)/delta)); return xi + lambda*y; }
-function betaSubjParams(minV, modaV, maxV){
-  const meanEst = (minV + 4*modaV + maxV)/6;
-  const sdEst = (maxV-minV)/6;
-  const meanStd = (meanEst-minV)/(maxV-minV);
-  const varStd = Math.pow(sdEst/(maxV-minV), 2);
-  const common = meanStd*(1-meanStd)/varStd - 1;
-  return { alpha: meanStd*common, beta: (1-meanStd)*common };
+function betaSubjParams(minV, modaV, meanV, maxV){
+  // Beta reescalada a [mín, máx] con exactamente esa moda y esa media (RiskBetaSubj)
+  const a1 = (meanV-minV)*(2*modaV-minV-maxV)/((modaV-meanV)*(maxV-minV));
+  const a2 = a1*(maxV-meanV)/(meanV-minV);
+  return { alpha: a1, beta: a2 };
 }
-function randBetaSubj(minV, modaV, maxV){
-  const {alpha, beta} = betaSubjParams(minV, modaV, maxV);
+function randBetaSubj(minV, modaV, meanV, maxV){
+  const {alpha, beta} = betaSubjParams(minV, modaV, meanV, maxV);
   return minV + randBeta(alpha, beta)*(maxV-minV);
 }
 
 /* ---- Discretas adicionales ---- */
 function randBernoulli(p){ return Math.random() < p ? 1 : 0; }
 function randIntUniform(minV, maxV){ return minV + Math.floor(Math.random()*(maxV-minV+1)); }
-function randGeometric(p){ return Math.ceil(Math.log(Math.random())/Math.log(1-p)); }
-function randNegBin(r, p){ let s=0; for(let i=0;i<r;i++) s += randGeometric(p)-1; return s; }
+function randGeometric(p){ return Math.floor(Math.log(1-Math.random())/Math.log(1-p)); } // fallos antes del primer éxito (0,1,2…)
+function randNegBin(r, p){ let s=0; for(let i=0;i<r;i++) s += randGeometric(p); return s; }
 function randHypergeo(popSize, successStates, sampleSize){
   let remainingPop = popSize, remainingSuccess = successStates, drawn = 0;
   for(let i=0;i<sampleSize;i++){
@@ -610,52 +682,32 @@ function makeDiscreteSampler(items){
   };
 }
 
-function interpolateWeight(xs, ws, x){
-  if(x <= xs[0]) return ws[0];
-  if(x >= xs[xs.length-1]) return ws[ws.length-1];
+/* General (RiskGeneral): densidad lineal por tramos (min,0) -> (X1,p1) ... (Xn,pn) -> (max,0),
+   normalizada a área 1; muestreo por inversión exacta de la CDF (en cada tramo es cuadrática). */
+function makeGeneralSampler(minV, maxV, points){
+  const xs = [], hs = [];
+  if(points[0].x > minV){ xs.push(minV); hs.push(0); }
+  points.forEach(p=>{ xs.push(p.x); hs.push(p.weight); });
+  if(points[points.length-1].x < maxV){ xs.push(maxV); hs.push(0); }
+  const segs = [];
+  let total = 0;
   for(let i=0;i<xs.length-1;i++){
-    if(x >= xs[i] && x <= xs[i+1]){
-      const t = (x-xs[i]) / ((xs[i+1]-xs[i]) || 1);
-      return ws[i] + (ws[i+1]-ws[i])*t;
-    }
+    const w = xs[i+1]-xs[i];
+    const area = (hs[i]+hs[i+1])/2*w;
+    if(area > 0){ segs.push({x0:xs[i], w, h0:hs[i], h1:hs[i+1], area, cumBefore:total}); total += area; }
   }
-  return 0;
-}
-
-function makeGeneralSampler(points){
-  const xs = points.map(p=>p.x);
-  const ws = points.map(p=>p.weight);
-  const xmin = xs[0], xmax = xs[xs.length-1];
-  const N = 400;
-  const gridX = new Array(N+1);
-  const gridDensity = new Array(N+1);
-  for(let i=0;i<=N;i++){
-    const x = xmin + (xmax-xmin)*i/N;
-    gridX[i] = x;
-    gridDensity[i] = interpolateWeight(xs, ws, x);
-  }
-  const cdf = new Array(N+1);
-  cdf[0] = 0;
-  for(let i=1;i<=N;i++){
-    const dx = gridX[i]-gridX[i-1];
-    const avg = (gridDensity[i]+gridDensity[i-1])/2;
-    cdf[i] = cdf[i-1] + avg*dx;
-  }
-  const total = cdf[N] || 1;
-  for(let i=0;i<=N;i++) cdf[i] /= total;
-
   return function(){
-    const u = Math.random();
-    let lo = 0, hi = N;
+    const R0 = Math.random()*total;
+    let lo = 0, hi = segs.length-1;
     while(lo < hi){
       const mid = (lo+hi) >> 1;
-      if(cdf[mid] < u) lo = mid+1; else hi = mid;
+      if(segs[mid].cumBefore + segs[mid].area < R0) lo = mid+1; else hi = mid;
     }
-    const i = Math.max(1, lo);
-    const c0 = cdf[i-1], c1 = cdf[i];
-    const x0 = gridX[i-1], x1 = gridX[i];
-    const frac = c1 > c0 ? (u-c0)/(c1-c0) : 0;
-    return x0 + (x1-x0)*frac;
+    const s = segs[lo];
+    const R = Math.min(Math.max(R0 - s.cumBefore, 0), s.area);
+    const a = (s.h1 - s.h0)/(2*s.w), b = s.h0;
+    const t = 2*R/(b + Math.sqrt(b*b + 4*a*R));
+    return s.x0 + t;
   };
 }
 
@@ -676,20 +728,6 @@ function makeCumulSampler(points){
   };
 }
 
-function makeCumulDSampler(points){
-  // como Cumul pero sin interpolar: devuelve el X del primer punto cuya acumulada alcanza u
-  const minCum = points[0].cum, maxCum = points[points.length-1].cum;
-  const span = (maxCum-minCum) || 1;
-  const norm = points.map(p=>({x:p.x, cum:(p.cum-minCum)/span}));
-  return function(){
-    const u = Math.random();
-    for(let i=0;i<norm.length;i++){
-      if(u <= norm[i].cum) return norm[i].x;
-    }
-    return norm[norm.length-1].x;
-  };
-}
-
 function makeHistogramSampler(bins){
   const total = bins.reduce((s,b)=>s+b.peso, 0);
   let cum = 0;
@@ -705,6 +743,42 @@ function makeResampleSampler(values){
   return function(){
     return values[Math.floor(Math.random()*values.length)];
   };
+}
+
+/* ---- Mezcla ponderada: elige un componente según su peso y muestrea de su distribución ---- */
+function makeMixtureSampler(components, method){
+  const total = components.reduce((s,c)=>s+c.weight, 0);
+  const samplers = components.map(c=>{
+    const dd = DISTS[c.dist];
+    return dd.makeSampler ? dd.makeSampler(c.params) : (()=>dd.sample(c.params));
+  });
+  if(method === 'sumproduct'){
+    // Promedio ponderado (SUMAPRODUCTO): en cada iteración se toma un valor de CADA componente y se combinan con pesos normalizados
+    const wn = components.map(c=>c.weight/total);
+    const parts = new Array(samplers.length).fill(0);
+    const g = function(){
+      let s = 0;
+      for(let i=0;i<samplers.length;i++){ const v = samplers[i](); parts[i] = v; s += wn[i]*v; }
+      g.lastParts = parts;
+      return s;
+    };
+    g.lastParts = parts;
+    return g;
+  }
+  // Mezcla al azar: en cada iteración se elige UN componente con probabilidad igual a su peso
+  let cum = 0;
+  const table = components.map((c,i)=>{ cum += c.weight/total; return { cum, sampler: samplers[i] }; });
+  const f = function(){
+    const u = Math.random();
+    let k = table.length-1;
+    for(let i=0;i<table.length;i++){
+      if(u <= table[i].cum){ k = i; break; }
+    }
+    f.lastIndex = k;
+    return table[k].sampler();
+  };
+  f.lastIndex = 0;
+  return f;
 }
 
 /* ---------------------------------------------------------
@@ -801,14 +875,22 @@ const DISTS = {
   },
   betaSubjetiva:{
     name:'Beta Subjetiva', tag:'continua',
-    desc:'Como la PERT: la defines con mínimo, moda y máximo, pero usa un ajuste de momentos distinto para la forma de la curva. Equivale a RiskBetaSubj en @RISK.',
+    desc:'Beta acotada entre un mínimo y un máximo cuya forma se ajusta para tener exactamente la moda y la media que indiques. La media debe quedar entre la moda y el centro del rango. Equivale a RiskBetaSubj(mín, moda, media, máx) en @RISK.',
     params:[
       {key:'min', label:'Mínimo', default:10},
-      {key:'mode', label:'Moda (más probable)', default:50},
+      {key:'mode', label:'Moda (más probable)', default:40},
+      {key:'mean', label:'Media', default:45},
       {key:'max', label:'Máximo', default:90}
     ],
-    validate:p=> (p.min<p.mode && p.mode<p.max) ? null : 'Debe cumplirse mínimo < moda < máximo',
-    sample:p=>randBetaSubj(p.min, p.mode, p.max)
+    validate:p=>{
+      if(!(p.min<p.mode && p.mode<p.max)) return 'Debe cumplirse mínimo < moda < máximo';
+      if(!(p.min<p.mean && p.mean<p.max)) return 'La media debe estar entre el mínimo y el máximo';
+      if(p.mean===p.mode) return 'La media debe ser distinta de la moda';
+      const q = betaSubjParams(p.min, p.mode, p.mean, p.max);
+      if(!(q.alpha>1 && q.beta>1)) return 'Combinación no válida: la media debe quedar entre la moda y el centro del rango';
+      return null;
+    },
+    sample:p=>randBetaSubj(p.min, p.mode, p.mean, p.max)
   },
   weibull:{
     name:'Weibull', tag:'continua',
@@ -857,21 +939,25 @@ const DISTS = {
   },
   general:{
     name:'General', tag:'personalizada',
-    desc:'Curva de probabilidad totalmente personalizada: define puntos (X, peso relativo) y la simulación interpola la forma entre ellos. Útil cuando ninguna distribución estándar se ajusta a tu caso. Equivale a RiskGeneral en @RISK.',
+    desc:'Distribución definida por una curva de densidad: indicas el mínimo, el máximo y una serie de puntos (X, p), donde p es la altura relativa de la curva en ese X. La curva une los puntos con líneas rectas y toca el eje X en el mínimo y en el máximo; los p se normalizan solos. Equivale a RiskGeneral(mín, máx, {X}, {p}) en @RISK.',
     custom:'general',
+    minRows:1,
+    params:[
+      {key:'min', label:'Mínimo', default:0},
+      {key:'max', label:'Máximo', default:10}
+    ],
+    validate:p=>p.max>p.min ? null : 'El máximo debe ser mayor que el mínimo',
     rowFields:[
       {key:'x', label:'X'},
-      {key:'weight', label:'Peso relativo'}
+      {key:'weight', label:'p (altura relativa)'}
     ],
     defaultRows:[
-      {x:0, weight:0},
-      {x:20, weight:0.3},
-      {x:50, weight:1},
-      {x:70, weight:0.8},
-      {x:100, weight:0.1},
-      {x:120, weight:0}
+      {x:2, weight:1},
+      {x:5, weight:2},
+      {x:7, weight:3},
+      {x:9, weight:1}
     ],
-    makeSampler: params => makeGeneralSampler(params.points)
+    makeSampler: params => makeGeneralSampler(params.min, params.max, params.points)
   },
 
   /* ---- Nuevas distribuciones continuas ---- */
@@ -1176,7 +1262,7 @@ const DISTS = {
   },
   geometrica:{
     name:'Geométrica', tag:'discreta',
-    desc:'Número de ensayos hasta el primer éxito, dada una probabilidad de éxito p en cada intento.',
+    desc:'Número de fallos antes del primer éxito, dada una probabilidad de éxito p en cada intento (toma los valores 0, 1, 2…). Caso especial de la Binomial Negativa con r = 1. Equivale a RiskGeomet en @RISK.',
     discrete:true,
     params:[
       {key:'p', label:'Probabilidad de éxito (p)', default:0.2, min:0.0001, max:1}
@@ -1224,21 +1310,20 @@ const DISTS = {
     makeSampler: params => makeCumulSampler(params.points)
   },
   cumuld:{
-    name:'Cumulativa Discreta', tag:'discreta',
-    desc:'Como Cumulativa, pero el resultado es siempre uno de los valores de X que definiste (sin interpolar). Equivale a RiskCumulD en @RISK.',
-    discrete:true,
+    name:'Cumulativa Descendente', tag:'personalizada',
+    desc:'Igual que Cumulativa, pero cada punto se define con la probabilidad acumulada descendente: la probabilidad de que el valor sea MAYOR que X. Equivale a RiskCumulD en @RISK.',
     custom:'cumuld',
     rowFields:[
       {key:'x', label:'X'},
-      {key:'cum', label:'Prob. acumulada'}
+      {key:'cum', label:'P(valor > X)'}
     ],
     defaultRows:[
-      {x:10, cum:0.2},
-      {x:20, cum:0.5},
-      {x:30, cum:0.8},
-      {x:40, cum:1}
+      {x:0, cum:1},
+      {x:40, cum:0.7},
+      {x:70, cum:0.3},
+      {x:100, cum:0}
     ],
-    makeSampler: params => makeCumulDSampler(params.points)
+    makeSampler: params => makeCumulSampler(params.points)
   },
   histograma:{
     name:'Histograma', tag:'personalizada',
@@ -1283,6 +1368,21 @@ const DISTS = {
       {value:10}, {value:20}, {value:30}, {value:40}
     ],
     makeSampler: params => makeResampleSampler(params.values)
+  },
+  mezcla:{
+    name:'Mezcla ponderada', tag:'personalizada',
+    desc:'Combina varias distribuciones dándole un peso a cada una (por ejemplo, las opiniones de varios expertos). Dos métodos: Promedio ponderado (cada iteración toma un valor de cada componente y los combina como SUMAPRODUCTO de pesos por valores) o Mezcla al azar (cada iteración elige un solo componente con probabilidad igual a su peso). Los pesos no necesitan sumar 100.',
+    custom:'mezcla',
+    defaultComponents:[
+      { dist:'triangular', weight:40, params:{min:45, mode:50, max:70} },
+      { dist:'triangular', weight:20, params:{min:50, mode:65, max:80} },
+      { dist:'uniform', weight:20, params:{min:50, max:90} },
+      { dist:'general', weight:20, params:{min:2, max:80}, rows:[
+          {x:2, weight:1}, {x:10, weight:6}, {x:25, weight:7},
+          {x:60, weight:8}, {x:75, weight:10}, {x:80, weight:7}
+      ] }
+    ],
+    makeSampler: params => makeMixtureSampler(params.components, params.method)
   }
 };
 
@@ -1301,7 +1401,13 @@ const sheetBackdrop = document.getElementById('sheetBackdrop');
 const sheetList = document.getElementById('sheetList');
 const checkSvg = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1A0E08" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-Object.keys(DISTS).forEach(key=>{
+// Orden alfabético por nombre visible, con reglas del español (acentos, mayúsculas y números)
+const distCollator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+function sortedDistKeys(keys){
+  return (keys || Object.keys(DISTS)).slice().sort((a, b) => distCollator.compare(DISTS[a].name, DISTS[b].name));
+}
+
+sortedDistKeys().forEach(key=>{
   const d = DISTS[key];
   const item = document.createElement('button');
   item.className = 'sheet-item' + (key===activeDistKey ? ' active' : '');
@@ -1381,11 +1487,19 @@ function renderParamForm(){
   const wrap = document.getElementById('paramFields');
   wrap.innerHTML = '';
 
+  if(d.custom === 'mezcla'){
+    renderMixEditor(d, wrap);
+    return;
+  }
   if(d.custom){
     renderCustomEditor(d, wrap);
     return;
   }
 
+  renderScalarFields(d, wrap);
+}
+
+function renderScalarFields(d, wrap){
   const saved = lastValues[activeDistKey] || {};
   d.params.forEach(p=>{
     const val = saved[p.key] !== undefined ? saved[p.key] : p.default;
@@ -1398,11 +1512,326 @@ function renderParamForm(){
       <input type="number" step="${step}" value="${val}" data-key="${p.key}">
       <div class="field-error"></div>
     `;
+    const input = field.querySelector('input');
+    input.oninput = ()=>{
+      lastValues[activeDistKey] = lastValues[activeDistKey] || {};
+      lastValues[activeDistKey][p.key] = parseFloat(input.value);
+    };
     wrap.appendChild(field);
   });
 }
 
+/* ---------------------------------------------------------
+   MEZCLA PONDERADA: editor de componentes
+--------------------------------------------------------- */
+let mixComponents = null;
+let mixIdSeq = 0;
+let mixMethod = 'sumproduct';   // 'sumproduct' = promedio ponderado (SUMAPRODUCTO) | 'mezcla' = elige un componente al azar
+const MIX_METHOD_DESC = {
+  sumproduct: 'Cada iteración toma un valor de cada experto y los combina con sus pesos: resultado = w₁·x₁ + w₂·x₂ + … (en Excel, SUMAPRODUCTO). Los pesos se normalizan para sumar 100 %.',
+  mezcla: 'Cada iteración elige un solo experto, con probabilidad igual a su peso, y toma un valor de su distribución (en @RISK, RiskDiscrete + ELEGIR).'
+};
+
+function mixAllowedKeys(){
+  return sortedDistKeys(Object.keys(DISTS).filter(k => k !== 'mezcla' &&
+    (!DISTS[k].custom || DISTS[k].custom === 'discrete' || DISTS[k].custom === 'general')));
+}
+
+function mixNewComponent(distKey, weight){
+  const dd = DISTS[distKey];
+  const comp = { id: ++mixIdSeq, dist: distKey, weight: weight, params: {}, rows: [] };
+  if(dd.params) dd.params.forEach(p=>{ comp.params[p.key] = p.default; });
+  if(dd.custom) comp.rows = dd.defaultRows.map(r=>({...r}));
+  return comp;
+}
+
+function mixParamsGrid(dd, comp, i){
+  return `<div class="mix-params">` + dd.params.map(p=>`
+    <div class="mix-param"><label>${p.label}</label>
+      <input type="number" step="${p.integer ? '1' : 'any'}" value="${comp.params[p.key]}" data-param="${i}:${p.key}"></div>`).join('') + `</div>`;
+}
+
+function renderMixEditor(d, wrap){
+  if(!mixComponents){
+    mixComponents = d.defaultComponents.map(c=>{
+      const comp = mixNewComponent(c.dist, c.weight);
+      if(c.params) Object.assign(comp.params, c.params);
+      if(c.rows) comp.rows = c.rows.map(r=>({...r}));
+      return comp;
+    });
+  }
+  const comps = mixComponents;
+  const allowed = mixAllowedKeys();
+
+  const methodBox = document.createElement('div');
+  methodBox.className = 'mix-method';
+  methodBox.innerHTML = `
+    <div class="segmented" id="mixMethodSeg">
+      <button type="button" data-m="sumproduct" class="${mixMethod === 'sumproduct' ? 'active' : ''}">Promedio ponderado</button>
+      <button type="button" data-m="mezcla" class="${mixMethod === 'mezcla' ? 'active' : ''}">Mezcla al azar</button>
+    </div>
+    <div class="mix-method-desc">${MIX_METHOD_DESC[mixMethod]}</div>`;
+  wrap.appendChild(methodBox);
+  methodBox.querySelectorAll('button').forEach(b => { b.onclick = () => { mixMethod = b.dataset.m; renderParamForm(); }; });
+
+  const list = document.createElement('div');
+  list.className = 'mix-list';
+  comps.forEach((comp, i)=>{
+    const dd = DISTS[comp.dist];
+    const card = document.createElement('div');
+    card.className = 'mix-card';
+    let inner = `
+      <div class="mix-card-head">
+        <span class="mix-card-title">Componente ${i+1}</span>
+        <button type="button" class="mix-view-btn" data-view="${i}" disabled title="Ejecuta la simulación para ver este componente">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-7"/></svg> Ver
+        </button>
+        <span class="mix-spacer"></span>
+        <span class="mix-share" data-share="${i}"></span>
+        <button type="button" class="row-remove" data-remove="${i}" ${comps.length<=2 ? 'disabled' : ''} aria-label="Quitar componente">✕</button>
+      </div>
+      <div class="mix-top">
+        <div class="mix-weight"><label>Peso</label>
+          <input type="number" step="any" min="0" value="${comp.weight}" data-weight="${i}"></div>
+        <div class="mix-dist"><label>Distribución</label>
+          <select data-dist="${i}">
+            ${allowed.map(k=>`<option value="${k}" ${k===comp.dist ? 'selected' : ''}>${DISTS[k].name}</option>`).join('')}
+          </select></div>
+      </div>`;
+    if(dd.params) inner += mixParamsGrid(dd, comp, i);
+    if(dd.custom){
+      const minRows = dd.minRows || 2;
+      inner += `<div class="mix-rows-header">` + dd.rowFields.map(f=>`<span>${f.label}</span>`).join('') + `<span></span></div>`;
+      inner += comp.rows.map((r,j)=>`
+        <div class="custom-row">
+          ${dd.rowFields.map(f=>`<input type="number" step="any" value="${r[f.key]}" data-row="${i}:${j}:${f.key}" placeholder="${f.label}">`).join('')}
+          <button type="button" class="row-remove" data-rowremove="${i}:${j}" ${comp.rows.length<=minRows ? 'disabled' : ''} aria-label="Quitar fila">✕</button>
+        </div>`).join('');
+      inner += `<button type="button" class="add-row-btn" data-rowadd="${i}">+ Añadir fila</button>`;
+    }
+    card.innerHTML = inner;
+    list.appendChild(card);
+  });
+  wrap.appendChild(list);
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'add-row-btn';
+  addBtn.textContent = '+ Añadir componente';
+  addBtn.onclick = ()=>{ comps.push(mixNewComponent('normal', 10)); renderParamForm(); };
+  wrap.appendChild(addBtn);
+
+  const hint = document.createElement('div');
+  hint.className = 'custom-hint';
+  hint.textContent = 'Cada componente es una distribución con su peso (ej. 40, 20, 20, 20: no necesitan sumar 100, se normalizan solos). A la derecha de cada título ves el porcentaje efectivo. Puedes usar cualquier distribución con parámetros, además de Discreta y General.';
+  wrap.appendChild(hint);
+
+  const errBox = document.createElement('div');
+  errBox.className = 'field-error custom-error';
+  errBox.id = 'customError';
+  wrap.appendChild(errBox);
+
+  const refreshShares = ()=>{
+    const total = comps.reduce((s,c)=>s + (isNaN(c.weight) ? 0 : c.weight), 0);
+    wrap.querySelectorAll('[data-share]').forEach(el=>{
+      const c = comps[+el.dataset.share];
+      el.textContent = (total > 0 && !isNaN(c.weight)) ? '→ ' + (c.weight/total*100).toFixed(1) + '%' : '';
+    });
+  };
+  refreshShares();
+
+  wrap.querySelectorAll('[data-weight]').forEach(inp=>{
+    inp.oninput = ()=>{ comps[+inp.dataset.weight].weight = parseFloat(inp.value); refreshShares(); };
+  });
+  wrap.querySelectorAll('[data-param]').forEach(inp=>{
+    inp.oninput = ()=>{ const [i, key] = inp.dataset.param.split(':'); comps[+i].params[key] = parseFloat(inp.value); };
+  });
+  wrap.querySelectorAll('[data-row]').forEach(inp=>{
+    inp.oninput = ()=>{ const [i, j, f] = inp.dataset.row.split(':'); comps[+i].rows[+j][f] = parseFloat(inp.value); };
+  });
+  wrap.querySelectorAll('[data-dist]').forEach(sel=>{
+    sel.onchange = ()=>{ const i = +sel.dataset.dist; comps[i] = mixNewComponent(sel.value, comps[i].weight); renderParamForm(); };
+  });
+  wrap.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.onclick = ()=>{ comps.splice(+btn.dataset.remove, 1); renderParamForm(); };
+  });
+  wrap.querySelectorAll('[data-rowremove]').forEach(btn=>{
+    btn.onclick = ()=>{ const [i, j] = btn.dataset.rowremove.split(':'); comps[+i].rows.splice(+j, 1); renderParamForm(); };
+  });
+  wrap.querySelectorAll('[data-rowadd]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const i = +btn.dataset.rowadd, row = {};
+      DISTS[comps[i].dist].rowFields.forEach(f=>{ row[f.key] = (f.key === 'weight') ? 1 : 0; });
+      comps[i].rows.push(row);
+      renderParamForm();
+    };
+  });
+  wrap.querySelectorAll('[data-view]').forEach(btn=>{
+    btn.onclick = ()=> openCompView(+btn.dataset.view);
+  });
+  updateMixViewButtons();
+}
+
+/* ---- Ver la distribución de un componente (muestras que ese componente generó en la última simulación) ---- */
+function mixSig(comp){
+  return JSON.stringify([comp.dist, comp.weight, comp.params, comp.rows]);
+}
+
+function mixSnapshot(){
+  return mixComponents.map(c=>({ id:c.id, dist:c.dist, name:DISTS[c.dist].name, weight:c.weight, sig:mixSig(c) }));
+}
+
+function updateMixViewButtons(){
+  const mix = simData && simData.mix;
+  document.querySelectorAll('[data-view]').forEach(btn=>{
+    const comp = mixComponents && mixComponents[+btn.dataset.view];
+    const snap = mix && comp && mix.comps.find(s=>s.id === comp.id);
+    btn.disabled = !snap;
+    btn.title = snap ? 'Ver la distribución de este componente en la última simulación'
+                     : 'Ejecuta la simulación para ver este componente';
+  });
+}
+
+function openCompView(i){
+  const comp = mixComponents && mixComponents[i];
+  const mix = simData && simData.mix;
+  if(!comp || !mix) return;
+  const k = mix.comps.findIndex(s=>s.id === comp.id);
+  if(k < 0) return;
+  const snap = mix.comps[k];
+  const N = mix.data.length;
+  const isSum = mix.method === 'sumproduct';
+  let vals = [];
+  if(isSum){ vals = Array.from(mix.parts[k]); }
+  else { for(let t=0;t<N;t++){ if(mix.idx[t] === k) vals.push(mix.data[t]); } }
+
+  const totalW = mix.comps.reduce((s,x)=>s + x.weight, 0);
+  const share = totalW > 0 ? snap.weight/totalW : 0;
+  document.getElementById('compTitle').textContent = `Componente ${i+1} · ${snap.name}`;
+  document.getElementById('compSub').textContent = isSum
+    ? `Peso ${snap.weight} → aporta el ${(share*100).toFixed(1)}% del resultado · ${vals.length.toLocaleString('es-ES')} muestras (una por iteración)`
+    : `Peso ${snap.weight} → ${(share*100).toFixed(1)}% de las iteraciones · ${vals.length.toLocaleString('es-ES')} de ${N.toLocaleString('es-ES')} muestras`;
+
+  const canvas = document.getElementById('compCanvas');
+  const grid = document.getElementById('compStats');
+  const note = document.getElementById('compNote');
+  const modified = mixSig(comp) !== snap.sig || mixMethod !== mix.method;
+  let noteText = modified ? 'Cambiaste este componente (o su peso) después de simular. Esta vista corresponde a la última simulación; vuelve a ejecutar para actualizarla.' : '';
+
+  if(vals.length === 0){
+    canvas.style.display = 'none';
+    grid.innerHTML = '';
+    noteText = 'Este componente tiene peso 0: no generó ninguna muestra en la simulación.' + (noteText ? ' ' + noteText : '');
+  } else {
+    canvas.style.display = 'block';
+    const dd = DISTS[snap.dist];
+    const stats = computeStats(vals, !!dd.discrete);
+    openCompSheet();
+    animateHistogram(stats, !!dd.discrete, { canvas });
+    const items = [
+      ['Media', fmt(stats.mean)], ['Mediana', fmt(stats.median)], ['Desv. Est.', fmt(stats.sd)],
+      ['Mínimo', fmt(stats.min)], ['Máximo', fmt(stats.max)], ['Asimetría', fmt(stats.skew)]
+    ];
+    grid.innerHTML = items.map(([l,v])=>`<div class="stat-box"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  }
+  note.textContent = noteText;
+  note.style.display = noteText ? 'block' : 'none';
+  openCompSheet();
+}
+
+const compSheet = document.getElementById('compSheet');
+const compBackdrop = document.getElementById('compBackdrop');
+function openCompSheet(){ compSheet.classList.add('show'); compBackdrop.classList.add('show'); }
+function closeCompSheet(){ compSheet.classList.remove('show'); compBackdrop.classList.remove('show'); }
+compBackdrop.onclick = closeCompSheet;
+document.getElementById('compClose').onclick = closeCompSheet;
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeCompSheet(); });
+
+function readMixParams(d){
+  const comps = mixComponents || [];
+  const errBox = document.getElementById('customError');
+  let err = null;
+  const out = [];
+
+  if(comps.length < 2){
+    err = 'Añade al menos 2 componentes';
+  } else {
+    let total = 0;
+    for(let i=0;i<comps.length;i++){
+      if(isNaN(comps[i].weight) || comps[i].weight < 0){ err = `Componente ${i+1}: el peso debe ser un número ≥ 0`; break; }
+      total += comps[i].weight;
+    }
+    if(!err && total <= 0) err = 'La suma de los pesos debe ser mayor que 0';
+  }
+
+  if(!err){
+    for(let i=0;i<comps.length;i++){
+      const c = comps[i], dd = DISTS[c.dist];
+      const label = `Componente ${i+1} (${dd.name})`;
+
+      // parámetros escalares (todas las distribuciones con "params": incluye mín/máx de General)
+      const p = {};
+      if(dd.params){
+        for(const f of dd.params){
+          const v = c.params[f.key];
+          if(v === undefined || isNaN(v)){ err = `${label}: completa "${f.label}"`; break; }
+          if(f.positive && v <= 0){ err = `${label}: "${f.label}" debe ser mayor que 0`; break; }
+          if(f.min !== undefined && v < f.min){ err = `${label}: "${f.label}" debe ser ≥ ${f.min}`; break; }
+          if(f.max !== undefined && v > f.max){ err = `${label}: "${f.label}" debe ser ≤ ${f.max}`; break; }
+          p[f.key] = v;
+        }
+        if(!err && dd.validate){
+          const m = dd.validate(p);
+          if(m) err = `${label}: ${m}`;
+        }
+        if(err) break;
+      }
+
+      if(!dd.custom){
+        out.push({ dist:c.dist, weight:c.weight, params:p });
+        continue;
+      }
+
+      // filas (Discreta / General)
+      const minRows = dd.minRows || 2;
+      if(c.rows.length < minRows){ err = `${label}: añade al menos ${minRows} fila${minRows>1?'s':''}`; break; }
+      let tw = 0;
+      for(const r of c.rows){
+        for(const f of dd.rowFields){
+          if(isNaN(r[f.key])){ err = `${label}: completa todos los campos`; break; }
+        }
+        if(err) break;
+        if(r.weight < 0){ err = `${label}: los pesos no pueden ser negativos`; break; }
+        tw += r.weight;
+      }
+      if(!err && tw <= 0) err = `${label}: la suma de los pesos debe ser mayor que 0`;
+      if(err) break;
+
+      if(dd.custom === 'discrete'){
+        out.push({ dist:c.dist, weight:c.weight, params:{ items: c.rows.map(r=>({ value:r.value, weight:r.weight })) } });
+      } else { // general
+        const sorted = c.rows.slice().sort((a,b)=>a.x-b.x);
+        for(let k=1;k<sorted.length;k++){
+          if(sorted[k].x === sorted[k-1].x){ err = `${label}: los valores de X deben ser distintos entre sí`; break; }
+        }
+        if(!err){
+          for(const r of sorted){
+            if(r.x < p.min || r.x > p.max){ err = `${label}: todos los X deben estar dentro del rango mínimo–máximo`; break; }
+          }
+        }
+        if(err) break;
+        out.push({ dist:c.dist, weight:c.weight, params:{ min:p.min, max:p.max, points: sorted.map(r=>({ x:r.x, weight:r.weight })) } });
+      }
+    }
+  }
+
+  if(errBox) errBox.textContent = err || '';
+  if(err) return null;
+  return { components: out, method: mixMethod };
+}
+
 function renderCustomEditor(d, wrap){
+  if(d.params) renderScalarFields(d, wrap);
   if(!customRows[activeDistKey]){
     customRows[activeDistKey] = d.defaultRows.map(r=>({...r}));
   }
@@ -1442,9 +1871,9 @@ function renderCustomEditor(d, wrap){
 
   const hints = {
     discrete: 'Los pesos no necesitan sumar 1: se normalizan automáticamente entre sí.',
-    general: 'Ordena los puntos de X de menor a mayor (se reordenan solos). El peso indica qué tan probable es esa zona; 0 en los extremos cierra la curva.',
+    general: 'Cada fila es un punto de la curva: X (dentro del rango mínimo–máximo) y p, la altura relativa de la densidad en ese X. Los puntos se ordenan solos por X; la curva los une con rectas y toca el eje X en el mínimo y el máximo. Los p pueden sumar cualquier valor: se normalizan.',
     cumul: 'Ordena los puntos de X de menor a mayor. La probabilidad acumulada debe ir aumentando; no hace falta que empiece en 0 ni termine en 1 exactos, se reescala automáticamente.',
-    cumuld: 'Ordena los puntos de X de menor a mayor. La probabilidad acumulada debe ir aumentando; el resultado siempre será uno de los valores de X que definas (no se interpola).',
+    cumuld: 'Ordena los puntos de X de menor a mayor. Cada fila indica la probabilidad de que el valor sea MAYOR que X, por lo que debe ir disminuyendo (por ejemplo 1, 0,7, 0,3, 0). No hace falta que empiece en 1 ni termine en 0 exactos: se reescala.',
     histograma: 'Cada fila es una barra del histograma. El peso indica qué tan probable es esa barra frente a las demás; no hace falta que sumen 1.',
     resample: 'Ingresa los valores observados; cada uno tiene la misma probabilidad de salir (se puede repetir el mismo valor varias veces si quieres que pese más).'
   };
@@ -1489,11 +1918,12 @@ document.getElementById('iterSeg').querySelectorAll('button').forEach(btn=>{
 --------------------------------------------------------- */
 function readParams(){
   const d = DISTS[activeDistKey];
+  if(d.custom === 'mezcla') return readMixParams(d);
+  if(d.custom) return readCustomParams(d);
+  return readScalarParams(d);
+}
 
-  if(d.custom){
-    return readCustomParams(d);
-  }
-
+function readScalarParams(d){
   const params = {};
   let valid = true;
   const saved = {};
@@ -1531,6 +1961,15 @@ function readParams(){
 }
 
 function readCustomParams(d){
+  let scalars = null;
+  if(d.params){
+    scalars = readScalarParams(d);
+    if(!scalars){
+      const eb = document.getElementById('customError');
+      if(eb) eb.textContent = '';
+      return null;
+    }
+  }
   const rows = customRows[activeDistKey] || [];
   const fields = d.rowFields;
   const minRows = d.minRows || 2;
@@ -1562,12 +2001,18 @@ function readCustomParams(d){
       for(let i=1;i<sorted.length;i++){
         if(sorted[i].x === sorted[i-1].x){ err = 'Los valores de X deben ser distintos entre sí'; break; }
       }
+      if(!err){
+        for(const r of rows){
+          if(r.x < scalars.min || r.x > scalars.max){ err = 'Todos los valores de X deben estar dentro del rango mínimo–máximo'; break; }
+        }
+      }
     }
     if(!err && (d.custom === 'cumul' || d.custom === 'cumuld')){
       const sorted = rows.slice().sort((a,b)=>a.x-b.x);
       for(let i=1;i<sorted.length;i++){
         if(sorted[i].x <= sorted[i-1].x){ err = 'Los valores de X deben ser estrictamente crecientes'; break; }
-        if(sorted[i].cum < sorted[i-1].cum){ err = 'La probabilidad acumulada debe ir aumentando (o mantenerse igual)'; break; }
+        if(d.custom === 'cumul' && sorted[i].cum < sorted[i-1].cum){ err = 'La probabilidad acumulada debe ir aumentando (o mantenerse igual)'; break; }
+        if(d.custom === 'cumuld' && sorted[i].cum > sorted[i-1].cum){ err = 'La probabilidad descendente debe ir disminuyendo (o mantenerse igual)'; break; }
       }
     }
     if(!err && d.custom === 'histograma'){
@@ -1585,12 +2030,16 @@ function readCustomParams(d){
       return { items: rows.map(r=>({ value:r.value, weight:r.weight })) };
     case 'general': {
       const sorted = rows.slice().sort((a,b)=>a.x-b.x);
-      return { points: sorted.map(r=>({ x:r.x, weight:r.weight })) };
+      return { min: scalars.min, max: scalars.max, points: sorted.map(r=>({ x:r.x, weight:r.weight })) };
     }
-    case 'cumul':
-    case 'cumuld': {
+    case 'cumul': {
       const sorted = rows.slice().sort((a,b)=>a.x-b.x);
       return { points: sorted.map(r=>({ x:r.x, cum:r.cum })) };
+    }
+    case 'cumuld': {
+      // la probabilidad descendente P(valor > X) se convierte a acumulada ascendente
+      const sorted = rows.slice().sort((a,b)=>a.x-b.x);
+      return { points: sorted.map(r=>({ x:r.x, cum:1 - r.cum })) };
     }
     case 'histograma':
       return { bins: rows.slice().sort((a,b)=>a.limInf-b.limInf).map(r=>({ limInf:r.limInf, limSup:r.limSup, peso:r.peso })) };
@@ -1686,6 +2135,7 @@ const counterEl = document.getElementById('counter');
 runBtn.onclick = ()=>{
   const params = readParams();
   if(!params) return;
+  const mixSnap = (activeDistKey === 'mezcla') ? mixSnapshot() : null;
 
   runBtn.disabled = true;
   runBtn.textContent = 'Simulando…';
@@ -1696,11 +2146,28 @@ runBtn.onclick = ()=>{
     const n = iterations;
     const data = new Array(n);
     const sampler = d.makeSampler ? d.makeSampler(params) : (()=> d.sample(params));
-    for(let i=0;i<n;i++){
-      data[i] = sampler();
+    let idx = null, parts = null;
+    if(mixSnap && params.method === 'sumproduct'){
+      parts = mixSnap.map(() => new Float64Array(n));
+      for(let i=0;i<n;i++){
+        data[i] = sampler();
+        const lp = sampler.lastParts;
+        for(let j=0;j<parts.length;j++) parts[j][i] = lp[j];
+      }
+    } else if(mixSnap){
+      idx = new Uint16Array(n);
+      for(let i=0;i<n;i++){
+        data[i] = sampler();
+        idx[i] = sampler.lastIndex;
+      }
+    } else {
+      for(let i=0;i<n;i++){
+        data[i] = sampler();
+      }
     }
     const stats = computeStats(data, d.discrete);
-    simData = { stats, discrete: !!d.discrete };
+    simData = { stats, discrete: !!d.discrete, mix: mixSnap ? { data, idx, parts, method: params.method, comps: mixSnap } : null,
+                distKey: activeDistKey, params, n, when: new Date(), raw: data };
 
     runBtn.disabled = false;
     runBtn.textContent = 'Ejecutar simulación →';
@@ -1714,6 +2181,7 @@ runBtn.onclick = ()=>{
     drawCDF(stats);
     renderPercentiles(stats);
     renderDescriptiveStats(stats);
+    if(mixSnap) updateMixViewButtons();
     document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
   }, 30);
 };
@@ -1789,7 +2257,7 @@ function buildBins(sorted, discrete){
       edges[0] = uniqueVals[0]-half;
       for(let k=1;k<m;k++) edges[k] = (uniqueVals[k-1]+uniqueVals[k])/2;
       edges[m] = uniqueVals[m-1]+half;
-      return {edges, counts};
+      return {edges, counts, exact:true};
     }
     // demasiados valores únicos (p. ej. binomial con n muy grande): se agrupan como continua
   }
@@ -1808,8 +2276,9 @@ function buildBins(sorted, discrete){
   return {edges, counts};
 }
 
-function animateHistogram(stats, discrete){
-  const canvas = document.getElementById('histCanvas');
+function animateHistogram(stats, discrete, opts){
+  opts = opts || {};
+  const canvas = opts.canvas || document.getElementById('histCanvas');
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 420;
   const cssH = 220;
@@ -1825,8 +2294,10 @@ function animateHistogram(stats, discrete){
   const barGap = 1.5;
   const barW = plotW/counts.length - barGap;
 
-  document.getElementById('histSub').textContent =
-    `${counts.length} intervalos · rango [${fmt(stats.min)}, ${fmt(stats.max)}]`;
+  if(!opts.canvas){
+    document.getElementById('histSub').textContent =
+      `${counts.length} intervalos · rango [${fmt(stats.min)}, ${fmt(stats.max)}]`;
+  }
 
   const duration = 650;
   const start = performance.now();
@@ -2015,6 +2486,800 @@ function updateProb(stats){
   subEl.textContent = `P(X ${complementSymbol} ${fmt(x)}) = ${(complement*100).toFixed(1)}%  ·  basado en ${stats.n.toLocaleString('es-ES')} iteraciones`;
   drawThresholdLine(stats, x);
 }
+
+/* =========================================================
+   EXPORTAR A EXCEL (.xlsx)
+   Sin librerías externas: el ZIP y los XML de Office se escriben
+   aquí mismo, con gráficas nativas de Excel (editables).
+========================================================= */
+const XL = {};
+XL.HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+XL.NS_MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+XL.NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+XL.RT = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/';
+XL.palette = ['FF7A50','43C6B0','FFC857','5B8DEF','C084FC','FF5470','8BC34A','26A69A','F4A261','9E9E9E'];
+
+XL.esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+XL.col = n => { let s = ''; n++; while(n > 0){ const m = (n-1) % 26; s = String.fromCharCode(65+m) + s; n = Math.floor((n-1)/26); } return s; };
+XL.ref = (c, r) => XL.col(c) + (r+1);
+XL.numStr = v => String(+Number(v).toPrecision(12));
+XL.lab = x => String(+Number(x).toPrecision(4));
+XL.q = name => "'" + name + "'";
+
+/* ---------- Estilos (índices usados en las celdas) ----------
+   0 normal | 1 título | 2 encabezado | 3 texto | 4 número 0.0000 | 5 porcentaje
+   6 entrada editable | 7 nota | 8 entero | 9 etiqueta en negrita | 10 (libre) | 11 número general
+   12 código (monoespaciado, ajusta texto) | 13 texto que ajusta línea */
+XL.stylesXml = () => XL.HEAD + `<styleSheet xmlns="${XL.NS_MAIN}">
+<numFmts count="3"><numFmt numFmtId="164" formatCode="#,##0.0000"/><numFmt numFmtId="165" formatCode="0.0%"/><numFmt numFmtId="166" formatCode="#,##0"/></numFmts>
+<fonts count="7">
+<font><sz val="10"/><name val="Arial"/></font>
+<font><b/><sz val="16"/><color rgb="FFFF7A50"/><name val="Arial"/></font>
+<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>
+<font><b/><sz val="10"/><name val="Arial"/></font>
+<font><sz val="10"/><color rgb="FF0000FF"/><name val="Arial"/></font>
+<font><i/><sz val="9"/><color rgb="FF888888"/><name val="Arial"/></font>
+<font><sz val="10"/><name val="Consolas"/></font>
+</fonts>
+<fills count="4">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF1F2631"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFF3EE"/><bgColor indexed="64"/></patternFill></fill>
+</fills>
+<borders count="2">
+<border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left/><right/><top/><bottom style="thin"><color rgb="FFD9DEE5"/></bottom><diagonal/></border>
+</borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="16">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="4" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="0" fontId="6" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>
+<xf numFmtId="165" fontId="4" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+/* ---------- Hoja ---------- */
+XL.Sheet = class {
+  constructor(name){ this.name = name; this.rows = new Map(); this.widths = []; this.grid = false; this.hasDrawing = false; this.merges = []; this.rowHeights = new Map(); }
+  set(c, r, v, s){
+    if(!this.rows.has(r)) this.rows.set(r, new Map());
+    this.rows.get(r).set(c, { v, s: s || 0 });
+    return this;
+  }
+  setF(c, r, formula, cached, s){
+    if(!this.rows.has(r)) this.rows.set(r, new Map());
+    this.rows.get(r).set(c, { f: formula, v: cached, s: s || 0 });
+    return this;
+  }
+  xml(){
+    const out = [XL.HEAD, `<worksheet xmlns="${XL.NS_MAIN}" xmlns:r="${XL.NS_R}">`];
+    out.push('<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>');
+    out.push(`<sheetViews><sheetView ${this.grid ? '' : 'showGridLines="0" '}workbookViewId="0"/></sheetViews>`);
+    out.push('<sheetFormatPr defaultRowHeight="15"/>');
+    if(this.widths.length){
+      out.push('<cols>' + this.widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('') + '</cols>');
+    }
+    out.push('<sheetData>');
+    [...this.rows.keys()].sort((a,b)=>a-b).forEach(r=>{
+      const row = this.rows.get(r);
+      const ht = this.rowHeights.get(r);
+      out.push(ht ? `<row r="${r+1}" ht="${ht}" customHeight="1">` : `<row r="${r+1}">`);
+      [...row.keys()].sort((a,b)=>a-b).forEach(c=>{
+        const cell = row.get(c), ref = XL.ref(c, r), s = cell.s ? ` s="${cell.s}"` : '';
+        if(cell.f !== undefined){
+          out.push(isFinite(cell.v)
+            ? `<c r="${ref}"${s}><f>${XL.esc(cell.f)}</f><v>${XL.numStr(cell.v)}</v></c>`
+            : `<c r="${ref}"${s}><f>${XL.esc(cell.f)}</f></c>`);
+        } else if(typeof cell.v === 'number'){
+          out.push(isFinite(cell.v)
+            ? `<c r="${ref}"${s}><v>${XL.numStr(cell.v)}</v></c>`
+            : `<c r="${ref}"${s} t="inlineStr"><is><t>n/d</t></is></c>`);
+        } else if(cell.v === null || cell.v === undefined || cell.v === ''){
+          out.push(`<c r="${ref}"${s}/>`);
+        } else {
+          out.push(`<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${XL.esc(cell.v)}</t></is></c>`);
+        }
+      });
+      out.push('</row>');
+    });
+    out.push('</sheetData>');
+    if(this.merges.length) out.push(`<mergeCells count="${this.merges.length}">` + this.merges.map(m => `<mergeCell ref="${m}"/>`).join('') + '</mergeCells>');
+    out.push('<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
+    if(this.hasDrawing) out.push('<drawing r:id="rId1"/>');
+    out.push('</worksheet>');
+    return out.join('');
+  }
+};
+
+/* ---------- Gráficas nativas ---------- */
+XL.rich = (text, sz, bold) =>
+  `<c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${sz}" b="${bold?1:0}"/></a:pPr><a:r><a:rPr lang="es-ES" sz="${sz}" b="${bold?1:0}"/><a:t>${XL.esc(text)}</a:t></a:r></a:p></c:rich></c:tx>`;
+XL.chartTitle = text => `<c:title>${XL.rich(text, 1200, true)}<c:overlay val="0"/></c:title>`;
+XL.axTitle = text => text ? `<c:title>${XL.rich(text, 900, false)}<c:overlay val="0"/></c:title>` : '';
+XL.grid = '<c:majorGridlines><c:spPr><a:ln w="6350"><a:solidFill><a:srgbClr val="D9D9D9"/></a:solidFill></a:ln></c:spPr></c:majorGridlines>';
+XL.chartWrap = (title, plot, legend) => XL.HEAD +
+  '<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+  '<c:roundedCorners val="0"/><c:chart>' + XL.chartTitle(title) + '<c:autoTitleDeleted val="0"/><c:plotArea><c:layout/>' + plot + '</c:plotArea>' +
+  (legend ? '<c:legend><c:legendPos val="b"/><c:overlay val="0"/></c:legend>' : '') +
+  '<c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>';
+
+XL.colChart = ({ title, xTitle, yTitle, catRef, series, stacked, skip }) => {
+  const sers = series.map((s,i)=>
+    `<c:ser><c:idx val="${i}"/><c:order val="${i}"/><c:tx><c:strRef><c:f>${XL.esc(s.nameRef)}</c:f></c:strRef></c:tx>` +
+    `<c:spPr><a:solidFill><a:srgbClr val="${s.color}"/></a:solidFill></c:spPr><c:invertIfNegative val="0"/>` +
+    `<c:cat><c:strRef><c:f>${XL.esc(catRef)}</c:f></c:strRef></c:cat><c:val><c:numRef><c:f>${XL.esc(s.valRef)}</c:f></c:numRef></c:val></c:ser>`).join('');
+  const plot =
+    `<c:barChart><c:barDir val="col"/><c:grouping val="${stacked ? 'stacked' : 'clustered'}"/><c:varyColors val="0"/>${sers}` +
+    `<c:gapWidth val="${stacked ? 30 : 15}"/>${stacked ? '<c:overlap val="100"/>' : ''}<c:axId val="50010"/><c:axId val="50020"/></c:barChart>` +
+    `<c:catAx><c:axId val="50010"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/>${XL.axTitle(xTitle)}` +
+    `<c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/>` +
+    `<c:txPr><a:bodyPr rot="-2700000" vert="horz"/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="800"/></a:pPr><a:endParaRPr lang="es-ES"/></a:p></c:txPr>` +
+    `<c:crossAx val="50020"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:tickLblSkip val="${skip || 1}"/><c:noMultiLvlLbl val="0"/></c:catAx>` +
+    `<c:valAx><c:axId val="50020"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="l"/>${XL.grid}${XL.axTitle(yTitle)}` +
+    `<c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/>` +
+    `<c:crossAx val="50010"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx>`;
+  return XL.chartWrap(title, plot, stacked);
+};
+
+XL.scatterChart = ({ title, xTitle, yTitle, xRef, yRef, nameRef, color, series, yPct = true }) => {
+  const ss = series || [{ xRef, yRef, nameRef, color }];
+  const sers = ss.map((s, i) =>
+    `<c:ser><c:idx val="${i}"/><c:order val="${i}"/><c:tx><c:strRef><c:f>${XL.esc(s.nameRef)}</c:f></c:strRef></c:tx>` +
+    `<c:spPr><a:ln w="28575" cap="rnd"><a:solidFill><a:srgbClr val="${s.color}"/></a:solidFill><a:round/></a:ln></c:spPr>` +
+    `<c:marker><c:symbol val="none"/></c:marker>` +
+    `<c:xVal><c:numRef><c:f>${XL.esc(s.xRef)}</c:f></c:numRef></c:xVal><c:yVal><c:numRef><c:f>${XL.esc(s.yRef)}</c:f></c:numRef></c:yVal><c:smooth val="0"/></c:ser>`).join('');
+  const plot =
+    `<c:scatterChart><c:scatterStyle val="lineMarker"/><c:varyColors val="0"/>${sers}<c:axId val="50030"/><c:axId val="50040"/></c:scatterChart>` +
+    `<c:valAx><c:axId val="50030"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/>${XL.axTitle(xTitle)}` +
+    `<c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/>` +
+    `<c:crossAx val="50040"/><c:crosses val="autoZero"/><c:crossBetween val="midCat"/></c:valAx>` +
+    `<c:valAx><c:axId val="50040"/><c:scaling><c:orientation val="minMax"/>${yPct ? '<c:max val="1"/><c:min val="0"/>' : ''}</c:scaling><c:delete val="0"/><c:axPos val="l"/>${XL.grid}${XL.axTitle(yTitle)}` +
+    `<c:numFmt formatCode="${yPct ? '0%' : 'General'}" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/>` +
+    `<c:crossAx val="50030"/><c:crosses val="autoZero"/><c:crossBetween val="midCat"/></c:valAx>`;
+  return XL.chartWrap(title, plot, ss.length > 1);
+};
+
+XL.drawingXml = anchors => XL.HEAD +
+  '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+  anchors.map((a,i)=>
+    `<xdr:oneCellAnchor><xdr:from><xdr:col>${a.c0}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${a.r0}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>` +
+    `<xdr:ext cx="${a.w * 9525}" cy="${a.h * 9525}"/>` +
+    `<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${i+2}" name="Grafico ${i+1}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr>` +
+    `<xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart">` +
+    `<c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="${XL.NS_R}" r:id="rId${i+1}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:oneCellAnchor>`
+  ).join('') + '</xdr:wsDr>';
+
+XL.relsXml = items => XL.HEAD + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+  items.map(i=>`<Relationship Id="${i.id}" Type="${i.type}" Target="${i.target}"/>`).join('') + '</Relationships>';
+
+/* ---------- ZIP (con compresión deflate nativa del navegador) ---------- */
+XL.crcTable = (()=>{ const t = new Uint32Array(256); for(let n=0;n<256;n++){ let c = n; for(let k=0;k<8;k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
+XL.crc32 = u8 => { let c = 0xFFFFFFFF; for(let i=0;i<u8.length;i++) c = XL.crcTable[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+XL.deflate = async u8 => {
+  try{
+    if(typeof CompressionStream === 'undefined') return null;
+    const stream = new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch(e){ return null; }
+};
+XL.zip = async files => {
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+  const now = new Date();
+  const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  for(const f of files){
+    const nameB = enc.encode(f.name);
+    const raw = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    const crc = XL.crc32(raw);
+    let comp = await XL.deflate(raw), method = 8;
+    if(!comp || comp.length >= raw.length){ comp = raw; method = 0; }
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, method, true);
+    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, comp.length, true); lh.setUint32(22, raw.length, true); lh.setUint16(26, nameB.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), nameB, comp);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, method, true);
+    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, comp.length, true); ch.setUint32(24, raw.length, true); ch.setUint16(28, nameB.length, true);
+    ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
+    ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), nameB);
+    offset += 30 + nameB.length + comp.length;
+  }
+  let cdSize = 0; central.forEach(p => cdSize += p.length);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(4, 0, true); end.setUint16(6, 0, true);
+  end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true); end.setUint16(20, 0, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+/* ---------- Contenido ---------- */
+XL.binIndex = (edges, x) => {
+  const last = edges.length - 2;
+  if(x <= edges[0]) return 0;
+  if(x >= edges[edges.length - 1]) return last;
+  let lo = 0, hi = last;
+  while(lo < hi){ const mid = (lo + hi + 1) >> 1; if(edges[mid] <= x) lo = mid; else hi = mid - 1; }
+  return lo;
+};
+
+XL.describeComp = (dd, p) => {
+  if(!dd.custom) return dd.params.map(f => `${f.label} = ${p[f.key]}`).join('; ');
+  if(dd.custom === 'discrete') return 'Valores (valor:peso): ' + p.items.map(it => `${it.value}:${it.weight}`).join(', ');
+  if(dd.custom === 'general') return `Mínimo ${p.min}; Máximo ${p.max}; puntos (X:p): ` + p.points.map(q => `${q.x}:${q.weight}`).join(', ');
+  return '';
+};
+
+// Devuelve bloques de tablas; la primera fila de cada bloque es el encabezado
+XL.paramBlocks = (d, params) => {
+  if(d.custom === 'mezcla'){
+    const tw = params.components.reduce((s,c)=>s + c.weight, 0);
+    return [
+      [ ['Parámetro','Valor'], ['Método de combinación', params.method === 'sumproduct' ? 'Promedio ponderado (SUMAPRODUCTO)' : 'Mezcla al azar (se elige un experto en cada iteración)'] ],
+      [ ['Componente','Distribución','Peso', params.method === 'sumproduct' ? 'Peso normalizado' : '% efectivo'],
+        ...params.components.map((c,i)=>[ `Componente ${i+1}`, DISTS[c.dist].name, {v:c.weight, s:11}, {v:c.weight/tw, s:5} ]) ] ];
+  }
+  if(!d.custom) return [[ ['Parámetro','Valor'], ...d.params.map(p => [p.label, {v:params[p.key], s:11}]) ]];
+  switch(d.custom){
+    case 'discrete': return [[ ['Valor','Peso'], ...params.items.map(it => [{v:it.value,s:11},{v:it.weight,s:11}]) ]];
+    case 'general': return [
+      [ ['Parámetro','Valor'], ['Mínimo',{v:params.min,s:11}], ['Máximo',{v:params.max,s:11}] ],
+      [ ['X','p (altura relativa)'], ...params.points.map(q => [{v:q.x,s:11},{v:q.weight,s:11}]) ] ];
+    case 'cumul': return [[ ['X','Prob. acumulada'], ...params.points.map(q => [{v:q.x,s:11},{v:q.cum,s:11}]) ]];
+    case 'cumuld': return [[ ['X','P(valor > X)'], ...params.points.map(q => [{v:q.x,s:11},{v:1 - q.cum,s:11}]) ]];
+    case 'histograma': return [[ ['Límite inferior','Límite superior','Peso'], ...params.bins.map(b => [{v:b.limInf,s:11},{v:b.limSup,s:11},{v:b.peso,s:11}]) ]];
+    case 'resample': return [[ ['Valor observado'], ...params.values.map(v => [{v:v,s:11}]) ]];
+  }
+  return [];
+};
+
+XL.writeBlock = (S, r, block) => {
+  block.forEach((row, i) => {
+    row.forEach((cell, j) => {
+      const spec = (cell !== null && typeof cell === 'object') ? cell : { v: cell };
+      const style = i === 0 ? 2 : (spec.s !== undefined ? spec.s : (typeof spec.v === 'number' ? 4 : 3));
+      S.set(j, r + i, spec.v, style);
+    });
+  });
+  return r + block.length;
+};
+
+XL.band = (S, r, text, ncols) => { S.set(0, r, text, 2); for(let j=1;j<ncols;j++) S.set(j, r, '', 2); return r + 1; };
+
+/* ---------- Funciones equivalentes de @RISK (texto) ---------- */
+XL.FORMATS = {
+  std:  { sep: ',', dec: '.', arr: ',' },     // Excel con configuración regional inglesa
+  semi: { sep: ';', dec: ',', arr: '\\' }     // Excel en español: ; entre argumentos, coma decimal, \ entre elementos de una matriz
+};
+XL.mode = XL.FORMATS.semi;
+XL.rn = v => { const s = String(+Number(v).toPrecision(12)); return XL.mode.dec === '.' ? s : s.replace('.', XL.mode.dec); };
+XL.arr = a => '{' + a.map(XL.rn).join(XL.mode.arr) + '}';
+XL.VERIFY = 'Verifique el orden de los parámetros en el manual de @RISK.';
+
+// Devuelve { fn, note }: fn sin el signo "=" inicial
+XL.risk = (key, p) => {
+  const n = XL.rn, arr = XL.arr;
+  const f = (name, ...args) => `${name}(${args.join(XL.mode.sep)})`;
+  let fn = '', note = '';
+  switch(key){
+    case 'normal':      fn = f('RiskNormal', n(p.mean), n(p.sd)); break;
+    case 'uniform':     fn = f('RiskUniform', n(p.min), n(p.max)); break;
+    case 'triangular':  fn = f('RiskTriang', n(p.min), n(p.mode), n(p.max)); break;
+    case 'pert':        fn = f('RiskPert', n(p.min), n(p.mode), n(p.max)); break;
+    case 'lognormal':   fn = f('RiskLognorm', n(p.mean), n(p.sd)); break;
+    case 'exponential': fn = f('RiskExpon', n(p.mean)); break;
+    case 'gamma':       fn = f('RiskGamma', n(p.shape), n(p.scale)); break;
+    case 'betaEstandar':fn = f('RiskBeta', n(p.alpha), n(p.beta)); break;
+    case 'beta':        fn = f('RiskBetaGeneral', n(p.alpha), n(p.beta), n(p.min), n(p.max)); break;
+    case 'betaSubjetiva': fn = f('RiskBetaSubj', n(p.min), n(p.mode), n(p.mean), n(p.max)); break;
+    case 'weibull':     fn = f('RiskWeibull', n(p.shape), n(p.scale)); break;
+    case 'poisson':     fn = f('RiskPoisson', n(p.lambda)); break;
+    case 'binomial':    fn = f('RiskBinomial', n(Math.round(p.n)), n(p.p)); break;
+    case 'discreta':    fn = f('RiskDiscrete', arr(p.items.map(i => i.value)), arr(p.items.map(i => i.weight))); break;
+    case 'general': {
+      const xs = p.points.map(q => q.x), ws = p.points.map(q => q.weight);
+      let mn = p.min, mx = p.max;
+      const eps = (p.max - p.min) * 1e-6, edge = xs[0] <= mn || xs[xs.length-1] >= mx;
+      if(xs[0] <= mn) mn = xs[0] - eps;
+      if(xs[xs.length-1] >= mx) mx = xs[xs.length-1] + eps;
+      fn = f('RiskGeneral', n(mn), n(mx), arr(xs), arr(ws));
+      if(edge) note = 'Hay puntos X en los extremos del rango y @RISK exige mín < X < máx: se amplió el rango en una millonésima (efecto despreciable) para que la función sea válida.';
+      break;
+    }
+    case 'cauchy':      fn = f('RiskCauchy', n(p.x0), n(p.gamma)); break;
+    case 'chisq':       fn = f('RiskChiSq', n(p.df)); break;
+    case 'erlang':      fn = f('RiskErlang', n(Math.round(p.k)), n(p.scale)); break;
+    case 'rayleigh':    fn = f('RiskRayleigh', n(p.scale)); break;
+    case 'laplace':     fn = f('RiskLaplace', n(p.loc), n(p.scale)); break;
+    case 'logistic':    fn = f('RiskLogistic', n(p.loc), n(p.scale)); break;
+    case 'loglogistic': fn = f('RiskLoglogistic', 0, n(p.alpha), n(p.beta));
+      note = 'γ = 0 (sin desplazamiento); escala = ' + n(p.alpha) + ', forma = ' + n(p.beta) + '. La ayuda de @RISK muestra el ejemplo con forma y escala en distinto orden que su lista de parámetros. ' + XL.VERIFY; break;
+    case 'lognorm2':    fn = f('RiskLognorm2', n(p.mu), n(p.sigma)); break;
+    case 'pareto':      fn = f('RiskPareto', n(p.alpha), n(p.xm)); note = 'RiskPareto(forma, escala): forma = ' + n(p.alpha) + ', escala (mínimo) = ' + n(p.xm) + '.'; break;
+    case 'pareto2':
+      fn = p.loc !== 0 ? f('RiskPareto2', n(p.scale), n(p.shape), `RiskShift(${n(p.loc)})`) : f('RiskPareto2', n(p.scale), n(p.shape));
+      note = p.loc !== 0 ? 'La ubicación se aplica con RiskShift.' : ''; break;
+    case 'f':           fn = f('RiskF', n(p.d1), n(p.d2)); break;
+    case 'student':     fn = f('RiskStudent', n(p.df)); break;
+    case 'reciprocal':  fn = f('RiskReciprocal', n(p.min), n(p.max)); break;
+    case 'levy':        fn = f('RiskLevy', n(p.loc), n(p.scale)); break;
+    case 'hypsecant':   fn = f('RiskHypSecant', n(p.loc), n(p.scale)); note = 'La escala es la desviación estándar.'; break;
+    case 'invgauss':    fn = f('RiskInvGauss', n(p.mu), n(p.lambda)); break;
+    case 'fatiguelife': fn = f('RiskFatigueLife', 0, n(p.beta), n(p.alpha)); note = 'γ = 0 (sin desplazamiento); orden de @RISK: (γ, β escala, α forma).'; break;
+    case 'frechet':     fn = f('RiskFrechet', 0, n(p.scale), n(p.alpha)); note = 'γ = 0 (sin desplazamiento); orden de @RISK: (γ, β escala, α forma).'; break;
+    case 'extvalue':    fn = f('RiskExtValue', n(p.loc), n(p.scale)); break;
+    case 'extvaluemin': fn = f('RiskExtValueMin', n(p.loc), n(p.scale)); break;
+    case 'burr12':      fn = f('RiskBurr12', 0, n(p.scale), n(p.c), n(p.k));
+      note = 'γ = 0 (sin desplazamiento); α1 = ' + n(p.c) + ' (exponente de x), α2 = ' + n(p.k) + '. ' + XL.VERIFY; break;
+    case 'dagum':       fn = f('RiskDagum', 0, n(p.scale), n(p.c), n(p.k));
+      note = 'γ = 0 (sin desplazamiento); α1 = ' + n(p.c) + ', α2 = ' + n(p.k) + '. ' + XL.VERIFY; break;
+    case 'kumaraswamy': fn = f('RiskKumaraswamy', n(p.a), n(p.b), n(p.min), n(p.max)); break;
+    case 'pearson5':    fn = f('RiskPearson5', n(p.alpha), n(p.beta)); break;
+    case 'pearson6':    fn = f('RiskPearson6', n(p.alpha1), n(p.alpha2), n(p.beta)); break;
+    case 'johnsonsu':   fn = f('RiskJohnsonSU', n(p.gamma), n(p.delta), n(p.xi), n(p.lambda)); break;
+    case 'johnsonsb':   fn = f('RiskJohnsonSB', n(p.gamma), n(p.delta), n(p.xi), n(p.xi + p.lambda));
+      note = 'a = ξ (mínimo) y b = ξ + λ (máximo). ' + XL.VERIFY; break;
+    case 'erf': {
+      const h = 1 / (p.sd * Math.SQRT2);
+      fn = p.mean !== 0 ? f('RiskErf', n(h), `RiskShift(${n(p.mean)})`) : f('RiskErf', n(h));
+      note = 'RiskErf usa h = 1/(σ·√2) (media 0); la media se aplica con RiskShift.'; break;
+    }
+    case 'trigen':      fn = f('RiskTrigen', n(p.x1), n(p.mode), n(p.x2), n(p.p1), n(p.p2)); note = 'Los percentiles se expresan de 0 a 100.'; break;
+    case 'bernoulli':   fn = f('RiskBernoulli', n(p.p)); break;
+    case 'intuniforme': fn = f('RiskIntUniform', n(Math.round(p.min)), n(Math.round(p.max))); break;
+    case 'geometrica':  fn = f('RiskGeomet', n(p.p)); note = 'Cuenta fallos antes del primer éxito (0, 1, 2…).'; break;
+    case 'negbin':      fn = f('RiskNegbin', n(Math.round(p.r)), n(p.p)); note = 'Cuenta fallos antes de lograr r éxitos.'; break;
+    case 'hipergeometrica': fn = f('RiskHypergeo', n(Math.round(p.sample)), n(Math.round(p.success)), n(Math.round(p.pop)));
+      note = 'Orden: (tamaño de la muestra, éxitos en la población, tamaño de la población). ' + XL.VERIFY; break;
+    case 'cumul':
+    case 'cumuld': {
+      const pts = p.points, c0 = pts[0].cum, span = (pts[pts.length-1].cum - c0) || 1;
+      const inner = pts.slice(1, -1), asc = inner.map(q => (q.cum - c0) / span);
+      const mn = n(pts[0].x), mx = n(pts[pts.length-1].x);
+      if(!inner.length){ fn = f('RiskUniform', mn, mx); note = 'Sin puntos interiores: equivale a una Uniforme.'; }
+      else if(key === 'cumul') fn = f('RiskCumul', mn, mx, arr(inner.map(q => q.x)), arr(asc));
+      else fn = f('RiskCumulD', mn, mx, arr(inner.map(q => q.x)), arr(asc.map(v => 1 - v)));
+      note = (note ? note + ' ' : '') + 'El mínimo y el máximo son la primera y la última fila; @RISK recibe solo los puntos interiores.';
+      break;
+    }
+    case 'histograma': {
+      const b = p.bins, nb = b.length, tol = 1e-9;
+      const total = b.reduce((s, q) => s + q.peso, 0);
+      const mn = n(b[0].limInf), mx = n(b[nb-1].limSup);
+      const contiguous = b.every((q, i) => i === 0 || Math.abs(q.limInf - b[i-1].limSup) <= tol * (Math.abs(q.limInf) + 1));
+      const w0 = b[0].limSup - b[0].limInf;
+      const equal = b.every(q => Math.abs((q.limSup - q.limInf) - w0) <= tol * (Math.abs(w0) + 1));
+      if(contiguous && equal){
+        fn = f('RiskHistogrm', mn, mx, arr(b.map(q => q.peso)));
+        note = 'Intervalos contiguos de igual ancho.';
+      } else if(nb === 1){
+        fn = f('RiskUniform', mn, mx); note = 'Un solo intervalo: equivale a una Uniforme.';
+      } else {
+        const xs = [], cs = []; let cum = 0;
+        b.forEach((q, i) => {
+          if(i > 0 && q.limInf > b[i-1].limSup + tol){ xs.push(q.limInf); cs.push(cum / total); }
+          cum += q.peso;
+          if(i < nb - 1){ xs.push(q.limSup); cs.push(cum / total); }
+        });
+        fn = f('RiskCumul', mn, mx, arr(xs), arr(cs));
+        note = contiguous ? 'Intervalos de distinto ancho: RiskHistogrm exige igual ancho, así que se expresa con RiskCumul (equivalente exacto).'
+                          : 'Hay huecos entre intervalos: se expresa con RiskCumul con tramos planos. ' + XL.VERIFY;
+      }
+      break;
+    }
+    case 'resample':    fn = f('RiskResample', 2, arr(p.values)); note = 'Método 2 = muestreo aleatorio con reemplazo.'; break;
+    case 'duniform':    fn = f('RiskDuniform', arr(p.values)); break;
+    case 'mezcla':      return XL.riskMix(p);
+    default:            fn = ''; note = 'Sin equivalente definido.';
+  }
+  return { fn, note };
+};
+
+// Nombres de función de Excel según el idioma del texto mostrado (las funciones de @RISK no se traducen)
+XL.fnName = n => XL.mode === XL.FORMATS.semi ? ({ CHOOSE: 'ELEGIR', SUM: 'SUMA', SUMPRODUCT: 'SUMAPRODUCTO' }[n] || n) : n;
+
+XL.riskMix = params => {
+  const comps = params.components;
+  const parts = comps.map(c => XL.risk(c.dist, c.params));
+  const sp = XL.mode.sep;
+  if(params.method === 'sumproduct'){
+    // Promedio ponderado: suma de (peso normalizado × valor de cada experto) = SUMAPRODUCTO(pesos; valores)
+    const tw = comps.reduce((s, c) => s + c.weight, 0);
+    const fn = comps.map((c, i) => `${XL.rn(c.weight / tw)}*${parts[i].fn}`).join('+');
+    return { fn, parts, note: 'Promedio ponderado: equivale a SUMAPRODUCTO(pesos; valores), con un valor de cada experto en cada iteración. En la hoja "Modelo RISK" se arma con celdas y SUMAPRODUCTO.' };
+  }
+  const fn = `${XL.fnName('CHOOSE')}(RiskDiscrete(${XL.arr(comps.map((_, i) => i + 1))}${sp}${XL.arr(comps.map(c => c.weight))})${sp}${parts.map(q => q.fn).join(sp)})`;
+  return { fn, parts, note: '@RISK no tiene una función de mezcla ponderada: se arma con ELEGIR (CHOOSE) y RiskDiscrete; el peso de cada componente es la probabilidad de elegirlo.' };
+};
+
+XL.rowHeight = (texts) => {
+  // texts: [[texto, caracteresPorLinea], ...]
+  const lines = Math.max(1, ...texts.map(([t, w]) => Math.ceil(String(t).length / w)));
+  return Math.max(15, Math.round(13.5 * lines + 3));
+};
+
+XL.build = async sim => {
+  const d = DISTS[sim.distKey], stats = sim.stats, n = sim.n, mix = sim.mix;
+  const DATA = 'Datos simulados', GRAF = 'Graficas datos', COMP = 'Componentes', RISKS = 'Modelo RISK';
+  const rk = XL.risk(sim.distKey, sim.params);
+  const sheets = [];     // { name, xml, drawing: index|null }
+  const charts = [];     // xml
+  const drawings = [];   // { anchors:[{chart,c0,r0,c1,r1}] }
+
+  /* ----- Datos de las gráficas ----- */
+  const bins = buildBins(stats.sorted, !!sim.discrete);
+  const nb = bins.counts.length;
+  const G = new XL.Sheet(GRAF); G.grid = true; G.widths = [24, 12, 14, 3, 16, 18];
+  ['Intervalo','Frecuencia','Frec. relativa'].forEach((h,j) => G.set(j, 0, h, 2));
+  bins.counts.forEach((cnt, i) => {
+    const lo = bins.edges[i], hi = bins.edges[i+1];
+    const label = bins.exact ? XL.lab((lo + hi)/2) : `${XL.lab(lo)} – ${XL.lab(hi)}`;
+    G.set(0, i+1, label, 3); G.set(1, i+1, cnt, 8); G.set(2, i+1, cnt / n, 5);
+  });
+  const np = Math.min(200, n);
+  G.set(4, 0, 'Valor', 2); G.set(5, 0, 'Prob. acumulada', 2);
+  for(let i = 0; i < np; i++){
+    const idx = np > 1 ? Math.round(i * (n-1) / (np-1)) : 0;
+    G.set(4, i+1, stats.sorted[idx], 4); G.set(5, i+1, (idx+1) / n, 5);
+  }
+
+  const gq = XL.q(GRAF);
+  charts.push(XL.colChart({
+    title: `Histograma — ${d.name}`, xTitle: 'Valor simulado', yTitle: 'Frecuencia',
+    catRef: `${gq}!$A$2:$A$${nb+1}`,
+    series: [{ nameRef: `${gq}!$B$1`, valRef: `${gq}!$B$2:$B$${nb+1}`, color: XL.palette[0] }],
+    skip: bins.exact && nb <= 15 ? 1 : Math.max(1, Math.ceil(nb / 12))
+  }));
+  charts.push(XL.scatterChart({
+    title: `Probabilidad acumulada — ${d.name}`, xTitle: 'Valor simulado', yTitle: 'P(X ≤ valor)',
+    xRef: `${gq}!$E$2:$E$${np+1}`, yRef: `${gq}!$F$2:$F$${np+1}`, nameRef: `${gq}!$F$1`, color: XL.palette[1]
+  }));
+
+  /* ----- Resumen ----- */
+  const S = new XL.Sheet('Resumen'); S.widths = [34, 20, 16, 16, 3];
+  let r = 0;
+  S.set(0, r++, `Monte Carlo Lab — ${d.name}`, 1);
+  S.set(0, r, 'Fecha de la simulación', 9); S.set(1, r++, sim.when.toLocaleString('es-CO'), 3);
+  S.set(0, r, 'Iteraciones', 9); S.set(1, r++, n, 8);
+  r++;
+  r = XL.band(S, r, 'PARÁMETROS DE ENTRADA', 4);
+  XL.paramBlocks(d, sim.params).forEach(block => { r = XL.writeBlock(S, r, block) + 1; });
+  r = XL.band(S, r, 'FUNCIÓN @RISK EQUIVALENTE', 4);
+  const fnText = '=' + rk.fn;
+  S.set(0, r, fnText, 12); for(let j = 1; j < 4; j++) S.set(j, r, '', 12);
+  S.merges.push(`A${r+1}:D${r+1}`); S.rowHeights.set(r, XL.rowHeight([[fnText, 78]])); r++;
+  if(rk.note){
+    S.set(0, r, rk.note, 13); for(let j = 1; j < 4; j++) S.set(j, r, '', 13);
+    S.merges.push(`A${r+1}:D${r+1}`); S.rowHeights.set(r, XL.rowHeight([[rk.note, 85]])); r++;
+  }
+  S.set(0, r++, `Modelo listo para @RISK, con fórmulas vivas y celda de salida, en la hoja "${RISKS}".`, 7);
+  r++;
+  r = XL.band(S, r, 'ESTADÍSTICAS DESCRIPTIVAS', 4);
+  [ ['Tamaño de muestra (n)', stats.n, 8], ['Suma', stats.sum, 4], ['Media', stats.mean, 4], ['Mediana', stats.median, 4],
+    ['Moda (aprox.)', stats.mode, 4], ['Desviación estándar', stats.sd, 4], ['Varianza', stats.variance, 4],
+    ['Error estándar de la media', stats.se, 4], ['Coeficiente de variación', stats.cv, 5], ['Mínimo', stats.min, 4],
+    ['Máximo', stats.max, 4], ['Rango', stats.range, 4], ['Asimetría (skewness)', stats.skew, 4], ['Curtosis (exceso)', stats.kurtosis, 4]
+  ].forEach(([l, v, s]) => { S.set(0, r, l, 3); S.set(1, r++, v, s); });
+  r++;
+  r = XL.band(S, r, 'PERCENTILES', 4);
+  [ ['P5', stats.p5], ['P10', stats.p10], ['P25', stats.p25], ['P50 (mediana)', stats.median], ['P75', stats.p75], ['P90', stats.p90], ['P95', stats.p95]
+  ].forEach(([l, v]) => { S.set(0, r, l, 3); S.set(1, r++, v, 4); });
+  r++;
+  r = XL.band(S, r, 'CALCULADORA DE PROBABILIDAD', 4);
+  const thrEl = document.getElementById('threshold');
+  let thr = thrEl ? parseFloat(thrEl.value) : NaN;
+  if(isNaN(thr)) thr = stats.mean;
+  const inRow = r;
+  S.set(0, r, 'Valor de referencia (X)', 3); S.set(1, r, thr, 6); S.set(2, r++, '← cámbialo y se recalcula', 7);
+  const dq = XL.q(DATA), dRange = `${dq}!$B$2:$B$${n+1}`;
+  S.set(0, r, 'P(X ≤ valor)', 3); S.setF(1, r++, `COUNTIF(${dRange},"<="&B${inRow+1})/COUNT(${dRange})`, probLE(stats.sorted, thr), 5);
+  S.set(0, r, 'P(X ≥ valor)', 3); S.setF(1, r++, `COUNTIF(${dRange},">="&B${inRow+1})/COUNT(${dRange})`, probGE(stats.sorted, thr), 5);
+  S.set(0, r++, `Se calcula con fórmulas sobre la hoja "${DATA}".`, 7);
+  S.hasDrawing = true;
+  drawings.push({ anchors: [ { chart: 0, c0: 5, r0: 1, w: 640, h: 340 }, { chart: 1, c0: 5, r0: 19, w: 640, h: 340 } ] });
+
+  /* ----- Modelo @RISK: fórmulas vivas -----
+     Dentro del archivo Excel guarda siempre las fórmulas en formato internacional (comas y punto decimal) y las muestra
+     en el idioma del usuario; por eso la columna B se escribe en formato estándar y la columna C (texto) sigue la casilla. */
+  const textMode = XL.mode;
+  const asStd = fn => { XL.mode = XL.FORMATS.std; try { return fn(); } finally { XL.mode = textMode; } };
+  const live = asStd(() => XL.risk(sim.distKey, sim.params));
+  const heavyTail = key => key === 'cauchy' || key === 'levy';   // sin media definida: @RISK muestra la mediana
+  const R = new XL.Sheet(RISKS); R.grid = true; R.widths = [44, 11, 30, 92, 58];
+  ['Elemento', 'Peso', 'Celda de @RISK (fórmula viva)', 'Función (texto, para leer)', 'Nota'].forEach((h, j) => R.set(j, 0, h, 2));
+  let rr = 0;
+  const addRow = (label, weight, liveFormula, cached, text, note) => {
+    rr++;
+    R.set(0, rr, label, 13);
+    if(weight === null) R.set(1, rr, '', 13); else R.set(1, rr, weight, 15);
+    R.setF(2, rr, liveFormula, cached, 14);
+    R.set(3, rr, text, 12);
+    R.set(4, rr, note || '', 13);
+    R.rowHeights.set(rr, XL.rowHeight([[label, 42], [text, 88], [note || '', 56]]));
+    return rr + 1;                       // número de fila de Excel (base 1) de la fila recién escrita
+  };
+  const sp = textMode.sep;
+  if(sim.distKey !== 'mezcla'){
+    const cached = heavyTail(sim.distKey) ? stats.median : stats.mean;
+    const rIn = addRow(`Entrada · ${d.name}`, null, live.fn, cached, '=' + rk.fn, rk.note);
+    addRow('Salida (resultado que se simula)', null, `RiskOutput("${d.name}")+C${rIn}`, cached,
+      `=RiskOutput("${d.name}")+C${rIn}`, 'Celda marcada como salida de @RISK: al simular, @RISK registra sus resultados.');
+  } else {
+    const cps = sim.params.components, twr = cps.reduce((s, q) => s + q.weight, 0);
+    const isSumP = sim.params.method === 'sumproduct';
+    const cv = cps.map(() => []);
+    if(isSumP){ cps.forEach((q, j) => { cv[j] = Array.from(mix.parts[j]); }); }
+    else { for(let t = 0; t < mix.data.length; t++) cv[mix.idx[t]].push(mix.data[t]); }
+    const median = a => { const z = a.slice().sort((x, y) => x - y); return z[z.length >> 1]; };
+    const compRows = cps.map((q, j) => {
+      let vals = cv[j];
+      if(vals.length < 2000){   // pocas o ninguna muestra (peso bajo o 0): se estima el valor esperado directo de su distribución
+        const dd = DISTS[q.dist], smp = dd.makeSampler ? dd.makeSampler(q.params) : (() => dd.sample(q.params));
+        vals = Array.from({ length: 20000 }, smp);
+      }
+      const val = heavyTail(q.dist) ? median(vals) : vals.reduce((s, x) => s + x, 0) / vals.length;
+      return addRow(`Componente ${j+1} · ${DISTS[q.dist].name} (peso ${XL.rn(q.weight)} → ${(q.weight / twr * 100).toFixed(1)} %)`,
+        q.weight / twr, live.parts[j].fn, val, '=' + rk.parts[j].fn, rk.parts[j].note);
+    });
+    const first = compRows[0], last = compRows[compRows.length - 1];
+    if(isSumP){
+      // Ponderación con SUMAPRODUCTO: pesos (col. B, editables) por el valor de cada experto (col. C)
+      rr++;
+      R.set(0, rr, 'Suma de pesos (debe ser 100 %)', 13);
+      R.setF(1, rr, `SUM(B${first}:B${last})`, 1, 5);
+      R.set(2, rr, '', 13);
+      R.set(3, rr, `=${XL.fnName('SUM')}(B${first}:B${last})`, 12);
+      R.set(4, rr, 'Los pesos de la columna B se pueden editar; si cambias alguno, la suma debe seguir en 100 %.', 13);
+      R.rowHeights.set(rr, XL.rowHeight([['Suma de pesos (debe ser 100 %)', 42], ['x', 88], ['Los pesos de la columna B se pueden editar; si cambias alguno, la suma debe seguir en 100 %.', 56]]));
+      addRow('Salida · Promedio ponderado (SUMAPRODUCTO)', null,
+        `RiskOutput("Promedio ponderado")+SUMPRODUCT(B${first}:B${last},C${first}:C${last})`, stats.mean,
+        `=RiskOutput("Promedio ponderado")+${XL.fnName('SUMPRODUCT')}(B${first}:B${last}${sp}C${first}:C${last})`,
+        'Celda marcada como salida de @RISK: en cada iteración toma un valor de cada experto y los combina con sus pesos.');
+    } else {
+      const idxArr = cps.map((_, i) => i + 1), wArr = cps.map(q => q.weight);
+      const selStd = asStd(() => `RiskDiscrete(${XL.arr(idxArr)},${XL.arr(wArr)})`);
+      const selTxt = `RiskDiscrete(${XL.arr(idxArr)}${sp}${XL.arr(wArr)})`;
+      const meanIdx = Math.round(cps.reduce((s, q, i) => s + q.weight * (i + 1), 0) / twr);
+      const rSel = addRow('Selector de componente (según los pesos)', null, selStd, meanIdx, '=' + selTxt,
+        'Elige qué componente se usa en cada iteración; el peso de cada uno es su probabilidad de salir.');
+      addRow('Salida · Mezcla al azar', null,
+        `RiskOutput("Mezcla al azar")+CHOOSE(C${rSel},${compRows.map(n => 'C' + n).join(',')})`, stats.mean,
+        `=RiskOutput("Mezcla al azar")+${XL.fnName('CHOOSE')}(C${rSel}${sp}${compRows.map(n => 'C' + n).join(sp)})`,
+        'Celda marcada como salida de @RISK. @RISK no trae una función de mezcla ponderada: se arma con ELEGIR (CHOOSE) y RiskDiscrete.');
+    }
+  }
+  let nr = rr + 2;
+  [ 'La columna C son fórmulas reales de @RISK: con @RISK cargado funcionan sin copiar nada. Abre @RISK antes que este archivo; si lo abriste después, presiona Ctrl+Alt+F9.',
+    'Para simular: pestaña @RISK → Iniciar simulación. La celda de salida ya está marcada con RiskOutput.',
+    'Sin @RISK instalado se ve el valor esperado guardado; al recalcular aparecerá #¿NOMBRE?. La columna D muestra el texto de cada función.',
+    textMode === XL.FORMATS.semi
+      ? 'Texto en formato Excel en español: argumentos con ";", decimales con coma, matrices con "\\" entre elementos y funciones como SUMAPRODUCTO. Las fórmulas de la columna C se adaptan solas al idioma de tu Excel.'
+      : 'Texto en formato estándar: argumentos con coma y decimales con punto. Las fórmulas de la columna C se adaptan solas al idioma de tu Excel.'
+  ].forEach(t => R.set(0, nr++, t, 7));
+
+  sheets.push({ sheet: S, drawing: 0 });
+  sheets.push({ sheet: R, drawing: null });
+  sheets.push({ sheet: G, drawing: null });
+
+  /* ----- Componentes (solo mezcla / promedio ponderado) ----- */
+  if(mix){
+    const k = mix.comps.length, N = mix.data.length, isSum = mix.method === 'sumproduct';
+    const C = new XL.Sheet(COMP); C.grid = true;
+    C.widths = [26, 22, 13, 15, 13, 13, 13, 13, 13, 13, 80, 78];
+    const comps = sim.params.components;
+    const tw = comps.reduce((s,c)=>s + c.weight, 0);
+    ['Componente','Distribución','Peso', isSum ? 'Peso normalizado' : '% efectivo','Muestras','Media','Mediana','Desv. est.','Mínimo','Máximo','Parámetros','Función @RISK']
+      .forEach((h,j) => C.set(j, 0, h, 2));
+    const compVals = comps.map(() => []);
+    if(isSum){ comps.forEach((c, j) => { compVals[j] = Array.from(mix.parts[j]); }); }
+    else { for(let t = 0; t < N; t++) compVals[mix.idx[t]].push(mix.data[t]); }
+    comps.forEach((c, j) => {
+      const dd = DISTS[c.dist], vals = compVals[j], row = j + 1;
+      C.set(0, row, `Componente ${j+1}`, 3); C.set(1, row, dd.name, 3);
+      C.set(2, row, c.weight, 11); C.set(3, row, c.weight / tw, 5); C.set(4, row, vals.length, 8);
+      if(vals.length){
+        const cs = computeStats(vals, !!dd.discrete);
+        [cs.mean, cs.median, cs.sd, cs.min, cs.max].forEach((v, q) => C.set(5 + q, row, v, 4));
+      } else {
+        for(let q = 5; q <= 9; q++) C.set(q, row, 'sin muestras', 3);
+      }
+      C.set(10, row, XL.describeComp(dd, c.params), 3);
+      C.set(11, row, '=' + XL.risk(c.dist, c.params).fn, 3);
+    });
+    if(isSum){
+      C.set(0, k + 1, 'Resultado (SUMAPRODUCTO)', 9); C.set(1, k + 1, 'Promedio ponderado', 3);
+      C.set(2, k + 1, tw, 11); C.set(3, k + 1, 1, 5); C.set(4, k + 1, N, 8);
+      [stats.mean, stats.median, stats.sd, stats.min, stats.max].forEach((v, q) => C.set(5 + q, k + 1, v, 4));
+      C.set(10, k + 1, 'Suma de (peso normalizado × valor de cada experto)', 3);
+      C.set(11, k + 1, '=' + rk.fn, 3);
+    }
+    // Intervalos: en el promedio ponderado cada experto tiene su propio rango, así que se usa uno común a todos
+    const seriesVals = compVals.slice();
+    if(isSum) seriesVals.push(sim.raw);
+    let edges;
+    if(isSum){
+      let gmin = Infinity, gmax = -Infinity;
+      seriesVals.forEach(v => { for(let t = 0; t < v.length; t++){ if(v[t] < gmin) gmin = v[t]; if(v[t] > gmax) gmax = v[t]; } });
+      const w = (gmax - gmin) / 40 || 1;
+      edges = Array.from({ length: 41 }, (_, i) => gmin + i * w);
+    } else {
+      edges = bins.edges;
+    }
+    const nbins = edges.length - 1;
+    const labels = Array.from({ length: nbins }, (_, i) => isSum ? `${XL.lab(edges[i])} – ${XL.lab(edges[i+1])}` : G.rows.get(i+1).get(0).v);
+    const mids = Array.from({ length: nbins }, (_, i) => (edges[i] + edges[i+1]) / 2);
+    const counts = seriesVals.map(vals => {
+      const cnt = new Array(nbins).fill(0);
+      for(let t = 0; t < vals.length; t++) cnt[XL.binIndex(edges, vals[t])]++;
+      return cnt;
+    });
+    const h0 = isSum ? k + 4 : k + 3;    // fila (0-based) del encabezado de la tabla de histogramas
+    const off = isSum ? 2 : 1;           // primera columna de series
+    C.set(0, h0 - 1, isSum ? 'Histograma de cada experto y del resultado (mismos intervalos para todos)' : 'Histograma por componente (mismos intervalos que el histograma total)', 9);
+    C.set(0, h0, 'Intervalo', 2);
+    if(isSum) C.set(1, h0, 'Marca de clase', 2);
+    comps.forEach((c, j) => C.set(off + j, h0, `Comp ${j+1}`, 2));
+    C.set(off + k, h0, isSum ? 'Resultado' : 'Total', 2);
+    for(let i = 0; i < nbins; i++){
+      C.set(0, h0 + 1 + i, labels[i], 3);
+      if(isSum) C.set(1, h0 + 1 + i, mids[i], 4);
+      let tot = 0;
+      comps.forEach((c, j) => { C.set(off + j, h0 + 1 + i, counts[j][i], 8); tot += counts[j][i]; });
+      C.set(off + k, h0 + 1 + i, isSum ? counts[k][i] : tot, 8);
+    }
+    const cq = XL.q(COMP), first = h0 + 2, lastRow = h0 + 1 + nbins;
+    const catRef = `${cq}!$A$${first}:$A$${lastRow}`;
+    const skip = (!isSum && bins.exact && nbins <= 15) ? 1 : Math.max(1, Math.ceil(nbins / 12));
+    const colRef = j => `${cq}!$${XL.col(j)}$${first}:$${XL.col(j)}$${lastRow}`;
+    const nameOf = j => `${cq}!$${XL.col(j)}$${h0 + 1}`;
+    const chartIdx0 = charts.length;
+    if(isSum){
+      const xRef = `${cq}!$B$${first}:$B$${lastRow}`;
+      charts.push(XL.scatterChart({
+        title: 'Distribución de cada experto y del resultado ponderado', xTitle: 'Valor', yTitle: 'Frecuencia', yPct: false,
+        series: [ ...comps.map((c, j) => ({ nameRef: nameOf(off + j), xRef, yRef: colRef(off + j), color: XL.palette[j % XL.palette.length] })),
+                  { nameRef: nameOf(off + k), xRef, yRef: colRef(off + k), color: '1F2631' } ]
+      }));
+    } else {
+      charts.push(XL.colChart({
+        title: 'Composición del histograma por componente', xTitle: 'Valor simulado', yTitle: 'Frecuencia', catRef, stacked: true, skip,
+        series: comps.map((c, j) => ({ nameRef: nameOf(off + j), valRef: colRef(off + j), color: XL.palette[j % XL.palette.length] }))
+      }));
+    }
+    comps.forEach((c, j) => {
+      charts.push(XL.colChart({
+        title: `Componente ${j+1} · ${DISTS[c.dist].name} (${(c.weight / tw * 100).toFixed(1)} %)`, xTitle: 'Valor simulado', yTitle: 'Frecuencia', catRef, skip,
+        series: [{ nameRef: nameOf(off + j), valRef: colRef(off + j), color: XL.palette[j % XL.palette.length] }]
+      }));
+    });
+    const anchors = [];
+    const c0 = isSum ? k + 5 : k + 4, rowStart = h0;
+    for(let q = 0; q <= k; q++){
+      anchors.push({ chart: q, c0, r0: rowStart + q * 18, w: 640, h: 340 });
+    }
+    anchors.forEach(a => a.chart += chartIdx0);
+    C.hasDrawing = true;
+    drawings.push({ anchors });
+    sheets.splice(3, 0, { sheet: C, drawing: drawings.length - 1 });
+  }
+
+  /* ----- Datos simulados (hoja grande, escrita directo en texto) ----- */
+  const isSumData = !!mix && mix.method === 'sumproduct';
+  const nExtra = mix ? (isSumData ? mix.comps.length : 1) : 0;
+  const extraCols = Array.from({ length: nExtra }, (_, j) => XL.col(2 + j));
+  const hdr = (ref, text) => `<c r="${ref}1" s="2" t="inlineStr"><is><t>${text}</t></is></c>`;
+  const dr = [XL.HEAD, `<worksheet xmlns="${XL.NS_MAIN}" xmlns:r="${XL.NS_R}">`,
+    '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>',
+    '<sheetFormatPr defaultRowHeight="15"/>',
+    `<cols><col min="1" max="1" width="12" customWidth="1"/><col min="2" max="2" width="18" customWidth="1"/>${nExtra ? `<col min="3" max="${2 + nExtra}" width="14" customWidth="1"/>` : ''}</cols>`,
+    '<sheetData>',
+    `<row r="1">${hdr('A', 'Iteración')}${hdr('B', 'Valor simulado')}${mix ? (isSumData ? extraCols.map((L, j) => hdr(L, `Componente ${j+1}`)).join('') : hdr('C', 'Componente')) : ''}</row>`];
+  const raw = sim.raw;
+  for(let i = 0; i < n; i++){
+    const rr = i + 2;
+    let extra = '';
+    if(isSumData){ for(let j = 0; j < nExtra; j++) extra += `<c r="${extraCols[j]}${rr}"><v>${XL.numStr(mix.parts[j][i])}</v></c>`; }
+    else if(mix){ extra = `<c r="C${rr}"><v>${mix.idx[i] + 1}</v></c>`; }
+    dr.push(`<row r="${rr}"><c r="A${rr}"><v>${i+1}</v></c><c r="B${rr}"><v>${XL.numStr(raw[i])}</v></c>${extra}</row>`);
+  }
+  dr.push('</sheetData></worksheet>');
+  const dataXml = dr.join('');
+
+  /* ----- Ensamblado del paquete ----- */
+  const allSheets = sheets.map((s, i) => ({ name: s.sheet.name, xml: s.sheet.xml(), drawing: s.drawing }));
+  allSheets.push({ name: DATA, xml: dataXml, drawing: null });
+
+  const files = [];
+  const ct = [XL.HEAD, '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">',
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>',
+    '<Default Extension="xml" ContentType="application/xml"/>',
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>',
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'];
+  allSheets.forEach((s, i) => ct.push(`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`));
+  drawings.forEach((_, i) => ct.push(`<Override PartName="/xl/drawings/drawing${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>`));
+  charts.forEach((_, i) => ct.push(`<Override PartName="/xl/charts/chart${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>`));
+  ct.push('</Types>');
+  files.push({ name: '[Content_Types].xml', data: ct.join('') });
+  files.push({ name: '_rels/.rels', data: XL.relsXml([{ id: 'rId1', type: XL.RT + 'officeDocument', target: 'xl/workbook.xml' }]) });
+  files.push({ name: 'xl/workbook.xml', data: XL.HEAD + `<workbook xmlns="${XL.NS_MAIN}" xmlns:r="${XL.NS_R}"><sheets>` +
+    allSheets.map((s, i) => `<sheet name="${XL.esc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('') + '</sheets><calcPr calcId="191029"/></workbook>' });
+  files.push({ name: 'xl/_rels/workbook.xml.rels', data: XL.relsXml([
+    ...allSheets.map((s, i) => ({ id: `rId${i+1}`, type: XL.RT + 'worksheet', target: `worksheets/sheet${i+1}.xml` })),
+    { id: `rId${allSheets.length + 1}`, type: XL.RT + 'styles', target: 'styles.xml' } ]) });
+  files.push({ name: 'xl/styles.xml', data: XL.stylesXml() });
+  allSheets.forEach((s, i) => {
+    files.push({ name: `xl/worksheets/sheet${i+1}.xml`, data: s.xml });
+    if(s.drawing !== null){
+      files.push({ name: `xl/worksheets/_rels/sheet${i+1}.xml.rels`, data: XL.relsXml([{ id: 'rId1', type: XL.RT + 'drawing', target: `../drawings/drawing${s.drawing + 1}.xml` }]) });
+    }
+  });
+  drawings.forEach((dw, i) => {
+    files.push({ name: `xl/drawings/drawing${i+1}.xml`, data: XL.drawingXml(dw.anchors) });
+    files.push({ name: `xl/drawings/_rels/drawing${i+1}.xml.rels`, data: XL.relsXml(dw.anchors.map((a, q) => ({ id: `rId${q+1}`, type: XL.RT + 'chart', target: `../charts/chart${a.chart + 1}.xml` }))) });
+  });
+  charts.forEach((xml, i) => files.push({ name: `xl/charts/chart${i+1}.xml`, data: xml }));
+
+  const blob = await XL.zip(files);
+  const pad = x => String(x).padStart(2, '0'), w = sim.when;
+  const base = d.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const filename = `MonteCarloLab_${base}_${w.getFullYear()}${pad(w.getMonth()+1)}${pad(w.getDate())}_${pad(w.getHours())}${pad(w.getMinutes())}.xlsx`;
+  return { blob, filename };
+};
+
+XL.download = async (blob, filename) => {
+  const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(mobile && typeof File !== 'undefined' && navigator.canShare){
+    try{
+      const file = new File([blob], filename, { type: blob.type });
+      if(navigator.canShare({ files: [file] })){
+        await navigator.share({ files: [file], title: filename });
+        return;
+      }
+    } catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+};
+
+document.getElementById('exportBtn').onclick = async () => {
+  const btn = document.getElementById('exportBtn'), txt = document.getElementById('exportBtnText');
+  if(!simData) return;
+  btn.disabled = true; txt.textContent = 'Generando Excel…';
+  await new Promise(res => setTimeout(res, 30));
+  try{
+    XL.mode = document.getElementById('exportSemicolon').checked ? XL.FORMATS.semi : XL.FORMATS.std;
+    const { blob, filename } = await XL.build(simData);
+    await XL.download(blob, filename);
+    txt.textContent = 'Excel generado ✓';
+  } catch(err){
+    console.error(err);
+    txt.textContent = 'No se pudo generar el Excel';
+  }
+  setTimeout(() => { txt.textContent = 'Exportar a Excel (.xlsx)'; btn.disabled = false; }, 2500);
+};
+
 
 window.addEventListener('resize', ()=>{
   if(simData){
