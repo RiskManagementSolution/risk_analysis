@@ -401,6 +401,14 @@
   .saved-item .sheet-item{flex:1; min-width:0;}
   .saved-del{min-width:34px; height:34px; padding:0 8px; border-radius:9px; flex-shrink:0; background:transparent; border:1px solid var(--border); color:var(--text-faint); font-size:13px;}
   .saved-del:active{color:#FF6B6B; border-color:#FF6B6B;}
+  .mm-hist-head{display:flex; align-items:center; gap:10px; padding:4px 12px 8px; font-family:var(--font-display); font-weight:600; font-size:14px;}
+  .mm-hist-head span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .mm-note{font-size:12.5px; color:var(--text-dim); margin-top:3px; line-height:1.35;}
+  .mm-diff{margin:2px 12px 10px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); font-family:var(--font-mono); font-size:11.5px; line-height:1.55; word-break:break-word;}
+  .mm-diff .tabs-mini{display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;}
+  .mm-diff .tabs-mini .chip{padding:5px 9px; font-size:11px;}
+  .mm-diff .add{color:var(--accent-2);} .mm-diff .del{color:var(--err);} .mm-diff .chg{color:var(--accent-3);}
+  .mm-diff .none{color:var(--text-faint);}
   .saved-meta{font-family:var(--font-mono); font-size:11px; color:var(--text-faint); margin-top:3px;}
   .mm-files{display:flex; gap:8px; flex-wrap:wrap; margin:12px 12px 6px;}
   .bs-analysis{font-size:13px; line-height:1.55; color:var(--text-dim);}
@@ -710,6 +718,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span>Añadir a comparación</span>
       </button>
+      <button type="button" class="action-btn" id="rptBtnRes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+        <span>Informe (PDF / Word)</span>
+      </button>
     </div>
     <button type="button" class="export-btn" id="exportBtn">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
@@ -869,6 +881,7 @@
     <button type="button" class="action-btn" id="bsExport"><span>Exportar a Excel</span></button>
     <button type="button" class="action-btn" id="bsToModel"><span>Enviar al modelo libre</span></button>
   </div>
+  <div class="action-row" style="margin-top:0;"><button type="button" class="action-btn" id="bsReport"><span>Informe (PDF / Word)</span></button></div>
   <div class="hint-line">«Enviar al modelo libre» crea las variables N, p y q del escenario elegido y los resultados con las funciones BASS y BASSACUM, para que sigas el análisis con precios, costos o ingresos.</div>
 </div>
 
@@ -882,7 +895,7 @@
     <button type="button" class="chip" id="vwFileBtn">Cargar archivo</button>
     <button type="button" class="chip" id="vwExBtn">Usar ejemplo</button>
     <button type="button" class="chip" id="vwClear">Borrar</button>
-    <input type="file" id="vwFileInput" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden>
+    <input type="file" id="vwFileInput" accept=".txt,.csv,.tsv,.xlsx,.xlsm,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   </div>
   <div class="hint-line" id="vwInfo" style="margin-bottom:0; margin-top:10px;">Columnas, en este orden: muy barato · barato · caro · muy caro. Sepáralas con tabulador (pegado desde Excel), punto y coma, coma o espacio, y escribe los precios sin separador de miles (45000, no 45.000). Un archivo .csv, .tsv o .txt debe tener esas cuatro columnas primero.</div>
 </div>
@@ -911,6 +924,7 @@
     <button type="button" class="action-btn" id="vwExport"><span>Exportar a Excel</span></button>
     <button type="button" class="action-btn" id="vwToModel"><span>Enviar al modelo libre</span></button>
   </div>
+  <div class="action-row" style="margin-top:0;"><button type="button" class="action-btn" id="vwReport"><span>Informe (PDF / Word)</span></button></div>
   <div class="hint-line">«Enviar al modelo libre» crea las variables PMC, OPP, IPP y PME (triangulares, con la banda P5–P95 del bootstrap) y los resultados «Precio_optimo» y «Rango_aceptable», para que sigas con costos, volúmenes o ingresos.</div>
   <div class="hint-line">Definiciones: <b>PMC</b> (precio mínimo aceptable) = cruce de «muy barato» con «no barato» (1 − barato). <b>OPP</b> (precio óptimo) = «muy barato» con «muy caro». <b>IPP</b> (indiferencia) = «barato» con «caro». <b>PME</b> (precio máximo aceptable) = «muy caro» con «no caro» (1 − caro). Las bandas P5–P95 salen de repetir el cálculo 500 veces con encuestados remuestreados al azar (bootstrap).</div>
 </div>
@@ -931,7 +945,7 @@
     <button type="button" class="chip" id="fitFileBtn">Cargar archivo</button>
     <button type="button" class="chip" id="fitSampleBtn">Usar ejemplo</button>
     <button type="button" class="chip" id="fitClearBtn">Borrar</button>
-    <input type="file" id="fitFileInput" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden>
+    <input type="file" id="fitFileInput" accept=".txt,.csv,.tsv,.xlsx,.xlsm,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   </div>
   <div class="data-info" id="fitInfo"></div>
   <div id="fitVars" style="display:none;">
@@ -972,6 +986,7 @@
     <button type="button" class="action-btn" id="fitExport"><span>Exportar a Excel (@RISK)</span></button>
     <button type="button" class="action-btn" id="fitToModel"><span>Enviar al modelo libre</span></button>
   </div>
+  <div class="action-row" style="margin:0 0 6px;"><button type="button" class="action-btn" id="fitReport"><span>Informe (PDF / Word)</span></button></div>
   <div class="hint-line" id="fitActHint" style="margin-top:0;"></div>
   <div class="stat-grid" id="fitStats"></div>
   <div class="card" style="margin-top:12px;">
@@ -995,7 +1010,7 @@
     <button type="button" class="chip" id="tsFileBtn">Cargar archivo</button>
     <button type="button" class="chip" id="tsSampleBtn">Usar ejemplo</button>
     <button type="button" class="chip" id="tsClearBtn">Borrar</button>
-    <input type="file" id="tsFileInput" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden>
+    <input type="file" id="tsFileInput" accept=".txt,.csv,.tsv,.xlsx,.xlsm,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   </div>
   <div class="data-info" id="tsInfo"></div>
 </div>
@@ -4315,6 +4330,150 @@ FIT.parseTable = text => {
   return { cols, skipped, rows: dataRows.length, header: head };
 };
 
+/* ---- lectura de archivos de Excel (.xlsx) sin librerías: ZIP + XML ---- */
+const XLR = {};
+XLR.inflate = async u8 => {
+  const stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+};
+XLR.unzip = buf => {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let e = u8.length - 22; while(e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if(e < 0) throw new Error('El archivo no es un .xlsx válido.');
+  const count = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+  const files = new Map(), td = new TextDecoder();
+  for(let i = 0; i < count; i++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    files.set(td.decode(u8.subarray(p + 46, p + 46 + nlen)), { method, csize, lho });
+    p += 46 + nlen + elen + clen;
+  }
+  return async name => {
+    const f = files.get(name); if(!f) return null;
+    const start = f.lho + 30 + dv.getUint16(f.lho + 26, true) + dv.getUint16(f.lho + 28, true), data = u8.subarray(start, start + f.csize);
+    if(f.method === 0) return td.decode(data);
+    if(f.method === 8) return td.decode(await XLR.inflate(data));
+    throw new Error('El archivo usa una compresión que no se puede leer.');
+  };
+};
+XLR.xml = txt => { const d = new DOMParser().parseFromString(txt, 'application/xml'); if(d.getElementsByTagName('parsererror').length) throw new Error('El archivo de Excel está dañado.'); return d; };
+XLR.all = (el, name) => Array.from(el.getElementsByTagNameNS('*', name));
+XLR.colIndex = ref => { let n = 0; for(const ch of ref.replace(/[^A-Za-z]/g, '').toUpperCase()) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; };
+XLR.isDateFmt = (id, code) => {
+  if((id >= 14 && id <= 22) || (id >= 27 && id <= 36) || (id >= 45 && id <= 47) || (id >= 50 && id <= 58)) return true;
+  if(!code) return false;
+  const c = code.replace(/"[^"]*"/g, '').replace(/\[[^\]]*\]/g, '').replace(/\\./g, '');
+  return /[ymdhs]/i.test(c) && !/^(general|0|#)/i.test(c);
+};
+XLR.serialToIso = v => {
+  const ms = Math.round((v - 25569) * 86400000), d = new Date(ms), p2 = x => String(x).padStart(2, '0');
+  const day = `${d.getUTCFullYear()}-${p2(d.getUTCMonth() + 1)}-${p2(d.getUTCDate())}`;
+  return v % 1 ? `${day} ${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}` : day;
+};
+/* devuelve las hojas con datos: [{ name, rows: [[celda…]…] }] (rectángulo mínimo que contiene todo lo escrito) */
+XLR.read = async file => {
+  if(typeof DecompressionStream === 'undefined') throw new Error('Este navegador no puede abrir archivos .xlsx. Guárdalo como CSV desde Excel.');
+  const get = XLR.unzip(await file.arrayBuffer());
+  const wbTxt = await get('xl/workbook.xml'); if(!wbTxt) throw new Error('El archivo no es un libro de Excel válido.');
+  const wb = XLR.xml(wbTxt), relTxt = await get('xl/_rels/workbook.xml.rels'), rels = new Map();
+  if(relTxt) XLR.all(XLR.xml(relTxt), 'Relationship').forEach(r => { let t = r.getAttribute('Target') || ''; t = t.startsWith('/') ? t.slice(1) : 'xl/' + t.replace(/^\.\//, ''); rels.set(r.getAttribute('Id'), t); });
+  const strs = [], ssTxt = await get('xl/sharedStrings.xml');
+  if(ssTxt) XLR.all(XLR.xml(ssTxt), 'si').forEach(si => { strs.push(XLR.all(si, 't').filter(t => !t.parentNode || t.parentNode.localName !== 'rPh').map(t => t.textContent).join('')); });
+  const dateXf = [], stTxt = await get('xl/styles.xml');
+  if(stTxt){
+    const st = XLR.xml(stTxt), codes = new Map();
+    XLR.all(st, 'numFmt').forEach(n => codes.set(+n.getAttribute('numFmtId'), n.getAttribute('formatCode')));
+    const xfs = XLR.all(st, 'cellXfs')[0];
+    if(xfs) Array.from(xfs.children).forEach(x => { const id = +x.getAttribute('numFmtId') || 0; dateXf.push(XLR.isDateFmt(id, codes.get(id))); });
+  }
+  const out = [];
+  for(const sh of XLR.all(wb, 'sheet')){
+    const rid = sh.getAttribute('r:id') || sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+    const path = rels.get(rid); if(!path) continue;
+    const txt = await get(path); if(!txt) continue;
+    const grid = new Map(); let r0 = Infinity, r1 = -1, c0 = Infinity, c1 = -1, cells = 0;
+    for(const row of XLR.all(XLR.xml(txt), 'row')){
+      const ri = (+row.getAttribute('r') || 0) - 1; let seq = 0;
+      for(const c of Array.from(row.children)){
+        if(c.localName !== 'c') continue;
+        const ref = c.getAttribute('r'), ci = ref ? XLR.colIndex(ref) : seq; seq = ci + 1;
+        const t = c.getAttribute('t'), sx = +c.getAttribute('s') || 0;
+        const vEl = Array.from(c.children).find(x => x.localName === 'v'), isEl = Array.from(c.children).find(x => x.localName === 'is');
+        let val = '';
+        if(t === 'inlineStr' && isEl) val = XLR.all(isEl, 't').map(x => x.textContent).join('');
+        else if(vEl){
+          const v = vEl.textContent;
+          if(t === 's') val = strs[+v] == null ? '' : strs[+v];
+          else if(t === 'str' || t === 'd') val = v;
+          else if(t === 'b') val = v === '1' ? 'VERDADERO' : 'FALSO';
+          else if(t === 'e') val = '';
+          else { val = v; if(dateXf[sx] && v !== '' && isFinite(+v)) val = XLR.serialToIso(+v); }
+        }
+        val = String(val).replace(/[\t\r\n]+/g, ' ').trim();
+        if(val === '') continue;
+        if(++cells > 6000000) throw new Error('La hoja es demasiado grande para abrirla aquí.');
+        const rr = ri >= 0 ? ri : 0;
+        if(!grid.has(rr)) grid.set(rr, new Map());
+        grid.get(rr).set(ci, val);
+        if(rr < r0) r0 = rr; if(rr > r1) r1 = rr; if(ci < c0) c0 = ci; if(ci > c1) c1 = ci;
+      }
+    }
+    if(r1 < 0) continue;
+    const rows = [];
+    for(let r = r0; r <= r1; r++){ const m = grid.get(r), line = []; for(let c = c0; c <= c1; c++) line.push(m && m.has(c) ? m.get(c) : ''); rows.push(line); }
+    out.push({ name: sh.getAttribute('name') || ('Hoja ' + (out.length + 1)), rows });
+  }
+  return out;
+};
+XLR.toText = rows => rows.map(r => r.join('\t')).join('\n');
+
+/* hoja inferior para elegir la hoja del libro cuando trae varias con datos */
+function xlsChoose(sheets){
+  return new Promise(resolve => {
+    let box = document.getElementById('xlsSheet');
+    if(!box){
+      document.body.insertAdjacentHTML('beforeend', `
+<div class="sheet-backdrop" id="xlsBackdrop"></div>
+<div class="sheet" id="xlsSheet">
+  <div class="sheet-handle"></div>
+  <div class="comp-head"><div class="sheet-title">¿Qué hoja quieres usar?</div><button type="button" class="row-remove" id="xlsClose" aria-label="Cerrar">✕</button></div>
+  <div class="sheet-list" id="xlsList"></div>
+</div>`);
+      box = document.getElementById('xlsSheet');
+    }
+    const bd = document.getElementById('xlsBackdrop'), list = document.getElementById('xlsList');
+    let done = false;
+    const finish = i => { if(done) return; done = true; box.classList.remove('show'); bd.classList.remove('show'); resolve(i); };
+    list.innerHTML = '';
+    sheets.forEach((sh, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-item';
+      const nc = sh.rows.reduce((m, r) => Math.max(m, r.length), 0);
+      b.innerHTML = `<div class="sheet-item-body"><div class="sheet-item-top"><span class="sheet-item-name">${escH(sh.name)}</span></div><div class="saved-meta">${sh.rows.length.toLocaleString('es-ES')} filas · ${nc} columna${nc === 1 ? '' : 's'} · «${escH(String(sh.rows[0].find(x => x !== '') || '').slice(0, 30))}»…</div></div>`;
+      b.onclick = () => finish(i);
+      list.appendChild(b);
+    });
+    document.getElementById('xlsClose').onclick = () => finish(-1); bd.onclick = () => finish(-1);
+    box.classList.add('show'); bd.classList.add('show');
+  });
+}
+/* lee un archivo de datos (texto o Excel) y devuelve su contenido como texto separado por tabuladores/comas; null si se cancela */
+async function readDataFile(file){
+  const nm = (file.name || '').toLowerCase();
+  if(/\.xls$/.test(nm)){ toast('Los archivos .xls antiguos no se pueden leer: guárdalo como .xlsx o CSV.'); return null; }
+  if(/\.(xlsx|xlsm)$/.test(nm)){
+    try{
+      const sheets = await XLR.read(file);
+      if(!sheets.length){ toast('El libro de Excel no tiene datos.'); return null; }
+      let pick = 0;
+      if(sheets.length > 1){ pick = await xlsChoose(sheets); if(pick < 0) return null; }
+      const sh = sheets[pick], nc = sh.rows.reduce((m, r) => Math.max(m, r.length), 0);
+      toast(`Hoja «${sh.name}»: ${sh.rows.length.toLocaleString('es-ES')} filas × ${nc} columnas`);
+      return XLR.toText(sh.rows);
+    } catch(e){ console.error(e); toast(e.message || 'No se pudo leer el archivo de Excel.'); return null; }
+  }
+  return await file.text();
+}
+
 /* ---- utilidades ---- */
 const _sum = (a, f) => { let s = 0; for(let i = 0; i < a.length; i++) s += f(a[i], i); return s; };
 const _softplus = x => x > 30 ? x : (x < -30 ? Math.exp(x) : Math.log1p(Math.exp(x)));
@@ -4598,11 +4757,10 @@ $('fitSampleBtn').onclick = () => {
 $('fitFileBtn').onclick = () => $('fitFileInput').click();
 $('fitVarAll').onclick = () => { if(FITUI.table) FITUI.sel = new Set(FITUI.table.cols.map((_, i) => i)); fitParseNow(); };
 $('fitVarNone').onclick = () => { FITUI.sel = new Set(); fitParseNow(); };
-$('fitFileInput').onchange = e => {
-  const f = e.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = () => { $('fitData').value = String(r.result); FITUI.sel = new Set([0]); FITUI.sig = ''; fitParseNow(); };
-  r.readAsText(f); e.target.value = '';
+$('fitFileInput').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  const txt = await readDataFile(f); if(txt === null) return;
+  $('fitData').value = txt; FITUI.sel = new Set([0]); FITUI.sig = ''; fitParseNow();
 };
 $('fitCritHelp').textContent = FIT_CRIT_HELP.aic;
 document.querySelectorAll('#fitCrit button').forEach(b => {
@@ -5711,8 +5869,9 @@ document.body.insertAdjacentHTML('beforeend', `
 <div class="sheet" id="mmSheet">
   <div class="sheet-handle"></div>
   <div class="comp-head"><div class="sheet-title">Mis modelos</div><button type="button" class="row-remove" id="mmClose" aria-label="Cerrar">✕</button></div>
-  <div class="save-field"><input type="text" id="mmName" maxlength="60" placeholder="Nombre para guardar el modelo actual" autocomplete="off"></div>
-  <div class="save-actions"><button type="button" class="btn-primary" id="mmSave">Guardar el modelo actual</button></div>
+  <div class="save-field"><input type="text" id="mmName" maxlength="60" placeholder="Nombre del modelo" autocomplete="off"></div>
+  <div class="save-field"><input type="text" id="mmNote" maxlength="120" placeholder="Nota de esta versión (opcional)" autocomplete="off"></div>
+  <div class="save-actions"><button type="button" class="btn-primary" id="mmSave">Guardar versión</button></div>
   <div class="sheet-list" id="mmList"></div>
   <div class="mm-files"><button type="button" class="chip" id="mmExport">Exportar a archivo</button><button type="button" class="chip" id="mmImport">Importar archivo</button><input type="file" id="mmFile" accept=".json,application/json" hidden></div>
 </div>`);
@@ -5724,58 +5883,171 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMM(); })
 const pad2m = x => String(x).padStart(2, '0');
 const fechaM = iso => { const w = new Date(iso); return `${pad2m(w.getDate())}/${pad2m(w.getMonth() + 1)}/${w.getFullYear()}`; };
 
+/* ---- versiones: cada vez que guardas con el mismo nombre se agrega una versión (se conservan hasta 30 por modelo) ---- */
+const MM_MAXV = 30;
+const mmStable = o => JSON.stringify(o, (k, v) => (v && typeof v === 'object' && !Array.isArray(v)) ? Object.keys(v).sort().reduce((r, kk) => { r[kk] = v[kk]; return r; }, {}) : v);
+const mmCanon = m => ({ vars: m.vars, corr: m.corr, outs: m.outs, iterations: m.iterations });
+const mmSame = (a, b) => mmStable(mmCanon(a)) === mmStable(mmCanon(b));
+const mmVersions = item => (Array.isArray(item.versions) && item.versions.length ? item.versions : [{ v: 1, when: item.when, note: '', model: item.model }]);
+const mmFechaHora = iso => { const w = new Date(iso); return `${fechaM(iso)} ${pad2m(w.getHours())}:${pad2m(w.getMinutes())}`; };
+const MM = { view: 'list', histId: null, diffV: null, diffMode: 'prev' };
+function mdlVarText(v){
+  if(v.dist === 'const') return `Valor fijo ${sig4(v.params.value)}`;
+  const d = DISTS[v.dist]; if(!d) return String(v.dist);
+  const ps = d.params.map(q => { const x = v.params[q.key]; const lab = String(q.label || q.key).replace(/\s*\(.*$/, ''); return typeof x === 'number' ? `${lab} ${sig4(x)}` : `${lab} (${Array.isArray(x) ? x.length + ' filas' : '…'})`; });
+  const lim = (v.lo != null || v.hi != null) ? ` [límites ${v.lo != null ? sig4(v.lo) : '−∞'} a ${v.hi != null ? sig4(v.hi) : '+∞'}]` : '';
+  return `${d.name} (${ps.join(', ')})${lim}`;
+}
+function mmDiff(a, b){                     // a = base, b = nueva
+  const out = [], key = n => String(n).trim().toLowerCase();
+  const A = new Map(a.vars.map(v => [key(v.name), v])), B = new Map(b.vars.map(v => [key(v.name), v]));
+  B.forEach((v, k) => { if(!A.has(k)) out.push(['add', `Variable «${v.name}»: ${mdlVarText(v)}`]); else { const t1 = mdlVarText(A.get(k)), t2 = mdlVarText(v); if(t1 !== t2) out.push(['chg', `«${v.name}»: ${t1} → ${t2}`]); } });
+  A.forEach((v, k) => { if(!B.has(k)) out.push(['del', `Variable «${v.name}» eliminada`]); });
+  const AO = new Map(a.outs.map(o => [key(o.name), o])), BO = new Map(b.outs.map(o => [key(o.name), o]));
+  BO.forEach((o, k) => { if(!AO.has(k)) out.push(['add', `Resultado «${o.name}»: ${o.formula}`]); else { const q = AO.get(k); if(q.formula !== o.formula) out.push(['chg', `«${o.name}»: ${q.formula} → ${o.formula}`]); if((q.format || 'num') !== (o.format || 'num')) out.push(['chg', `«${o.name}»: formato ${q.format || 'num'} → ${o.format || 'num'}`]); } });
+  AO.forEach((o, k) => { if(!BO.has(k)) out.push(['del', `Resultado «${o.name}» eliminado`]); });
+  const cm = m => new Map(m.corr.map(c => { const n1 = m.vars[c.a] && m.vars[c.a].name, n2 = m.vars[c.b] && m.vars[c.b].name; return [[key(n1), key(n2)].sort().join('|'), { n1, n2, rho: c.rho }]; }));
+  const AC = cm(a), BC = cm(b);
+  BC.forEach((c, k) => { if(!AC.has(k)) out.push(['add', `Correlación «${c.n1}» ↔ «${c.n2}»: ${sig4(c.rho)}`]); else if(AC.get(k).rho !== c.rho) out.push(['chg', `Correlación «${c.n1}» ↔ «${c.n2}»: ${sig4(AC.get(k).rho)} → ${sig4(c.rho)}`]); });
+  AC.forEach((c, k) => { if(!BC.has(k)) out.push(['del', `Correlación «${c.n1}» ↔ «${c.n2}» eliminada`]); });
+  if(a.iterations !== b.iterations) out.push(['chg', `Iteraciones: ${a.iterations.toLocaleString('es-ES')} → ${b.iterations.toLocaleString('es-ES')}`]);
+  return out;
+}
+function mmSave(list){ return Persist.set(MM_KEY, JSON.stringify(list)); }
+
 function mmRenderList(){
+  if(MM.view === 'history') return mmRenderHistory();
   const box = $('mmList'), list = mdlModels(); box.innerHTML = '';
   if(!list.length){ box.innerHTML = '<div class="sheet-empty">Aún no has guardado modelos con nombre.<br>El modelo en edición se conserva solo, aunque cierres la app.</div>'; return; }
   list.forEach(item => {
+    const vs = mmVersions(item), last = vs[vs.length - 1], m = last.model;
     const row = document.createElement('div'); row.className = 'saved-item';
     const open = document.createElement('button'); open.type = 'button'; open.className = 'sheet-item';
     open.innerHTML = `<div class="sheet-item-body"><div class="sheet-item-top"><span class="sheet-item-name">${escH(item.name)}</span></div>
-      <div class="saved-meta">${item.model.vars.length} variables · ${item.model.outs.length} resultado${item.model.outs.length === 1 ? '' : 's'} · ${fechaM(item.when)}</div></div>`;
+      <div class="saved-meta">v${last.v} · ${m.vars.length} variables · ${m.outs.length} resultado${m.outs.length === 1 ? '' : 's'} · ${fechaM(last.when)}</div></div>`;
     open.onclick = () => {
-      const r = mdlSanitize(item.model);
+      const r = mdlSanitize(m);
       if(!r.model){ toast(r.error); return; }
-      mdlApply(r.model); mdlAutosave(); $('mmName').value = item.name; closeMM(); toast(`Modelo «${item.name}» abierto`);
+      mdlApply(r.model); mdlAutosave(); $('mmName').value = item.name; closeMM(); toast(`Modelo «${item.name}» abierto (v${last.v})`);
     };
+    const hist = document.createElement('button'); hist.type = 'button'; hist.className = 'saved-del'; hist.textContent = vs.length > 1 ? `Historial · ${vs.length}` : 'Historial'; hist.setAttribute('aria-label', 'Ver el historial de versiones');
+    hist.onclick = () => { MM.view = 'history'; MM.histId = item.id; MM.diffV = null; mmRenderList(); };
     const del = document.createElement('button'); del.type = 'button'; del.className = 'saved-del'; del.textContent = '✕'; del.setAttribute('aria-label', 'Eliminar');
     let armed = null;
     del.onclick = () => {
       if(!armed){ del.textContent = '¿Borrar?'; del.style.color = '#FF6B6B'; del.style.borderColor = '#FF6B6B'; armed = setTimeout(() => { armed = null; del.textContent = '✕'; del.style.cssText = ''; }, 3000); return; }
       clearTimeout(armed);
-      Persist.set(MM_KEY, JSON.stringify(mdlModels().filter(x => x.id !== item.id)));
-      mmRenderList(); toast('Modelo eliminado');
+      mmSave(mdlModels().filter(x => x.id !== item.id));
+      mmRenderList(); toast('Modelo eliminado con todo su historial');
     };
-    row.appendChild(open); row.appendChild(del); box.appendChild(row);
+    row.appendChild(open); row.appendChild(hist); row.appendChild(del); box.appendChild(row);
   });
 }
-$('mdlModelsBtn').onclick = () => { mmRenderList(); mmSheet.classList.add('show'); mmBackdrop.classList.add('show'); };
+function mmRenderHistory(){
+  const box = $('mmList'), list = mdlModels(), item = list.find(x => x.id === MM.histId); box.innerHTML = '';
+  if(!item){ MM.view = 'list'; return mmRenderList(); }
+  const vs = mmVersions(item), latest = vs[vs.length - 1];
+  const head = document.createElement('div'); head.className = 'mm-hist-head';
+  head.innerHTML = `<button type="button" class="chip" id="mmBack">← Modelos</button><span>${escH(item.name)} · ${vs.length} ${vs.length === 1 ? 'versión' : 'versiones'}</span>`;
+  box.appendChild(head);
+  head.querySelector('#mmBack').onclick = () => { MM.view = 'list'; MM.histId = null; mmRenderList(); };
+  for(let k = vs.length - 1; k >= 0; k--){
+    const ver = vs[k], m = ver.model;
+    const row = document.createElement('div'); row.className = 'saved-item';
+    const open = document.createElement('button'); open.type = 'button'; open.className = 'sheet-item';
+    open.innerHTML = `<div class="sheet-item-body"><div class="sheet-item-top"><span class="sheet-item-name">v${ver.v}${ver === latest ? ' · última' : ''}</span></div>
+      <div class="saved-meta">${mmFechaHora(ver.when)} · ${m.vars.length} variables · ${m.outs.length} resultado${m.outs.length === 1 ? '' : 's'}</div>${ver.note ? `<div class="mm-note">${escH(ver.note)}</div>` : ''}</div>`;
+    open.onclick = () => {
+      const r = mdlSanitize(m);
+      if(!r.model){ toast(r.error); return; }
+      mdlApply(r.model); mdlAutosave(); $('mmName').value = item.name; closeMM();
+      toast(ver === latest ? `«${item.name}» v${ver.v} abierta` : `«${item.name}» v${ver.v} abierta. Si la guardas, será la v${latest.v + 1}.`);
+    };
+    const cmp = document.createElement('button'); cmp.type = 'button'; cmp.className = 'saved-del'; cmp.textContent = 'Cambios';
+    cmp.onclick = () => { MM.diffV = MM.diffV === ver.v ? null : ver.v; mmRenderHistory(); };
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'saved-del'; del.textContent = '✕'; del.setAttribute('aria-label', 'Eliminar esta versión');
+    let armed = null;
+    del.onclick = () => {
+      if(vs.length < 2){ toast('Es la única versión: elimina el modelo completo desde la lista.'); return; }
+      if(!armed){ del.textContent = '¿Borrar?'; del.style.color = '#FF6B6B'; del.style.borderColor = '#FF6B6B'; armed = setTimeout(() => { armed = null; del.textContent = '✕'; del.style.cssText = ''; }, 3000); return; }
+      clearTimeout(armed);
+      const all = mdlModels(), it = all.find(x => x.id === item.id); if(!it) return;
+      const rest = mmVersions(it).filter(x => x.v !== ver.v), nl = rest[rest.length - 1];
+      it.versions = rest; it.model = nl.model; it.when = nl.when;
+      mmSave(all); if(MM.diffV === ver.v) MM.diffV = null; mmRenderHistory(); toast(`Versión v${ver.v} eliminada`);
+    };
+    row.appendChild(open); row.appendChild(cmp); row.appendChild(del); box.appendChild(row);
+    if(MM.diffV === ver.v){
+      const d = document.createElement('div'); d.className = 'mm-diff';
+      const prev = k > 0 ? vs[k - 1] : null;
+      const mode = MM.diffMode === 'cur' || !prev ? (prev || MM.diffMode === 'cur' ? 'cur' : 'init') : 'prev';
+      const lines = mode === 'prev' ? mmDiff(prev.model, m) : (mode === 'cur' ? mmDiff(m, mdlSnapshot()) : null);
+      const tabs = `<div class="tabs-mini">${prev ? `<button type="button" class="chip ${mode === 'prev' ? 'sel' : ''}" data-m="prev">Respecto a v${prev.v}</button>` : ''}<button type="button" class="chip ${mode === 'cur' ? 'sel' : ''}" data-m="cur">Respecto a lo que tienes en pantalla</button></div>`;
+      const body = lines === null ? '<div class="none">Es la primera versión: no hay una anterior con la cual comparar.</div>'
+        : (lines.length ? lines.map(([t, x]) => `<div class="${t}">${t === 'add' ? '+ ' : (t === 'del' ? '− ' : '~ ')}${escH(x)}</div>`).join('') : '<div class="none">Sin diferencias.</div>');
+      d.innerHTML = tabs + (mode === 'cur' ? '<div class="none" style="margin-bottom:4px;">Cambios que traería pasar de esta versión a lo que hay en pantalla:</div>' : '') + body;
+      d.querySelectorAll('[data-m]').forEach(bt => { bt.onclick = () => { MM.diffMode = bt.dataset.m; mmRenderHistory(); }; });
+      box.appendChild(d);
+    }
+  }
+}
+$('mdlModelsBtn').onclick = () => { MM.view = 'list'; MM.histId = null; mmRenderList(); mmSheet.classList.add('show'); mmBackdrop.classList.add('show'); };
 $('mmSave').onclick = () => {
-  const name = ($('mmName').value || '').trim() || `Modelo ${mdlModels().length + 1}`;
-  const list = mdlModels(), snap = mdlSnapshot(), i = list.findIndex(x => x.name.toLowerCase() === name.toLowerCase());
-  if(i >= 0) list[i] = { ...list[i], when: new Date().toISOString(), model: snap };
-  else list.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, when: new Date().toISOString(), model: snap });
+  const name = ($('mmName').value || '').trim() || `Modelo ${mdlModels().length + 1}`, note = ($('mmNote').value || '').trim();
+  const list = mdlModels(), snap = mdlSnapshot(), now = new Date().toISOString(), i = list.findIndex(x => x.name.toLowerCase() === name.toLowerCase());
+  let msg;
+  if(i >= 0){
+    const it = list[i], vs = mmVersions(it).slice(), last = vs[vs.length - 1];
+    if(mmSame(last.model, snap)){ toast(`Sin cambios desde la versión v${last.v}`); return; }
+    vs.push({ v: last.v + 1, when: now, note, model: snap }); while(vs.length > MM_MAXV) vs.shift();
+    list[i] = { ...it, when: now, model: snap, versions: vs }; msg = `«${name}»: guardada la versión v${last.v + 1}`;
+  } else {
+    list.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, when: now, model: snap, versions: [{ v: 1, when: now, note, model: snap }] }); msg = `Modelo «${name}» guardado (v1)`;
+  }
   if(list.length > 100) list.length = 100;
-  const ok = Persist.set(MM_KEY, JSON.stringify(list));
-  mmRenderList(); toast(ok ? (i >= 0 ? `Modelo «${name}» actualizado` : `Modelo «${name}» guardado`) : 'No se pudo guardar en este dispositivo');
+  const ok = mmSave(list);
+  if(ok) $('mmNote').value = '';
+  mmRenderList(); toast(ok ? msg : 'No se pudo guardar en este dispositivo (¿poco espacio?)');
 };
 $('mmExport').onclick = async () => {
   const name = ($('mmName').value || '').trim() || 'modelo';
-  const data = { app: 'MonteCarloLab', tipo: 'modelo', version: 1, nombre: name, fecha: new Date().toISOString(), modelo: mdlSnapshot() };
+  const saved = mdlModels().find(x => x.name.toLowerCase() === name.toLowerCase());
+  const data = { app: 'MonteCarloLab', tipo: 'modelo', version: 2, nombre: name, fecha: new Date().toISOString(), modelo: mdlSnapshot() };
+  if(saved) data.versiones = mmVersions(saved).map(v => ({ v: v.v, fecha: v.when, nota: v.note || '', modelo: v.model }));
   const file = 'MonteCarloLab_' + (name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '') || 'modelo') + '.json';
   await XL.download(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), file);
 };
 $('mmImport').onclick = () => $('mmFile').click();
 $('mmFile').onchange = e => {
   const f = e.target.files[0]; if(!f) return;
-  if(f.size > 2 * 1024 * 1024){ toast('El archivo es demasiado grande para ser un modelo'); e.target.value = ''; return; }
+  if(f.size > 8 * 1024 * 1024){ toast('El archivo es demasiado grande para ser un modelo'); e.target.value = ''; return; }
   const r = new FileReader();
   r.onload = () => {
     let obj; try{ obj = JSON.parse(String(r.result)); } catch(err){ toast('El archivo no es un modelo válido (no se pudo leer).'); return; }
     const res = mdlSanitize(obj && obj.modelo ? obj.modelo : obj);
     if(!res.model){ toast(res.error); return; }
     mdlApply(res.model); mdlAutosave();
-    if(obj && typeof obj.nombre === 'string') $('mmName').value = obj.nombre.slice(0, 60);
-    closeMM(); toast(`Modelo importado${obj && obj.nombre ? ': «' + String(obj.nombre).slice(0, 40) + '»' : ''}`);
+    const nm = obj && typeof obj.nombre === 'string' ? obj.nombre.slice(0, 60) : '';
+    if(nm) $('mmName').value = nm;
+    let extra = '';
+    if(nm && Array.isArray(obj.versiones) && obj.versiones.length && obj.versiones.length <= 200){      /* historial: se suman las versiones que aún no existen en este dispositivo */
+      const incoming = [];
+      for(const v of obj.versiones){ const sv = mdlSanitize(v && v.modelo); if(sv.model) incoming.push({ when: typeof v.fecha === 'string' && !isNaN(new Date(v.fecha)) ? new Date(v.fecha).toISOString() : new Date().toISOString(), note: String(v.nota || '').slice(0, 120), model: { v: 1, ...mmCanon(sv.model) } }); }
+      if(incoming.length){
+        const list = mdlModels(), i = list.findIndex(x => x.name.toLowerCase() === nm.toLowerCase());
+        const existing = i >= 0 ? mmVersions(list[i]).slice() : [];
+        const fresh = incoming.filter(v => !existing.some(x => mmSame(x.model, v.model))).sort((x, y) => x.when.localeCompare(y.when));
+        let n = existing.length ? existing[existing.length - 1].v : 0;
+        fresh.forEach(v => existing.push({ v: ++n, when: v.when, note: v.note, model: v.model }));
+        while(existing.length > MM_MAXV) existing.shift();
+        if(existing.length){
+          const lastV = existing[existing.length - 1], entry = { id: i >= 0 ? list[i].id : Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: i >= 0 ? list[i].name : nm, when: lastV.when, model: lastV.model, versions: existing };
+          if(i >= 0) list[i] = entry; else list.unshift(entry);
+          if(mmSave(list)) extra = ` · historial: ${fresh.length} ${fresh.length === 1 ? 'versión nueva' : 'versiones nuevas'}`;
+        }
+      }
+    }
+    closeMM(); toast(`Modelo importado${nm ? ': «' + nm.slice(0, 40) + '»' : ''}${extra}`);
   };
   r.readAsText(f); e.target.value = '';
 };
@@ -6733,11 +7005,10 @@ $('vwClear').onclick = () => { $('vwData').value = ''; VW.res = null; $('vwOut')
 $('vwRun').onclick = () => { vwRun(); vwSave(); };
 $('vwData').addEventListener('input', vwInfoUpdate);
 $('vwFileBtn').onclick = () => $('vwFileInput').click();
-$('vwFileInput').onchange = e => {
-  const f = e.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = () => { $('vwData').value = String(r.result); vwInfoUpdate(); vwSave(); };
-  r.readAsText(f); e.target.value = '';
+$('vwFileInput').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  const txt = await readDataFile(f); if(txt === null) return;
+  $('vwData').value = txt.replace(/\t/g, '; '); vwInfoUpdate(); vwSave();
 };
 let vwSaveTimer = null;
 function vwSave(){ clearTimeout(vwSaveTimer); vwSaveTimer = setTimeout(() => Persist.set(VW_KEY, JSON.stringify({ text: $('vwData').value.slice(0, 200000), unit: $('vwUnit').value, excl: $('vwExcl').checked })), 300); }
@@ -7314,7 +7585,13 @@ function tsParseNow(){
 $('tsData').addEventListener('input', () => { clearTimeout(TSU.t); TSU.t = setTimeout(tsParseNow, 200); });
 $('tsClearBtn').onclick = () => { $('tsData').value = ''; tsInfo(''); $('tsOut').style.display = 'none'; TSU.res = null; $('tsErr').textContent = ''; };
 $('tsFileBtn').onclick = () => $('tsFileInput').click();
-$('tsFileInput').onchange = e => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = () => { $('tsData').value = String(r.result); tsParseNow(); }; r.readAsText(f); e.target.value = ''; };
+$('tsFileInput').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  let txt = await readDataFile(f); if(txt === null) return;
+  const tb = FIT.parseTable(txt);                       // una serie de tiempo es una sola columna: si el archivo trae varias, se usa la primera numérica
+  if(tb){ txt = tb.cols[0].values.map(v => String(v).replace('.', ',')).join('\n'); if(tb.cols.length > 1) toast(`Se usó la columna «${tb.cols[0].name}»; las otras ${tb.cols.length - 1} se ignoraron.`); }
+  $('tsData').value = txt; tsParseNow();
+};
 $('tsSampleBtn').onclick = () => {
   let ln = Math.log(100); const out = [];
   for(let t = 0; t < 250; t++){
@@ -7494,6 +7771,521 @@ XL.buildTS = async spec => {
   const pad = v => String(v).padStart(2, '0'), w = spec.when || new Date();
   return { blob, filename: `MonteCarloLab_SeriesTiempo_${w.getFullYear()}${pad(w.getMonth() + 1)}${pad(w.getDate())}_${pad(w.getHours())}${pad(w.getMinutes())}.xlsx` };
 };
+
+/* =========================================================
+   INFORMES EN PDF Y WORD: supuestos + resultados (+ gráficos) del análisis que tengas en pantalla
+========================================================= */
+const RC = { ink: '#2b3544', dim: '#6b7789', grid: '#e3e8ef', axis: '#b5bfce', accent: '#E5532A', teal: '#0E8A76', blue: '#5B8DEF', gold: '#C98A00', red: '#D6284A',
+  pal: ['#E5532A', '#0E8A76', '#5B8DEF', '#C98A00', '#8B5CF6', '#D6284A', '#2E9E4F', '#6B7280'] };
+function rptNew(w, h){ const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); return { c, g, w, h }; }
+/* ejes, cuadrícula y rótulos; devuelve las funciones X(), Y() */
+function rptFrame(o, m, x0, x1, y0, y1, xf, yf, xTitle, yTitle){
+  const { g, w, h } = o, pw = w - m.l - m.r, ph = h - m.t - m.b;
+  const X = x => m.l + (x - x0) / ((x1 - x0) || 1) * pw, Y = y => m.t + ph - (y - y0) / ((y1 - y0) || 1) * ph;
+  g.font = '500 19px "JetBrains Mono", monospace'; g.fillStyle = RC.dim; g.strokeStyle = RC.grid; g.lineWidth = 1.5;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for(let i = 0; i <= 4; i++){ const v = y0 + (y1 - y0) * i / 4, y = Y(v); g.beginPath(); g.moveTo(m.l, y); g.lineTo(m.l + pw, y); g.stroke(); g.fillText(yf(v), m.l - 10, y); }
+  g.textBaseline = 'top';
+  for(let i = 0; i <= 4; i++){ const v = x0 + (x1 - x0) * i / 4; g.textAlign = i === 4 ? 'right' : (i === 0 ? 'left' : 'center'); g.fillText(xf(v), i === 4 ? X(v) + 6 : (i === 0 ? X(v) - 6 : X(v)), m.t + ph + 12); }
+  g.strokeStyle = RC.axis; g.lineWidth = 2; g.beginPath(); g.moveTo(m.l, m.t + ph); g.lineTo(m.l + pw, m.t + ph); g.stroke();
+  g.font = '600 20px Inter, sans-serif'; g.fillStyle = RC.ink;
+  if(xTitle){ g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText(xTitle, m.l + pw / 2, h - 6); }
+  if(yTitle){ g.save(); g.translate(22, m.t + ph / 2); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(yTitle, 0, 0); g.restore(); }
+  return { X, Y, pw, ph };
+}
+const rptPctFmt = v => (v * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' %';
+function rptLegend(g, items, x, y){
+  g.font = '500 19px Inter, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+  items.forEach(([color, label, dashed]) => {
+    g.strokeStyle = color; g.lineWidth = 4; g.setLineDash(dashed ? [8, 6] : []); g.beginPath(); g.moveTo(x, y); g.lineTo(x + 34, y); g.stroke(); g.setLineDash([]);
+    g.fillStyle = RC.ink; g.fillText(label, x + 44, y); x += 44 + g.measureText(label).width + 26;
+  });
+}
+function rptHist(stats, discrete, fv, xTitle){
+  const o = rptNew(1100, 520), m = { l: 110, r: 30, t: 34, b: 84 }, bins = buildBins(stats.sorted, discrete), e = bins.edges, nb = bins.counts.length;
+  const rel = bins.counts.map(c => c / stats.n); let ymax = 0; rel.forEach(v => { if(v > ymax) ymax = v; }); ymax *= 1.1;
+  const f = rptFrame(o, m, e[0], e[nb], 0, ymax, fv, rptPctFmt, xTitle || 'Valor', 'Frecuencia relativa'), g = o.g;
+  g.fillStyle = RC.accent; g.globalAlpha = 0.88;
+  rel.forEach((v, i) => { const x1 = f.X(e[i]), x2 = f.X(e[i + 1]), y = f.Y(v); g.fillRect(x1 + 0.5, y, Math.max(1, x2 - x1 - 1), f.Y(0) - y); });
+  g.globalAlpha = 1;
+  g.strokeStyle = RC.teal; g.lineWidth = 3; g.setLineDash([10, 7]); g.beginPath(); g.moveTo(f.X(stats.mean), m.t); g.lineTo(f.X(stats.mean), m.t + f.ph); g.stroke(); g.setLineDash([]);
+  g.font = '600 19px Inter, sans-serif'; g.fillStyle = RC.teal; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText('Media', Math.min(f.X(stats.mean) + 8, m.l + f.pw - 70), m.t + 2);
+  return o.c;
+}
+function rptCDF(stats, fv, xTitle){
+  const o = rptNew(1100, 520), m = { l: 110, r: 30, t: 34, b: 84 }, s = stats.sorted, n = s.length;
+  const f = rptFrame(o, m, s[0], s[n - 1], 0, 1, fv, rptPctFmt, xTitle || 'Valor', 'Probabilidad acumulada'), g = o.g;
+  g.strokeStyle = RC.accent; g.lineWidth = 4; g.lineJoin = 'round'; g.beginPath();
+  for(let k = 0; k < 400; k++){ const i = Math.round(k * (n - 1) / 399); const x = f.X(s[i]), y = f.Y(i / (n - 1)); if(k) g.lineTo(x, y); else g.moveTo(x, y); }
+  g.stroke();
+  [0.05, 0.5, 0.95].forEach(p => {
+    const q = s[Math.round(p * (n - 1))];
+    g.strokeStyle = RC.axis; g.lineWidth = 1.5; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(m.l, f.Y(p)); g.lineTo(f.X(q), f.Y(p)); g.lineTo(f.X(q), f.Y(0)); g.stroke(); g.setLineDash([]);
+    g.fillStyle = RC.teal; g.beginPath(); g.arc(f.X(q), f.Y(p), 6, 0, Math.PI * 2); g.fill();
+    g.font = '600 18px Inter, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'bottom'; g.fillStyle = RC.teal; g.fillText('P' + Math.round(p * 100), f.X(q) + 10, f.Y(p) - 6);
+  });
+  return o.c;
+}
+function rptTornado(rows){
+  rows = rows.slice(0, 10); const o = rptNew(1100, 90 + rows.length * 52), { g, w, h } = o, left = 300, right = 70, pw = w - left - right, cx = left + pw / 2;
+  g.strokeStyle = RC.axis; g.lineWidth = 2; g.beginPath(); g.moveTo(cx, 20); g.lineTo(cx, h - 50); g.stroke();
+  g.font = '500 19px "JetBrains Mono", monospace'; g.fillStyle = RC.dim; g.textBaseline = 'top'; g.textAlign = 'center';
+  [['−1', left], ['0', cx], ['+1', left + pw]].forEach(([t, x]) => g.fillText(t, x, h - 40));
+  rows.forEach((r, i) => {
+    const y = 24 + i * 52, len = Math.abs(r.rho) * pw / 2, x = r.rho >= 0 ? cx : cx - len;
+    g.fillStyle = r.rho >= 0 ? RC.teal : RC.accent; g.fillRect(x, y, Math.max(2, len), 32);
+    g.fillStyle = RC.ink; g.font = '500 21px Inter, sans-serif'; g.textAlign = 'right'; g.textBaseline = 'middle';
+    let label = String(r.name); while(g.measureText(label).width > left - 24 && label.length > 3) label = label.slice(0, -2); if(label !== r.name) label += '…';
+    g.fillText(label, left - 14, y + 16);
+    g.font = '600 19px "JetBrains Mono", monospace'; g.textAlign = r.rho >= 0 ? 'left' : 'right';
+    g.fillText((r.rho >= 0 ? '+' : '−') + Math.abs(r.rho).toFixed(2).replace('.', ','), r.rho >= 0 ? x + len + 10 : x - 10, y + 16);
+  });
+  return o.c;
+}
+function rptFitChart(res, best, fv){
+  const o = rptNew(1100, 520), m = { l: 110, r: 30, t: 34, b: 84 }, xs = res.xs, n = xs.length, mn = xs[0], mx = xs[n - 1];
+  const nb = Math.max(8, Math.min(40, Math.round(Math.sqrt(n)))), wdt = (mx - mn) / nb || 1, cnt = new Array(nb).fill(0);
+  xs.forEach(x => { cnt[Math.min(nb - 1, Math.floor((x - mn) / wdt))]++; });
+  const dens = cnt.map(c => c / (n * wdt)), curve = [];
+  for(let k = 0; k <= 240; k++){ const x = mn + (mx - mn) * k / 240, y = Math.exp(best.model.logpdf(x)); curve.push([x, Number.isFinite(y) ? y : 0]); }
+  let ymax = 0; dens.forEach(v => { if(v > ymax) ymax = v; }); curve.forEach(([, y]) => { if(y > ymax && y < ymax * 4) ymax = y; }); ymax *= 1.1;
+  const f = rptFrame(o, m, mn, mx, 0, ymax, fv, v => v.toLocaleString('es-ES', { maximumSignificantDigits: 2 }), res.varName || 'Valor', 'Densidad'), g = o.g;
+  g.fillStyle = '#9db4d6'; g.globalAlpha = 0.85; dens.forEach((v, i) => { const x1 = f.X(mn + i * wdt), x2 = f.X(mn + (i + 1) * wdt), y = f.Y(v); g.fillRect(x1 + 0.5, y, Math.max(1, x2 - x1 - 1), f.Y(0) - y); }); g.globalAlpha = 1;
+  g.strokeStyle = RC.accent; g.lineWidth = 4; g.lineJoin = 'round'; g.beginPath(); curve.forEach(([x, y], k) => { const px = f.X(x), py = Math.max(m.t, f.Y(y)); if(k) g.lineTo(px, py); else g.moveTo(px, py); }); g.stroke();
+  rptLegend(g, [['#9db4d6', 'Datos'], [RC.accent, best.name]], m.l + 14, m.t + 14);
+  return o.c;
+}
+function rptBassChart(res, key){
+  const o = rptNew(1100, 520), m = { l: 130, r: 30, t: 50, b: 84 }, T = res.T, items = res.items;
+  let ymax = 0; items.forEach(it => { const l = key === 'S' ? it.S : it.Q; for(let t = 0; t < T; t++) if(l[t] > ymax) ymax = l[t]; }); ymax = (ymax || 1) * 1.08;
+  const f = rptFrame(o, m, 1, Math.max(T, 2), 0, ymax, v => String(Math.round(v)), bsAbbr, res.unit, key === 'S' ? 'Unidades vendidas' : 'Unidades acumuladas'), g = o.g;
+  items.forEach((it, i) => {
+    const l = key === 'S' ? it.S : it.Q, col = RC.pal[i % RC.pal.length];
+    g.strokeStyle = col; g.lineWidth = 4; g.lineJoin = 'round'; g.beginPath();
+    for(let t = 1; t <= T; t++){ const x = f.X(t), y = f.Y(l[t - 1]); if(t > 1) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke();
+  });
+  rptLegend(g, items.slice(0, 6).map((it, i) => [RC.pal[i % RC.pal.length], it.name]), m.l, 24);
+  return o.c;
+}
+function rptVWChart(res){
+  const o = rptNew(1100, 560), m = { l: 110, r: 30, t: 84, b: 84 }, grid = res.grid, c = res.cur, P = res.pts;
+  let iLo = 0, iHi = grid.length - 1;
+  for(let i = 0; i < grid.length; i++){ if(c.tc[i] >= 0.97) iLo = i; else break; }
+  for(let i = 0; i < grid.length; i++){ if(c.te[i] >= 0.95){ iHi = i; break; } }
+  let lo = grid[iLo], hi = grid[iHi]; if(!(hi > lo)){ lo = grid[0]; hi = grid[grid.length - 1]; }
+  const pad = (hi - lo) * 0.04; lo = Math.max(grid[0], lo - pad); hi = Math.min(grid[grid.length - 1], hi + pad);
+  const f = rptFrame(o, m, lo, hi, 0, 1, v => v.toLocaleString('es-ES', { maximumFractionDigits: res.dec }), rptPctFmt, 'Precio (' + res.unit + ')', 'Porcentaje acumulado'), g = o.g;
+  g.save(); g.beginPath(); g.rect(m.l, m.t, f.pw, f.ph); g.clip();
+  if(Number.isFinite(P.pmc) && Number.isFinite(P.pme) && P.pme > P.pmc){ g.fillStyle = RC.teal; g.globalAlpha = 0.08; g.fillRect(f.X(P.pmc), m.t, f.X(P.pme) - f.X(P.pmc), f.ph); g.globalAlpha = 1; }
+  const line = (arr, color, dashed) => { g.beginPath(); arr.forEach((v, i) => { const x = f.X(grid[i]), y = f.Y(v); if(i) g.lineTo(x, y); else g.moveTo(x, y); }); g.strokeStyle = color; g.lineWidth = dashed ? 2.5 : 4; g.globalAlpha = dashed ? 0.55 : 1; g.setLineDash(dashed ? [8, 6] : []); g.lineJoin = 'round'; g.stroke(); g.setLineDash([]); g.globalAlpha = 1; };
+  line(c.nc, RC.teal, true); line(c.ne, RC.gold, true); line(c.tc, RC.blue); line(c.ch, RC.teal); line(c.ex, RC.gold); line(c.te, RC.red);
+  g.restore();
+  [['pmc', 'PMC'], ['opp', 'OPP'], ['ipp', 'IPP'], ['pme', 'PME']].forEach(([k, lab], i) => {
+    const x = P[k]; if(!Number.isFinite(x)) return; const main = k === 'opp';
+    const ly = m.t - 10 - (i % 2 ? 28 : 0);
+    g.strokeStyle = main ? RC.accent : RC.dim; g.lineWidth = main ? 4 : 2; g.setLineDash(main ? [] : [8, 6]); g.beginPath(); g.moveTo(f.X(x), ly + 2); g.lineTo(f.X(x), m.t + f.ph); g.stroke(); g.setLineDash([]);
+    g.font = '700 19px Inter, sans-serif'; g.fillStyle = main ? RC.accent : RC.dim; g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText(lab, f.X(x), ly);
+  });
+  rptLegend(g, [[RC.blue, 'Muy barato'], [RC.teal, 'Barato'], [RC.gold, 'Caro'], [RC.red, 'Muy caro']], m.l, 16);
+  return o.c;
+}
+
+/* ---------- contenido del informe (bloques que luego se dibujan en PDF o Word) ---------- */
+const rptDate = d => (d || new Date()).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
+const rptLab = l => String(l).replace(/\s*\(.*$/, '');
+function rptParamRows(key, p){
+  const d = DISTS[key], rows = [];
+  if(key === 'const'){ rows.push(['Valor', fmt(p.value)]); return rows; }
+  if(d && d.params && d.params.length) d.params.forEach(q => { const x = p[q.key]; if(typeof x === 'number') rows.push([rptLab(q.label || q.key), fmt(x)]); });
+  Object.keys(p || {}).forEach(k => {
+    const x = p[k]; if(!Array.isArray(x)) { if(!(d && d.params && d.params.some(q => q.key === k)) && typeof x === 'number') rows.push([k, fmt(x)]); return; }
+    rows.push([k, `${x.length} elementos: ` + x.slice(0, 8).map(e => (e && typeof e === 'object' ? Object.values(e).map(v => typeof v === 'number' ? fmt(v) : v).join(' / ') : (typeof e === 'number' ? fmt(e) : e))).join('; ') + (x.length > 8 ? '…' : '')]);
+  });
+  return rows;
+}
+const rptParamText = (key, p) => rptParamRows(key, p).map(([a, b]) => `${a} ${b}`).join(', ');
+function rptStatsBlocks(st, f, nameForTitle){
+  const rows = [['Tamaño de muestra (n)', st.n.toLocaleString('es-ES')], ['Media', f(st.mean)], ['Mediana', f(st.median)], ['Desviación estándar', f(st.sd)], ['Mínimo', f(st.min)], ['Máximo', f(st.max)],
+    ['Rango', f(st.range)], ['Asimetría', fmt(st.skew)], ['Curtosis (exceso)', fmt(st.kurtosis)], ['Coef. de variación', Number.isNaN(st.cv) ? '—' : (st.cv * 100).toFixed(1).replace('.', ',') + ' %'],
+    ['Error estándar de la media', f(st.se)], ['Moda (aprox.)', f(st.mode)]];
+  const t4 = []; for(let i = 0; i < rows.length; i += 2) t4.push([rows[i][0], rows[i][1], rows[i + 1][0], rows[i + 1][1]]);
+  return [{ t: 'table', head: ['Estadístico', 'Valor', 'Estadístico', 'Valor'], rows: t4, align: ['l', 'r', 'l', 'r'] },
+    { t: 'label', text: 'Percentiles' },
+    { t: 'table', head: ['P5', 'P10', 'P25', 'P50', 'P75', 'P90', 'P95'], rows: [[st.p5, st.p10, st.p25, st.median, st.p75, st.p90, st.p95].map(f)], align: Array(7).fill('r') }];
+}
+function rptCommon(o, blocks){
+  if(o.notes) { blocks.push({ t: 'h1', text: 'Comentarios' }); String(o.notes).split(/\n+/).forEach(x => { if(x.trim()) blocks.push({ t: 'p', text: x.trim() }); }); }
+  blocks.push({ t: 'note', text: 'Informe generado con Monte Carlo Lab. Los resultados provienen de simulación aleatoria: dos corridas con las mismas entradas pueden diferir levemente.' });
+  return blocks;
+}
+function rptModelVersionText(){
+  try{
+    const name = ($('mmName').value || '').trim(); if(!name) return '';
+    const it = mdlModels().find(x => x.name.toLowerCase() === name.toLowerCase()); if(!it) return '';
+    const vs = mmVersions(it), last = vs[vs.length - 1];
+    return `${it.name} · versión v${last.v} (${mmFechaHora(last.when)})${mmSame(last.model, mdlSnapshot()) ? '' : ' · con cambios sin guardar'}`;
+  } catch(e){ return ''; }
+}
+function rptBuild(kind, o){
+  const B = [], sub = [rptDate(), o.author ? 'Preparado por ' + o.author : ''].filter(Boolean).join(' · ');
+  if(kind === 'dist'){
+    const s = simData, d = DISTS[s.distKey], st = s.stats, f = fmt;
+    B.push({ t: 'h1', text: 'Supuestos' });
+    const kv = [['Distribución', `${d.name}${d.tag ? ' (' + d.tag + ')' : ''}`], ['Iteraciones', s.n.toLocaleString('es-ES')], ['Fecha de la simulación', rptDate(s.when)]];
+    if(s.distKey === 'mezcla'){
+      kv.push(['Método de la mezcla', s.params.method === 'sumproduct' ? 'Promedio ponderado (SUMAPRODUCTO)' : 'Mezcla al azar']);
+      B.push({ t: 'kv', rows: kv });
+      const tw = s.params.components.reduce((a, c) => a + c.weight, 0) || 1;
+      B.push({ t: 'h2', text: 'Componentes de la mezcla' });
+      B.push({ t: 'table', head: ['#', 'Distribución', 'Peso', 'Parámetros'], align: ['c', 'l', 'r', 'l'], rows: s.params.components.map((c, i) => [i + 1, DISTS[c.dist].name, (100 * c.weight / tw).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' %', rptParamText(c.dist, c.params)]) });
+    } else {
+      rptParamRows(s.distKey, s.params).forEach(r => kv.push(r));
+      B.push({ t: 'kv', rows: kv });
+    }
+    B.push({ t: 'h1', text: 'Resultados' });
+    rptStatsBlocks(st, f).forEach(b => B.push(b));
+    const th = parseFloat(($('threshold') || {}).value);
+    if(Number.isFinite(th)){ B.push({ t: 'kv', rows: [['Valor de referencia (X)', f(th)], ['P(X ≤ valor)', rptPctFmt(probLE(st.sorted, th))], ['P(X ≥ valor)', rptPctFmt(probGE(st.sorted, th))]] }); }
+    if(o.charts){
+      B.push({ t: 'img', canvas: rptHist(st, !!s.discrete, f), caption: 'Figura 1. Histograma de frecuencias relativas de la simulación.' });
+      B.push({ t: 'img', canvas: rptCDF(st, f), caption: 'Figura 2. Probabilidad acumulada con los percentiles P5, P50 y P95.' });
+    }
+    return { title: o.title || `Simulación Monte Carlo · ${d.name}`, sub, blocks: rptCommon(o, B) };
+  }
+  if(kind === 'model'){
+    const def = MDL.runDef, res = MDL.res, B2 = B, ver = rptModelVersionText();
+    B.push({ t: 'h1', text: 'Supuestos' });
+    const kv = [['Iteraciones', res.n.toLocaleString('es-ES')], ['Fecha de la simulación', rptDate(def.when)]]; if(ver) kv.push(['Modelo guardado', ver]);
+    B.push({ t: 'kv', rows: kv });
+    B.push({ t: 'h2', text: 'Variables de entrada' });
+    B.push({ t: 'table', head: ['Variable', 'Distribución', 'Parámetros', 'Límites'], align: ['l', 'l', 'l', 'l'], rows: def.vars.map(v => [v.name, v.dist === 'const' ? 'Valor fijo' : DISTS[v.dist].name, rptParamText(v.dist, v.params), (v.lo != null || v.hi != null) ? `${v.lo != null ? fmt(v.lo) : '−∞'} a ${v.hi != null ? fmt(v.hi) : '+∞'}` : '—']) });
+    if(def.corr.length){
+      B.push({ t: 'h2', text: 'Correlaciones entre variables' });
+      B.push({ t: 'table', head: ['Variable A', 'Variable B', 'Objetivo', 'Lograda'], align: ['l', 'l', 'r', 'r'], rows: def.corr.map(c => { const ap = (res.applied || []).find(a => a.a === c.a && a.b === c.b); return [def.vars[c.a].name, def.vars[c.b].name, fmt(c.rho), ap ? fmt(ap.achieved) : '—']; }) });
+    }
+    B.push({ t: 'h2', text: 'Resultados calculados (fórmulas)' });
+    B.push({ t: 'table', head: ['Resultado', 'Fórmula', 'Formato'], align: ['l', 'l', 'l'], mono: true, rows: def.outs.map(q => [q.name, q.formula, ({ num: 'Número', pct: 'Porcentaje', cur: 'Moneda' })[q.format] || 'Número']) });
+    B.push({ t: 'h1', text: 'Resultados' });
+    res.outputs.forEach((out, idx) => {
+      const valid = []; for(let i = 0; i < res.n; i++){ const x = out.data[i]; if(Number.isFinite(x)) valid.push(x); }
+      const od = def.outs.find(q => q.id === MDL.runOutIds[idx]) || def.outs[idx], f = FMTS[od && od.format] || FMTS.num;
+      B.push({ t: 'h2', text: out.name });
+      if(valid.length < 2){ B.push({ t: 'p', text: 'Este resultado no se pudo calcular en ninguna iteración (revisa la fórmula).' }); return; }
+      if(valid.length < res.n) B.push({ t: 'note', text: `En ${((res.n - valid.length) / res.n * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })} % de las iteraciones el resultado no está definido; se excluyeron de las estadísticas.` });
+      const st = computeStats(valid, false);
+      rptStatsBlocks(st, f).forEach(b => B.push(b));
+      if(o.charts && idx === MDL.outIdx){
+        B.push({ t: 'img', canvas: rptHist(st, false, f, out.name), caption: `Figura 1. Histograma de «${out.name}».` });
+        B.push({ t: 'img', canvas: rptCDF(st, f, out.name), caption: `Figura 2. Probabilidad acumulada de «${out.name}».` });
+      }
+      if(idx === MDL.outIdx){
+        let sens = []; try{ sens = MODEL.sensitivity(res, idx); } catch(e){ /* sin sensibilidad */ }
+        if(sens.length){
+          B.push({ t: 'h2', text: `Sensibilidad de «${out.name}»` });
+          B.push({ t: 'table', head: ['Variable', 'Correlación de rangos', '% de la varianza'], align: ['l', 'r', 'r'], rows: sens.map(r => [r.name, (r.rho >= 0 ? '+' : '−') + Math.abs(r.rho).toFixed(2).replace('.', ','), (r.contrib * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' %']) });
+          if(o.charts) B.push({ t: 'img', canvas: rptTornado(sens), caption: 'Figura 3. Qué variables mueven el resultado (correlación de rangos de Spearman).' });
+        }
+      }
+    });
+    return { title: o.title || 'Modelo de simulación Monte Carlo', sub, blocks: rptCommon(o, B2) };
+  }
+  if(kind === 'bass'){
+    const res = BS.res, U = res.unit.toLowerCase();
+    B.push({ t: 'h1', text: 'Supuestos' });
+    B.push({ t: 'p', text: 'Modelo de difusión de Bass: S(t+1) = p·N + (q−p)·Q(t) − (q/N)·Q(t)². N es el mercado potencial, p el coeficiente de innovación y q el de imitación.' });
+    B.push({ t: 'kv', rows: [['Períodos', `${res.T} (${res.unit})`], ['Incertidumbre en N, p y q', res.unc > 0 ? `± ${res.unc.toLocaleString('es-ES')} % (distribución triangular; bandas P5–P95)` : 'Sin incertidumbre']] });
+    B.push({ t: 'table', head: ['Escenario', 'Habitantes', 'Mercado potencial', 'N', 'p', 'q'], align: ['l', 'r', 'r', 'r', 'r', 'r'], rows: res.items.map(it => [it.name, bsES(it.hab), it.mer.toLocaleString('es-ES') + ' %', bsES(it.N), it.p.toLocaleString('es-ES') + ' %', it.q.toLocaleString('es-ES') + ' %']) });
+    B.push({ t: 'h1', text: 'Resultados' });
+    B.push({ t: 'table', head: ['Escenario', `Pico (${U})`, 'Ventas en el pico', `Acumuladas al ${U} ${res.T}`, '% de N', '50 % de N', '90 % de N'], align: ['l', 'r', 'r', 'r', 'r', 'r', 'r'],
+      rows: res.items.map(it => [it.name, it.st.pk, bsES(it.st.pkVal), bsES(it.st.qT), bsPct(it.st.pct), it.st.t50 || '—', it.st.t90 || '—']) });
+    if(o.charts){
+      B.push({ t: 'img', canvas: rptBassChart(res, 'S'), caption: `Figura 1. Ventas por ${U}.` });
+      B.push({ t: 'img', canvas: rptBassChart(res, 'Q'), caption: 'Figura 2. Ventas acumuladas.' });
+    }
+    const an = $('bsAnalysis');
+    if(an && an.children.length){
+      B.push({ t: 'h1', text: 'Análisis' });
+      Array.from(an.children).forEach(el => { if(el.tagName === 'H4') B.push({ t: 'h2', text: el.textContent }); else if(el.tagName === 'UL') B.push({ t: 'bul', items: Array.from(el.children).map(li => li.textContent) }); });
+    }
+    return { title: o.title || 'Proyección de demanda · modelo de Bass', sub, blocks: rptCommon(o, B) };
+  }
+  if(kind === 'vw'){
+    const res = VW.res, f = v => vwFmt(v, res), P = res.pts, ci = res.ci;
+    B.push({ t: 'h1', text: 'Supuestos' });
+    B.push({ t: 'p', text: 'Medidor de sensibilidad al precio de Van Westendorp: cada encuestado indica a partir de qué precio le parece muy barato, barato, caro y muy caro. Se cruzan las curvas acumuladas de respuestas.' });
+    B.push({ t: 'kv', rows: [['Respuestas usadas', `${res.n.toLocaleString('es-ES')} de ${res.nAll.toLocaleString('es-ES')}`], ['Excluidas por incoherentes', res.excluded.toLocaleString('es-ES')], ['Moneda', res.unit], ['Bandas P5–P95', ci ? `Bootstrap con ${res.B} remuestreos de los encuestados` : 'No calculadas']] });
+    B.push({ t: 'h1', text: 'Resultados' });
+    const rows = [['PMC', 'Precio mínimo aceptable', 'pmc'], ['OPP', 'Precio óptimo', 'opp'], ['IPP', 'Precio de indiferencia', 'ipp'], ['PME', 'Precio máximo aceptable', 'pme']];
+    B.push({ t: 'table', head: ['Punto', 'Significado', 'Precio', 'P5 – P95'], align: ['l', 'l', 'r', 'r'], rows: rows.map(([a, b, k]) => [a, b, f(P[k]), ci && Number.isFinite(ci[k][0]) ? f(ci[k][0]) + ' – ' + f(ci[k][1]) : '—']) });
+    if(o.charts) B.push({ t: 'img', canvas: rptVWChart(res), caption: 'Figura 1. Curvas de Van Westendorp con los cuatro puntos marcados.' });
+    const an = $('vwAnalysis');
+    if(an){ const items = Array.from(an.querySelectorAll('li')).map(li => li.textContent); if(items.length){ B.push({ t: 'h1', text: 'Análisis' }); B.push({ t: 'bul', items }); } }
+    B.push({ t: 'note', text: 'PMC = «muy barato» con «no barato» (1 − barato). OPP = «muy barato» con «muy caro». IPP = «barato» con «caro». PME = «muy caro» con «no caro» (1 − caro).' });
+    return { title: o.title || 'Sensibilidad al precio · Van Westendorp', sub, blocks: rptCommon(o, B) };
+  }
+  if(kind === 'fit'){
+    const all = FITUI.all, crit = FITUI.crit, lab = FIT_CRIT_LABEL[crit] || crit;
+    B.push({ t: 'h1', text: 'Supuestos' });
+    B.push({ t: 'p', text: `Se ajustaron ${all[0].results.length + all[0].skipped.length} familias de distribuciones por máxima verosimilitud a ${all.length === 1 ? 'la variable' : 'cada variable'}. Las distribuciones se ordenan por ${lab} (menor es mejor).` });
+    B.push({ t: 'table', head: ['Variable', 'Datos', 'Media', 'Desv. est.', 'Mínimo', 'Máximo'], align: ['l', 'r', 'r', 'r', 'r', 'r'], rows: all.map(r => [r.varName || 'Datos', r.n.toLocaleString('es-ES'), fmt(r.mean), fmt(r.sd), fmt(r.min), fmt(r.max)]) });
+    B.push({ t: 'h1', text: 'Resultados' });
+    B.push({ t: 'table', head: ['Variable', 'Mejor distribución', 'Parámetros', lab], align: ['l', 'l', 'l', 'r'], rows: all.map(r => { const b = FIT.sortBy(r.results, crit)[0]; return [r.varName || 'Datos', b.name, paramText(b.key, b.params), fmt(b[crit])]; }) });
+    all.forEach((r, i) => {
+      const sorted = FIT.sortBy(r.results, crit), best = sorted[0];
+      B.push({ t: 'h2', text: r.varName ? `Variable «${r.varName}»` : 'Datos' });
+      const rk = XL.risk(best.key, best.params);
+      B.push({ t: 'kv', rows: [['Mejor distribución', best.name], ['Parámetros', paramText(best.key, best.params)], ['Función de @RISK', rk.fn ? '=' + rk.fn : '—']] });
+      if(o.charts) B.push({ t: 'img', canvas: rptFitChart(r, best, fmt), caption: `Figura ${i + 1}. Datos de «${r.varName || 'la variable'}» y distribución con mejor ajuste.` });
+      B.push({ t: 'table', head: ['Puesto', 'Distribución', 'AIC', 'BIC', 'A-D', 'K-S', 'χ²'], align: ['c', 'l', 'r', 'r', 'r', 'r', 'r'], rows: sorted.slice(0, 5).map((q, j) => [j + 1, q.name, fmt(q.aic), fmt(q.bic), fmt(q.ad), fmt(q.ks), fmt(q.chi2)]) });
+    });
+    return { title: o.title || 'Ajuste de distribuciones', sub, blocks: rptCommon(o, B) };
+  }
+  throw new Error('No hay un análisis para el informe.');
+}
+
+/* ---------- Word (.docx) ---------- */
+const RW = {
+  esc: s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''),
+  run(t, o){ o = o || {}; return `<w:r><w:rPr>${o.font ? `<w:rFonts w:ascii="${o.font}" w:hAnsi="${o.font}" w:cs="${o.font}"/>` : ''}${o.b ? '<w:b/>' : ''}${o.i ? '<w:i/>' : ''}${o.color ? `<w:color w:val="${o.color}"/>` : ''}${o.sz ? `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>` : ''}</w:rPr><w:t xml:space="preserve">${RW.esc(t)}</w:t></w:r>`; },
+  para(inner, o){ o = o || {}; return `<w:p><w:pPr>${o.style ? `<w:pStyle w:val="${o.style}"/>` : ''}${o.keep ? '<w:keepNext/>' : ''}${o.spacing ? `<w:spacing w:before="${o.spacing[0]}" w:after="${o.spacing[1]}"/>` : ''}${o.jc ? `<w:jc w:val="${o.jc}"/>` : ''}</w:pPr>${inner}</w:p>`; },
+  table(head, rows, align, mono, total, firstBold){
+    const nc = (head || rows[0]).length, text = r => r.map(c => String(c == null ? '' : c).length);
+    const wts = Array.from({ length: nc }, (_, i) => Math.max(6, Math.min(40, Math.max(head ? String(head[i]).length : 0, ...rows.map(r => String(r[i] == null ? '' : r[i]).length)))));
+    const sum = wts.reduce((a, b) => a + b, 0), ws = wts.map(w => Math.max(700, Math.round(total * w / sum)));
+    const fix = total / ws.reduce((a, b) => a + b, 0), w2 = ws.map(w => Math.round(w * fix));
+    const cell = (t, i, o) => `<w:tc><w:tcPr><w:tcW w:w="${w2[i]}" w:type="dxa"/>${o.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>` : ''}<w:vAlign w:val="center"/></w:tcPr>${RW.para(RW.run(String(t == null ? '' : t), { b: o.b, color: o.color, sz: 18, font: mono && !o.head ? 'Consolas' : null }), { jc: (align && align[i] === 'r') ? 'right' : ((align && align[i] === 'c') ? 'center' : 'left'), spacing: [30, 30] })}</w:tc>`;
+    const bd = '<w:tblBorders><w:top w:val="single" w:sz="4" w:color="D9DEE5"/><w:left w:val="single" w:sz="4" w:color="D9DEE5"/><w:bottom w:val="single" w:sz="4" w:color="D9DEE5"/><w:right w:val="single" w:sz="4" w:color="D9DEE5"/><w:insideH w:val="single" w:sz="4" w:color="D9DEE5"/><w:insideV w:val="single" w:sz="4" w:color="D9DEE5"/></w:tblBorders>';
+    let x = `<w:tbl><w:tblPr><w:tblW w:w="${total}" w:type="dxa"/>${bd}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${w2.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>`;
+    if(head) x += `<w:tr><w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>${head.map((h, i) => cell(h, i, { fill: '1F2631', color: 'FFFFFF', b: true, head: true })).join('')}</w:tr>`;
+    rows.forEach((r, k) => { x += `<w:tr><w:trPr><w:cantSplit/></w:trPr>${r.map((c, i) => cell(c, i, { fill: (firstBold && i === 0) ? 'EEF1F6' : (k % 2 ? 'F6F8FB' : null), b: firstBold && i === 0 })).join('')}</w:tr>`; });
+    return x + '</w:tbl>' + RW.para('', { spacing: [0, 80] });
+  }
+};
+async function rptDocx(rep, author){
+  const TOTAL = 9638, MAXW = 5760000, media = [], rels = [];
+  let body = '';
+  body += RW.para(RW.run(rep.title, {}), { style: 'Title' });
+  body += RW.para(RW.run(rep.sub, { color: '6B7789', sz: 20 }), { spacing: [0, 240] });
+  let imgN = 0;
+  for(const b of rep.blocks){
+    if(b.t === 'h1') body += RW.para(RW.run(b.text), { style: 'Heading1', keep: true });
+    else if(b.t === 'h2') body += RW.para(RW.run(b.text), { style: 'Heading2', keep: true });
+    else if(b.t === 'p') body += RW.para(RW.run(b.text), { spacing: [0, 120] });
+    else if(b.t === 'label') body += RW.para(RW.run(b.text, { b: true, color: '6B7789', sz: 18 }), { keep: true, spacing: [100, 40] });
+    else if(b.t === 'note') body += RW.para(RW.run(b.text, { i: true, color: '7B8798', sz: 17 }), { spacing: [120, 120] });
+    else if(b.t === 'bul') b.items.forEach(it => { body += RW.para(RW.run('•  ' + it), { spacing: [0, 60] }); });
+    else if(b.t === 'kv') body += RW.table(null, b.rows, ['l', 'l'], false, TOTAL, true);
+    else if(b.t === 'table') body += RW.table(b.head, b.rows, b.align, b.mono, TOTAL, false);
+    else if(b.t === 'img'){
+      const blob = await new Promise(r => b.canvas.toBlob(r, 'image/png')), bytes = new Uint8Array(await blob.arrayBuffer());
+      imgN++; const name = `image${imgN}.png`; media.push({ name: 'word/media/' + name, data: bytes }); rels.push(`<Relationship Id="rIdImg${imgN}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${name}"/>`);
+      const cx = Math.round(MAXW * 0.97), cy = Math.round(cx * b.canvas.height / b.canvas.width);
+      body += `<w:p><w:pPr><w:keepNext/><w:jc w:val="center"/><w:spacing w:before="60" w:after="40"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${imgN}" name="Gráfico ${imgN}" descr="${RW.esc(b.caption || '')}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${imgN}" name="${name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg${imgN}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+      if(b.caption) body += RW.para(RW.run(b.caption, { i: true, color: '6B7789', sz: 17 }), { style: 'Caption', jc: 'center', spacing: [0, 160] });
+    }
+  }
+  const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
+  const doc = `${XL.HEAD}<w:document ${NS}><w:body>${body}<w:sectPr><w:footerReference w:type="default" r:id="rIdFooter"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const fld = (t) => `<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="888888"/></w:rPr><w:fldChar w:fldCharType="${t}"/></w:r>`;
+  const footer = `${XL.HEAD}<w:ftr ${NS}><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="888888"/></w:rPr><w:t xml:space="preserve">Monte Carlo Lab · ${RW.esc(rep.title)} · página </w:t></w:r>${fld('begin')}<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="888888"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>${fld('separate')}<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="888888"/></w:rPr><w:t>1</w:t></w:r>${fld('end')}</w:p></w:ftr>`;
+  const styles = `${XL.HEAD}<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri" w:eastAsia="Calibri"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="es-ES"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="100" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>
+<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr><w:rPr><w:b/><w:color w:val="E5532A"/><w:sz w:val="46"/><w:szCs w:val="46"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="2" w:color="E5532A"/></w:pBdr><w:spacing w:before="320" w:after="140"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:color w:val="1F2631"/><w:sz w:val="30"/><w:szCs w:val="30"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="220" w:after="80"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:color w:val="0E8A76"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Caption"><w:name w:val="caption"/><w:basedOn w:val="Normal"/><w:qFormat/><w:rPr><w:i/><w:color w:val="6B7789"/><w:sz w:val="17"/></w:rPr></w:style></w:styles>`;
+  const ct = `${XL.HEAD}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+  const rootRels = `${XL.HEAD}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`;
+  const docRels = `${XL.HEAD}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rIdFooter" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>${rels.join('')}</Relationships>`;
+  const core = `${XL.HEAD}<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${RW.esc(rep.title)}</dc:title><dc:creator>${RW.esc(author || 'Monte Carlo Lab')}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created></cp:coreProperties>`;
+  const files = [{ name: '[Content_Types].xml', data: ct }, { name: '_rels/.rels', data: rootRels }, { name: 'word/document.xml', data: doc }, { name: 'word/styles.xml', data: styles }, { name: 'word/footer1.xml', data: footer }, { name: 'word/_rels/document.xml.rels', data: docRels }, { name: 'docProps/core.xml', data: core }, ...media];
+  const blob = await XL.zip(files);
+  return new Blob([blob], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
+/* ---------- PDF: las páginas se dibujan en un lienzo A4 (150 ppp) y se guardan como imágenes JPEG dentro del PDF ---------- */
+class RptPdf {
+  constructor(){ this.W = 1240; this.H = 1754; this.mx = 92; this.top = 112; this.bottom = 120; this.pages = []; this.newPage(); }
+  newPage(){ const c = document.createElement('canvas'); c.width = this.W; c.height = this.H; this.c = c; this.g = c.getContext('2d'); this.g.fillStyle = '#ffffff'; this.g.fillRect(0, 0, this.W, this.H); this.pages.push(c); this.y = this.top; }
+  get cw(){ return this.W - 2 * this.mx; }
+  ensure(h){ if(this.y + h > this.H - this.bottom){ this.newPage(); return true; } return false; }
+  wrap(text, font, maxW){
+    const g = this.g; g.font = font; const lines = [];
+    String(text == null ? '' : text).split('\n').forEach(par => {
+      let cur = '';
+      par.split(/\s+/).filter(Boolean).forEach(word => {
+        let w = word;
+        while(g.measureText(w).width > maxW){ let k = w.length; while(k > 1 && g.measureText(w.slice(0, k)).width > maxW) k--; if(cur){ lines.push(cur); cur = ''; } lines.push(w.slice(0, k)); w = w.slice(k); }
+        const t = cur ? cur + ' ' + w : w;
+        if(g.measureText(t).width <= maxW) cur = t; else { lines.push(cur); cur = w; }
+      });
+      lines.push(cur);
+    });
+    return lines.length ? lines : [''];
+  }
+  title(title, sub){
+    const g = this.g, x = this.mx; let y = this.y;
+    const s = 84, grad = g.createLinearGradient(x, y, x + s, y + s); grad.addColorStop(0, '#FF7A50'); grad.addColorStop(1, '#C4451F');
+    g.fillStyle = grad; g.beginPath(); g.roundRect(x, y, s, s, 20); g.fill();
+    g.fillStyle = '#1A0E08'; [[6, 17], [11, 8], [17, 14], [14, 19], [19, 6]].forEach(([dx, dy]) => { g.beginPath(); g.arc(x + (dx / 24) * s * 0.9 + s * 0.05, y + (dy / 24) * s * 0.9 + s * 0.05, 6.2, 0, Math.PI * 2); g.fill(); });
+    g.fillStyle = '#6b7789'; g.font = '600 20px "JetBrains Mono", monospace'; g.textBaseline = 'alphabetic'; g.fillText('MONTE CARLO LAB · SIMULACIÓN DE RIESGO', x + s + 26, y + 34);
+    g.fillStyle = RC.ink; g.font = '700 42px "Space Grotesk", sans-serif';
+    const lines = this.wrap(title, g.font, this.cw - s - 26); lines.forEach((l, i) => g.fillText(l, x + s + 26, y + 80 + i * 50));
+    y += Math.max(s, 80 + (lines.length - 1) * 50 + 20) + 24;
+    g.fillStyle = '#6b7789'; g.font = '400 22px Inter, sans-serif'; g.fillText(sub, x, y); y += 18;
+    g.strokeStyle = RC.accent; g.lineWidth = 4; g.beginPath(); g.moveTo(x, y); g.lineTo(x + this.cw, y); g.stroke();
+    this.y = y + 34;
+  }
+  h1(t){ this.ensure(150); const g = this.g; this.y += 22; g.fillStyle = '#1F2631'; g.font = '700 33px "Space Grotesk", sans-serif'; g.textBaseline = 'alphabetic'; g.fillText(t, this.mx, this.y + 30); g.strokeStyle = RC.accent; g.lineWidth = 3; g.beginPath(); g.moveTo(this.mx, this.y + 46); g.lineTo(this.mx + this.cw, this.y + 46); g.stroke(); this.y += 74; }
+  h2(t){ this.ensure(120); const g = this.g; this.y += 10; g.fillStyle = RC.teal; g.font = '700 25px "Space Grotesk", sans-serif'; g.textBaseline = 'alphabetic'; g.fillText(t, this.mx, this.y + 24); this.y += 46; }
+  p(t, o){ o = o || {}; const font = o.font || '400 22px Inter, sans-serif', lh = o.lh || 32; const lines = this.wrap(t, font, this.cw - (o.indent || 0));
+    lines.forEach(l => { this.ensure(lh); const g = this.g; g.font = font; g.fillStyle = o.color || '#232c3a'; g.textBaseline = 'alphabetic'; g.fillText(l, this.mx + (o.indent || 0), this.y + 24); this.y += lh; }); this.y += o.after == null ? 10 : o.after; }
+  note(t){ this.p(t, { font: 'italic 400 18px Inter, sans-serif', color: '#7b8798', lh: 26, after: 12 }); }
+  label(t){ this.ensure(110); this.y += 6; this.p(t, { font: '700 19px Inter, sans-serif', color: '#6b7789', lh: 28, after: 4 }); }
+  bullets(items){ items.forEach(it => { const lines = this.wrap(it, '400 22px Inter, sans-serif', this.cw - 36); lines.forEach((l, i) => { this.ensure(32); const g = this.g; g.font = '400 22px Inter, sans-serif'; g.fillStyle = '#232c3a'; g.textBaseline = 'alphabetic'; if(i === 0){ g.fillStyle = RC.accent; g.fillText('•', this.mx + 6, this.y + 24); g.fillStyle = '#232c3a'; } g.fillText(l, this.mx + 36, this.y + 24); this.y += 32; }); this.y += 6; }); this.y += 6; }
+  table(head, rows, align, mono, firstBold){
+    const cw = this.cw, pad = 12, nc = (head || rows[0]).length, gm = this.g;      // gm solo se usa para medir texto
+    const fB = '700 19px Inter, sans-serif', fC = mono ? '500 17px "JetBrains Mono", monospace' : '400 19px Inter, sans-serif', fF = '700 19px Inter, sans-serif';
+    const nat = Array.from({ length: nc }, (_, i) => { let w = 0; if(head){ gm.font = fB; w = gm.measureText(String(head[i])).width; } rows.forEach(r => { gm.font = (firstBold && i === 0) ? fF : fC; w = Math.max(w, Math.min(gm.measureText(String(r[i] == null ? '' : r[i])).width, 700)); }); return w + 2 * pad; });
+    const tot = nat.reduce((a, b) => a + b, 0); let widths;
+    if(tot <= cw) widths = nat.map(w => w * cw / tot);
+    else { const mins = nat.map(w => Math.min(w, 120)), left = cw - mins.reduce((a, b) => a + b, 0), extra = nat.map((w, i) => w - mins[i]), se = extra.reduce((a, b) => a + b, 0) || 1; widths = mins.map((m, i) => m + left * extra[i] / se); }
+    const lh = mono ? 24 : 26;
+    const draw = (cells, fill, font, color, boldFirst) => {
+      const cl = cells.map((c, i) => this.wrap(c, (boldFirst && i === 0) ? fF : font, widths[i] - 2 * pad).slice(0, 14)), rh = Math.max(...cl.map(a => a.length)) * lh + 18;
+      return { cl, rh, fill, font, color, boldFirst };
+    };
+    const paint = (row, x0) => {
+      const g = this.g; let x = x0 == null ? this.mx : x0; const y = this.y;
+      if(row.fill){ g.fillStyle = row.fill; g.fillRect(this.mx, y, cw, row.rh); }
+      row.cl.forEach((lines, i) => { g.font = (row.boldFirst && i === 0) ? fF : row.font; g.fillStyle = row.color; g.textBaseline = 'alphabetic';
+        lines.forEach((l, k) => { const tw = g.measureText(l).width, a = align && align[i]; const px = a === 'r' ? x + widths[i] - pad - tw : (a === 'c' ? x + (widths[i] - tw) / 2 : x + pad); g.fillText(l, px, y + 9 + lh * (k + 1) - 6); }); x += widths[i]; });
+      g.strokeStyle = '#e3e8ef'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(this.mx, y + row.rh); g.lineTo(this.mx + cw, y + row.rh); g.stroke();
+      this.y += row.rh;
+    };
+    const hdr = head ? draw(head.map(String), '#1F2631', fB, '#ffffff', false) : null;
+    this.ensure((hdr ? hdr.rh : 0) + 60); if(hdr) paint(hdr);
+    rows.forEach((r, k) => {
+      const row = draw(r.map(c => String(c == null ? '' : c)), (firstBold) ? (k % 2 ? '#F6F8FB' : '#ffffff') : (k % 2 ? '#F6F8FB' : '#ffffff'), fC, '#232c3a', !!firstBold);
+      if(this.ensure(row.rh) && hdr) paint(hdr);
+      if(firstBold){ const gx = this.mx; this.g.fillStyle = '#EEF1F6'; this.g.fillRect(gx, this.y, widths[0], row.rh); }
+      paint(row);
+    });
+    this.y += 22;
+  }
+  img(canvas, caption){
+    const w = this.cw * 0.97, h = w * canvas.height / canvas.width;
+    this.ensure(h + 60); this.g.drawImage(canvas, this.mx + (this.cw - w) / 2, this.y, w, h); this.y += h + 8;
+    if(caption){ this.p(caption, { font: 'italic 400 18px Inter, sans-serif', color: '#6b7789', lh: 26, after: 16 }); }
+  }
+  async finish(footerTitle){
+    const out = [], n = this.pages.length;
+    for(let i = 0; i < n; i++){
+      const c = this.pages[i], g = c.getContext('2d');
+      g.strokeStyle = '#e3e8ef'; g.lineWidth = 2; g.beginPath(); g.moveTo(this.mx, this.H - 88); g.lineTo(this.W - this.mx, this.H - 88); g.stroke();
+      g.fillStyle = '#8b96a8'; g.font = '400 18px Inter, sans-serif'; g.textBaseline = 'alphabetic'; g.textAlign = 'left'; g.fillText('Monte Carlo Lab · ' + footerTitle.slice(0, 70), this.mx, this.H - 56);
+      g.textAlign = 'right'; g.fillText(`Página ${i + 1} de ${n}`, this.W - this.mx, this.H - 56); g.textAlign = 'left';
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+      out.push(new Uint8Array(await blob.arrayBuffer()));
+    }
+    return out;
+  }
+}
+function rptPdfBytes(jpegs, w, h, title, author){
+  const enc = new TextEncoder(), chunks = [], offs = []; let len = 0;
+  const push = x => { const b = typeof x === 'string' ? enc.encode(x) : x; chunks.push(b); len += b.length; };
+  const hex16 = s => 'FEFF' + Array.from(String(s)).map(ch => ch.codePointAt(0).toString(16).padStart(4, '0')).join('');   // título en UTF-16 (admite tildes)
+  push(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34, 0x0A, 0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));
+  const obj = (n, body) => { offs[n] = len; push(`${n} 0 obj\n${body}\nendobj\n`); };
+  const n = jpegs.length, kids = jpegs.map((_, i) => `${4 + 3 * i} 0 R`).join(' ');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+  const d = new Date(), p2 = x => String(x).padStart(2, '0'), date = `D:${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`;
+  obj(3, `<< /Title <${hex16(title)}> /Author <${hex16(author || 'Monte Carlo Lab')}> /Producer <${hex16('Monte Carlo Lab')}> /CreationDate (${date}) >>`);
+  jpegs.forEach((bytes, i) => {
+    const pg = 4 + 3 * i, ct = pg + 1, im = pg + 2;
+    obj(pg, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${im} 0 R >> >> /Contents ${ct} 0 R >>`);
+    const stream = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    obj(ct, `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+    offs[im] = len; push(`${im} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`); push(bytes); push('\nendstream\nendobj\n');
+  });
+  const total = 4 + 3 * n, xref = len;
+  push(`xref\n0 ${total}\n0000000000 65535 f \n`);
+  for(let i = 1; i < total; i++) push(String(offs[i]).padStart(10, '0') + ' 00000 n \n');
+  push(`trailer\n<< /Size ${total} /Root 1 0 R /Info 3 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+async function rptPdf(rep, author){
+  await Promise.all([document.fonts.load('400 22px Inter'), document.fonts.load('700 22px Inter'), document.fonts.load('italic 400 18px Inter'), document.fonts.load('700 30px "Space Grotesk"'), document.fonts.load('500 18px "JetBrains Mono"')]);
+  const P = new RptPdf();
+  P.title(rep.title, rep.sub);
+  for(const b of rep.blocks){
+    if(b.t === 'h1') P.h1(b.text); else if(b.t === 'h2') P.h2(b.text); else if(b.t === 'p') P.p(b.text);
+    else if(b.t === 'note') P.note(b.text); else if(b.t === 'label') P.label(b.text); else if(b.t === 'bul') P.bullets(b.items);
+    else if(b.t === 'kv') P.table(null, b.rows, ['l', 'l'], false, true);
+    else if(b.t === 'table') P.table(b.head, b.rows, b.align, b.mono, false);
+    else if(b.t === 'img') P.img(b.canvas, b.caption);
+    await runYield();
+  }
+  const jpegs = await P.finish(rep.title);
+  return rptPdfBytes(jpegs, P.W, P.H, rep.title, author);
+}
+
+/* ---------- ventana «Generar informe» ---------- */
+const RPT = { kind: null };
+const RPT_DEFAULT = { dist: 'Simulación Monte Carlo', model: 'Modelo de simulación Monte Carlo', bass: 'Proyección de demanda · modelo de Bass', vw: 'Sensibilidad al precio · Van Westendorp', fit: 'Ajuste de distribuciones' };
+document.body.insertAdjacentHTML('beforeend', `
+<div class="sheet-backdrop" id="rptBackdrop"></div>
+<div class="sheet" id="rptSheet">
+  <div class="sheet-handle"></div>
+  <div class="comp-head"><div class="sheet-title">Generar informe</div><button type="button" class="row-remove" id="rptClose" aria-label="Cerrar">✕</button></div>
+  <div style="overflow-y:auto; padding:0 4px 4px;">
+    <div class="save-field"><input type="text" id="rptTitle" maxlength="120" placeholder="Título del informe" autocomplete="off"></div>
+    <div class="save-field"><input type="text" id="rptAuthor" maxlength="80" placeholder="Preparado por (opcional)" autocomplete="off"></div>
+    <div class="save-field"><textarea id="rptNotes" rows="3" maxlength="2000" placeholder="Comentarios o conclusiones (opcional)" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 12px; color:var(--text); font-family:var(--font-body); font-size:14.5px; outline:none; resize:vertical;"></textarea></div>
+    <label style="display:flex; gap:8px; align-items:center; margin:10px 14px 2px; font-size:13px; color:var(--text-dim);"><input type="checkbox" id="rptCharts" checked style="accent-color:var(--accent-2);"> Incluir gráficos</label>
+    <div class="save-actions"><button type="button" class="btn-primary" id="rptPdf">Descargar PDF</button><button type="button" class="btn-primary" id="rptWord" style="background:var(--accent-2); color:var(--on-accent-2);">Descargar Word</button></div>
+    <div class="saved-meta" id="rptMsg" style="margin:6px 14px 8px; min-height:16px;"></div>
+  </div>
+</div>`);
+const rptSheet = $('rptSheet'), rptBackdrop = $('rptBackdrop');
+const closeRpt = () => { rptSheet.classList.remove('show'); rptBackdrop.classList.remove('show'); };
+$('rptClose').onclick = closeRpt; rptBackdrop.onclick = closeRpt;
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeRpt(); });
+function rptAvailable(kind){
+  if(kind === 'dist') return !!(simData && resultsOwner === 'dist');
+  if(kind === 'model') return !!(MDL.res && MDL.runDef && resultsOwner === 'model');
+  if(kind === 'bass') return !!BS.res; if(kind === 'vw') return !!VW.res; if(kind === 'fit') return !!(FITUI.all && FITUI.all.length);
+  return false;
+}
+function rptOpen(kind){
+  if(!rptAvailable(kind)){ toast('Primero ejecuta el análisis para poder hacer el informe.'); return; }
+  RPT.kind = kind; $('rptTitle').value = RPT_DEFAULT[kind] + (kind === 'dist' && simData ? ' · ' + DISTS[simData.distKey].name : ''); $('rptMsg').textContent = '';
+  try{ $('rptAuthor').value = Persist.get('mcl_rpt_author') || ''; }catch(e){}
+  rptSheet.classList.add('show'); rptBackdrop.classList.add('show');
+}
+async function rptGenerate(fmtKind){
+  const msg = $('rptMsg'), btns = [$('rptPdf'), $('rptWord')]; btns.forEach(b => { b.disabled = true; });
+  const o = { title: ($('rptTitle').value || '').trim(), author: ($('rptAuthor').value || '').trim(), notes: $('rptNotes').value, charts: $('rptCharts').checked };
+  try{
+    Persist.set('mcl_rpt_author', o.author);
+    msg.textContent = 'Armando el informe…'; await runYield();
+    const rep = rptBuild(RPT.kind, o);
+    msg.textContent = fmtKind === 'pdf' ? 'Dibujando las páginas del PDF…' : 'Armando el documento de Word…'; await runYield();
+    const blob = fmtKind === 'pdf' ? await rptPdf(rep, o.author) : await rptDocx(rep, o.author);
+    const base = (rep.title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '') || 'informe').slice(0, 60), w = new Date();
+    await XL.download(blob, `${base}_${w.getFullYear()}${pad2m(w.getMonth() + 1)}${pad2m(w.getDate())}.${fmtKind === 'pdf' ? 'pdf' : 'docx'}`);
+    msg.textContent = '✓ Informe generado.';
+  } catch(e){ console.error(e); msg.textContent = 'No se pudo generar el informe: ' + (e && e.message ? e.message : 'error desconocido'); }
+  btns.forEach(b => { b.disabled = false; });
+}
+$('rptPdf').onclick = () => rptGenerate('pdf');
+$('rptWord').onclick = () => rptGenerate('docx');
+
+$('rptBtnRes').onclick = () => rptOpen(resultsOwner === 'model' ? 'model' : 'dist');
+$('bsReport').onclick = () => rptOpen('bass');
+$('vwReport').onclick = () => rptOpen('vw');
+$('fitReport').onclick = () => rptOpen('fit');
 
 /*@@FEATURES_END@@*/
 
