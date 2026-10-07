@@ -492,6 +492,7 @@
   .segmented button.active{background:var(--accent-2); color:var(--on-accent-2);}
   .crit-group-label{font-family:var(--font-mono); font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-faint); margin:10px 2px 6px;}
   .crit-group-label:first-child{margin-top:0;}
+  #fitMode button{font-size:11px; padding:9px 2px; letter-spacing:-0.02em; white-space:nowrap;}
   #mdlMode button{font-size:11px; padding:9px 2px; letter-spacing:-0.02em; white-space:nowrap;}
 
   /* Run button */
@@ -935,6 +936,7 @@
 <div class="segmented" id="fitMode" style="margin-top:12px;">
   <button type="button" data-m="dist" class="active">Distribuciones</button>
   <button type="button" data-m="ts">Series de tiempo</button>
+  <button type="button" data-m="fc">Previsión</button>
 </div>
 <div id="fitDist">
 <p class="view-intro">Pega tus datos históricos (uno por línea o copiados desde Excel) o carga un archivo. Si trae varias columnas con títulos, elige la variable que quieres analizar. La app prueba 15 distribuciones, las ordena según qué tan bien se ajustan y te deja usar la mejor en el simulador.</p>
@@ -1045,6 +1047,105 @@
 </div>
 
 <!--@@TS_END@@--></div>
+<div id="fitFC" style="display:none;"><!--@@FC_BEGIN@@-->
+<p class="view-intro">Previsión clásica de series de tiempo, como en StatTools: promedios móviles y suavización exponencial (simple, de Holt y de Winters). Puedes dejar períodos «descartados» al final para comprobar la previsión con datos reales y pedir que la app optimice los parámetros.</p>
+<div class="section-label"><span class="n">01</span> Variable <span style="color:var(--text-faint); text-transform:none; letter-spacing:0;">(selecciona solo una)</span></div>
+<div class="card">
+  <textarea id="fcData" class="data-area" rows="6" placeholder="Un valor por línea, en orden cronológico…&#10;120,5&#10;132,1&#10;118,9" spellcheck="false" autocomplete="off"></textarea>
+  <div class="data-tools">
+    <button type="button" class="chip" id="fcFileBtn">Cargar archivo</button>
+    <button type="button" class="chip" id="fcSampleBtn">Usar ejemplo</button>
+    <button type="button" class="chip" id="fcClearBtn">Borrar</button>
+    <input type="file" id="fcFileInput" accept=".txt,.csv,.tsv,.xlsx,.xlsm,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+  </div>
+  <div class="data-info" id="fcInfo"></div>
+  <div id="fcVars" style="display:none;">
+    <div class="crit-group-label" style="margin-top:12px;">Variable a prever</div>
+    <div class="data-tools" id="fcVarList" style="margin-top:0;"></div>
+  </div>
+</div>
+<div class="section-label"><span class="n">02</span> Configuración</div>
+<div class="segmented seg-small" id="fcTabs">
+  <button type="button" data-t="cfg" class="active">Previsión</button>
+  <button type="button" data-t="time">Escala de tiempo</button>
+  <button type="button" data-t="charts">Gráficos</button>
+</div>
+<div id="fcTabCfg" style="margin-top:12px;">
+  <div class="var-params">
+    <div class="field"><label>Número de previsiones</label><input type="number" id="fcH" value="6" min="1" max="120" inputmode="numeric"></div>
+    <div class="field"><label>Número de descartadas</label><input type="number" id="fcHold" value="0" min="0" max="60" inputmode="numeric"></div>
+  </div>
+  <div class="hint-line" style="margin-top:0;">Las descartadas son los últimos datos de tu serie que se reservan para validar: la app prevé esos períodos sin usarlos y los compara con lo que realmente pasó. Las previsiones son los períodos nuevos que se proyectan después del último dato.</div>
+  <label class="ts-check" style="margin:2px 0 14px;"><input type="checkbox" id="fcOpt" checked><span>Optimizar parámetros</span></label>
+  <div class="card" style="margin-top:0;">
+    <div class="crit-group-label" style="margin-top:0;">Método</div>
+    <div style="display:grid; gap:11px; margin-top:8px;">
+      <label class="ts-check"><input type="radio" name="fcMethod" value="ma" checked><span>Movimiento de promedios</span></label>
+      <label class="ts-check"><input type="radio" name="fcMethod" value="ses"><span>Suavización exponencial (Simple)</span></label>
+      <label class="ts-check"><input type="radio" name="fcMethod" value="holt"><span>Suavización exponencial (Holt)</span></label>
+      <label class="ts-check"><input type="radio" name="fcMethod" value="winters"><span>Suavización exponencial (Winters)</span></label>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px;" id="fcParams">
+    <div class="crit-group-label" style="margin-top:0;">Parámetros</div>
+    <div class="var-params" style="margin-top:8px;">
+      <div class="field" data-for="ma"><label>Extensión (períodos del promedio)</label><input type="number" id="fcK" value="3" min="1" max="60" inputmode="numeric"></div>
+      <div class="field" data-for="ses holt winters"><label>Alfa (nivel)</label><input type="number" id="fcA" value="0.3" min="0.01" max="1" step="0.05" inputmode="decimal"></div>
+      <div class="field" data-for="holt winters"><label>Beta (tendencia)</label><input type="number" id="fcB" value="0.1" min="0" max="1" step="0.05" inputmode="decimal"></div>
+      <div class="field" data-for="winters"><label>Gamma (estacionalidad)</label><input type="number" id="fcG" value="0.1" min="0" max="1" step="0.05" inputmode="decimal"></div>
+    </div>
+    <div data-for="winters" style="margin-top:6px;">
+      <div class="crit-group-label">Tipo de estacionalidad</div>
+      <div class="segmented seg-small" id="fcSeasType"><button type="button" data-v="add" class="active">Aditiva</button><button type="button" data-v="mul">Multiplicativa</button></div>
+    </div>
+    <div class="hint-line" id="fcParamHint" style="margin-bottom:0;"></div>
+  </div>
+</div>
+<div id="fcTabTime" style="display:none; margin-top:12px;">
+  <div class="field"><label>Estacionalidad (períodos por ciclo)</label>
+    <select id="fcSeason" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 12px; color:var(--text); font-size:15px; outline:none;">
+      <option value="0">Sin estacionalidad</option><option value="4">Trimestral (4 por año)</option><option value="12">Mensual (12 por año)</option><option value="7">Diaria con ciclo semanal (7)</option><option value="52">Semanal con ciclo anual (52)</option><option value="x">Otra…</option>
+    </select>
+  </div>
+  <div class="field" id="fcSeasonOther" style="display:none;"><label>Períodos por ciclo</label><input type="number" id="fcSeasonN" value="6" min="2" max="60" inputmode="numeric"></div>
+  <div class="var-params">
+    <div class="field"><label>Unidad de tiempo</label><input type="text" id="fcUnit" value="Período" maxlength="14" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 12px; color:var(--text); font-size:15px; outline:none;"></div>
+    <div class="field"><label>Número del primer período</label><input type="number" id="fcStart" value="1" inputmode="numeric"></div>
+  </div>
+  <div class="hint-line">La estacionalidad solo la usa el método de Winters (necesita al menos dos ciclos completos de datos). La unidad y el número inicial solo cambian los rótulos de las tablas y gráficos.</div>
+</div>
+<div id="fcTabCharts" style="display:none; margin-top:12px;">
+  <div class="card" style="margin-top:0; display:grid; gap:12px;">
+    <label class="ts-check"><input type="checkbox" checked disabled><span>Serie y previsión (siempre)</span></label>
+    <label class="ts-check"><input type="checkbox" id="fcChRes" checked><span>Residuos</span></label>
+    <label class="ts-check"><input type="checkbox" id="fcChAcf" checked><span>Autocorrelación de los residuos</span></label>
+    <label class="ts-check"><input type="checkbox" id="fcChCmp" checked><span>Comparar los cuatro métodos</span></label>
+  </div>
+</div>
+<div class="var-err" id="fcErr"></div>
+<button type="button" class="run-btn" id="fcRun" style="margin-top:14px;">Calcular previsión →</button>
+<div id="fcOut" style="display:none;">
+  <div class="section-label"><span class="n">03</span> Resultado: <span id="fcMethodName" style="color:var(--accent-2); text-transform:none; letter-spacing:0;"></span></div>
+  <div class="stat-grid" id="fcStats"></div>
+  <div class="card">
+    <div class="chart-title">Serie y previsión</div>
+    <div class="chart-sub" id="fcChartSub"></div>
+    <canvas id="fcChart" height="280" style="width:100%; display:block;"></canvas>
+    <div class="legend" id="fcLegend"></div>
+  </div>
+  <div class="card" style="padding:6px 0; margin-top:12px; max-height:420px; overflow:auto;"><table class="cmp-table" id="fcTable"></table></div>
+  <div class="card" id="fcDiag" style="margin-top:12px;"></div>
+  <div class="card" id="fcRobCard" style="margin-top:12px;"></div>
+  <div class="card" id="fcResCard" style="margin-top:12px;"><div class="chart-title">Residuos (error de un paso adelante)</div><div class="chart-sub">Dato real menos lo que el método había previsto. Deben oscilar alrededor de 0 sin patrón.</div><canvas id="fcResChart" height="200" style="width:100%; display:block;"></canvas></div>
+  <div class="card" id="fcAcfCard" style="margin-top:12px;"><div class="chart-title">Autocorrelación de los residuos</div><div class="chart-sub">Si las barras salen de las líneas, el método deja estructura sin explicar.</div><canvas id="fcAcfChart" height="200" style="width:100%; display:block;"></canvas></div>
+  <div class="card" id="fcCmpCard" style="margin-top:12px; padding:6px 0;"><div class="cmp-scroll"><table class="cmp-table" id="fcCmpTable"></table></div></div>
+  <div class="hint-line" id="fcCmpHint"></div>
+  <div class="action-row" style="margin-top:14px;"><button type="button" class="action-btn" id="fcToModel"><span>Enviar al modelo libre</span></button><button type="button" class="action-btn" id="fcReport"><span>Informe (PDF / Word)</span></button></div>
+  <div class="action-row" style="margin-top:0;"><button type="button" class="action-btn" id="fcExport"><span>Exportar a Excel (fórmulas vivas)</span></button></div>
+  <div class="hint-line">El Excel recalcula todo si cambias los parámetros o los datos (la banda P5–P95, la comparación de métodos y el análisis de robustez son valores fijos de la simulación). Para volver a optimizar, usa Solver minimizando el RMSE en la hoja «Ajuste».</div>
+  <div class="hint-line">«Enviar al modelo libre» crea una variable por cada período previsto (triangular, entre P5 y P95) y el resultado «Total_previsto», para operar con la previsión.</div>
+</div>
+<!--@@FC_END@@--></div>
 
 <!--@@FIT_VIEW_END@@--></div>
   <div id="viewCompare" class="view" style="display:none;"><!--@@COMPARE_VIEW_BEGIN@@-->
@@ -7559,8 +7660,9 @@ const tsTick = () => new Promise(r => setTimeout(r, 25));
 /* ---- selector de modo (Distribuciones / Series de tiempo) ---- */
 function fitSetMode(m){
   document.querySelectorAll('#fitMode button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
-  $('fitDist').style.display = m === 'dist' ? '' : 'none'; $('fitTS').style.display = m === 'ts' ? '' : 'none';
+  $('fitDist').style.display = m === 'dist' ? '' : 'none'; $('fitTS').style.display = m === 'ts' ? '' : 'none'; $('fitFC').style.display = m === 'fc' ? '' : 'none';
   if(m === 'ts' && TSU.res) requestAnimationFrame(tsDraw);
+  if(m === 'fc' && FCU.res) requestAnimationFrame(fcDrawAll);
   if(m === 'dist' && FITUI.res) requestAnimationFrame(() => { const c = {}; [...FITUI.visible].forEach((k, i) => { c[k] = FIT_COLORS[i % FIT_COLORS.length]; }); fitDraw(c); });
 }
 document.querySelectorAll('#fitMode button').forEach(b => { b.onclick = () => { fitSetMode(b.dataset.m); window.scrollTo({ top: 0 }); }; });
@@ -7965,11 +8067,11 @@ const rptReadKurt = k => (Math.abs(k) < 1 ? 'colas similares a las de una normal
 const rptReadCV = cv => (!Number.isFinite(cv) ? '' : (cv < 0.1 ? 'baja' : (cv < 0.3 ? 'moderada' : 'alta')));
 /* bloques de análisis de una variable */
 function rptVarBlocks(A, f, o, opt){
-  opt = opt || {}; const B = [], name = opt.name || 'la variable', showRisk = opt.risk !== false, pr = opt.precision !== false;
+  opt = opt || {}; const cvOk = Number.isFinite(A.cv) && Math.abs(A.mean) > 0.2 * A.sd; const B = [], name = opt.name || 'la variable', showRisk = opt.risk !== false, pr = opt.precision !== false;
   const ci = (lo, hi) => `${f(lo)} a ${f(hi)}`;
   B.push({ t: 'label', text: 'Estadísticos descriptivos' });
   const d = [['Tamaño de muestra (n)', A.n.toLocaleString('es-ES')], ['Media', f(A.mean)], ['Mediana', f(A.median)], ['Moda (aprox.)', f(A.mode)], ['Media recortada (5 %)', f(A.trimmed)], ['Desviación estándar (n−1)', f(A.sd)],
-    ['Varianza', fmt(A.variance)], ['Coef. de variación', Number.isFinite(A.cv) ? rptPct1(A.cv) : '—'], ['Mínimo', f(A.min)], ['Máximo', f(A.max)], ['Rango', f(A.range)], ['Rango intercuartílico', f(A.iqr)],
+    ['Varianza', fmt(A.variance)], ['Coef. de variación', cvOk ? rptPct1(A.cv) : '— (media cercana a 0)'], ['Mínimo', f(A.min)], ['Máximo', f(A.max)], ['Rango', f(A.range)], ['Rango intercuartílico', f(A.iqr)],
     ['Desv. absoluta mediana (MAD)', f(A.mad)], ['Error estándar de la media', f(A.se)]];
   const t4 = []; for(let i = 0; i < d.length; i += 2) t4.push([d[i][0], d[i][1], d[i + 1][0], d[i + 1][1]]);
   B.push({ t: 'table', head: ['Estadístico', 'Valor', 'Estadístico', 'Valor'], rows: t4, align: ['l', 'r', 'l', 'r'] });
@@ -8002,7 +8104,7 @@ function rptVarBlocks(A, f, o, opt){
   const I = [];
   I.push(`${name}: la media es ${f(A.mean)} y la mediana ${f(A.median)}${Math.abs(A.mean - A.median) > 0.1 * (A.iqr || 1) ? ' (la diferencia entre ambas confirma asimetría)' : ''}; el 90 % central de los valores va de ${f(A.P[0.05].v)} a ${f(A.P[0.95].v)}.`);
   I.push(`La distribución es ${rptReadSkew(A.skew)} (asimetría ${fmt(A.skew)}) y presenta ${rptReadKurt(A.kurt)} (curtosis ${fmt(A.kurt)}). ${A.jbP < 0.05 ? 'La prueba de Jarque–Bera rechaza la normalidad (' + rptPtxt(A.jbP) + '), por eso los percentiles son más confiables que la media ± desviaciones.' : 'La prueba de Jarque–Bera no rechaza la normalidad (' + rptPtxt(A.jbP) + ').'}`);
-  if(Number.isFinite(A.cv)) I.push(`La variabilidad relativa es ${rptReadCV(A.cv)} (coeficiente de variación ${rptPct1(A.cv)}).`);
+  if(cvOk) I.push(`La variabilidad relativa es ${rptReadCV(A.cv)} (coeficiente de variación ${rptPct1(A.cv)}).`);
   if(showRisk){
   if(A.signChange) I.push(`La probabilidad de obtener un valor negativo es ${rptPct2(A.pNeg)} (IC 95 %: ${rptPct2(A.pNegCI[0])} a ${rptPct2(A.pNegCI[1])}); en el 5 % peor de los casos el valor promedio es ${f(A.esLow)}.`);
   else I.push(`En el 5 % más bajo de los casos el valor promedio es ${f(A.esLow)} y en el 5 % más alto, ${f(A.esHigh)}.`);
@@ -8051,6 +8153,13 @@ function rptMethod(kind){
     I.push('Modelo de difusión de Bass: S(t+1) = p·N + (q − p)·Q(t) − (q/N)·Q(t)², con ventas no negativas y acumuladas limitadas a N. El instante teórico del pico en tiempo continuo es t* = ln(q/p)/(p + q) (solo si q > p).');
     I.push('Referencia: en estudios de metaanálisis de modelos de Bass los valores medios reportados son p ≈ 0,03 y q ≈ 0,38; sirven solo como orientación y varían mucho por producto y mercado.');
     I.push('Cuando se indica incertidumbre, N, p y q se sortean con distribución triangular alrededor de cada valor y las bandas son los percentiles P5 y P95 de las simulaciones.');
+  } else if(kind === 'fc'){
+    I.push('Promedio móvil de extensión k: la previsión del siguiente período es el promedio de los últimos k valores; para varios períodos, el promedio se desplaza usando las propias previsiones.');
+    I.push('Suavización exponencial simple: nivel L(t) = α·y(t) + (1−α)·L(t−1); la previsión es el último nivel. Holt agrega una tendencia T(t) = β·(L(t)−L(t−1)) + (1−β)·T(t−1) y proyecta L + h·T. Winters agrega un índice estacional por posición del ciclo (aditivo o multiplicativo) actualizado con γ.');
+    I.push('Optimización: se buscan los parámetros que minimizan el promedio de los errores cuadráticos de un paso adelante (método de Nelder–Mead con varios puntos de partida); en el promedio móvil se prueban todas las extensiones posibles.');
+    I.push('Validación: los últimos períodos «descartados» no se usan para ajustar; se prevén y se comparan con los datos reales. RMSE = raíz del promedio de los errores al cuadrado; MAE = promedio de los errores absolutos; MAPE = promedio de |error|/|dato| (se omiten los datos iguales a cero); sesgo = error medio.');
+    I.push('Banda P5–P95: se simulan 3.000 trayectorias futuras; en cada paso se suma al valor previsto un residuo tomado al azar de los residuos del ajuste y se actualiza el método con ese valor. Supone que los errores futuros se parecen a los pasados.');
+    I.push('Ljung–Box: contrasta si los residuos están autocorrelacionados (Q = n(n+2)·Σ ρ(k)²/(n−k), χ² con rezagos − parámetros estimados grados de libertad).');
   } else if(kind === 'vw'){
     I.push('Van Westendorp: para cada precio se calcula el porcentaje acumulado de encuestados que lo considera muy barato, barato, caro o muy caro. Los puntos son los cruces de esas curvas por interpolación lineal.');
     I.push('Las bandas P5–P95 provienen de repetir el cálculo con encuestados remuestreados al azar (bootstrap). Una banda ancha indica que el punto depende mucho de quiénes respondieron.');
@@ -8325,6 +8434,41 @@ async function rptBuild(kind, o, prog){
     rptMethod('fit').forEach(b => B.push(b));
     return { title: o.title || 'Ajuste de distribuciones', sub, blocks: rptCommon(o, B) };
   }
+  if(kind === 'fc'){
+    const r = FCU.res, f = v => fmt(+Number(v).toPrecision(6)), lbl = fcLabel, tr = r.train, vm = r.valid && r.valid.m, E = r.fit.errs;
+    await tick('Analizando los residuos…');
+    const AR = rptDescribe(E, null), best = r.cmp.filter(c => c.met).sort((a, b) => a.met.rmse - b.met.rmse)[0], total = r.point.reduce((a, b) => a + b, 0);
+    B.push({ t: 'h1', text: 'Resumen ejecutivo' });
+    const ex = [`Se prevén ${r.H} período${r.H === 1 ? '' : 's'} de «${r.name}» con el método ${FC.names[r.mth]} (${fcParamText(r.mth, r.fit.p, r.fit.m, r.fit.mult)}), a partir de ${r.n.toLocaleString('es-ES')} datos.`,
+      `Primera previsión (${lbl(r.n)}): ${f(r.point[0])} (banda P5–P95: ${f(r.p5[0])} a ${f(r.p95[0])}). Última (${lbl(r.n + r.H - 1)}): ${f(r.point[r.H - 1])} (${f(r.p5[r.H - 1])} a ${f(r.p95[r.H - 1])}). Suma de las previsiones: ${f(total)}.`,
+      `Error de entrenamiento (un paso adelante): RMSE ${f(tr.rmse)}, error medio absoluto ${f(tr.mae)}${Number.isFinite(tr.mape) ? ', MAPE ' + fcPct(tr.mape) : ''}.`];
+    if(vm) ex.push(`Validación con ${r.d} períodos descartados: RMSE ${f(vm.rmse)}, error medio absoluto ${f(vm.mae)}${Number.isFinite(vm.mape) ? ', MAPE ' + fcPct(vm.mape) : ''}.`);
+    if(best) ex.push(`Entre los cuatro métodos comparados (${r.cmpBasis}), el de menor RMSE es «${FC.names[best.m2]}».`);
+    ex.push(r.lb.p < 0.05 ? `Los residuos muestran autocorrelación (Ljung–Box ${rptPtxt(r.lb.p)}): el método no captura toda la estructura de la serie.` : `Los residuos no muestran autocorrelación (Ljung–Box ${rptPtxt(r.lb.p)}).`);
+    B.push({ t: 'bul', items: ex });
+    B.push({ t: 'h1', text: 'Supuestos' });
+    B.push({ t: 'kv', rows: [['Variable', r.name], ['Datos usados', r.n.toLocaleString('es-ES')], ['Método', FC.names[r.mth]], ['Parámetros', `${fcParamText(r.mth, r.fit.p, r.fit.m, r.fit.mult)} (${r.st.optimize ? 'optimizados' : 'fijos'})`], ['Períodos previstos', String(r.H)], ['Períodos descartados para validar', String(r.d)],
+      ['Estacionalidad', r.st.m >= 2 ? `${r.st.m} períodos por ciclo${r.mth === 'winters' ? ' (' + (r.st.mult ? 'multiplicativa' : 'aditiva') + ')' : ' (solo la usa el método de Winters)'}` : 'Sin estacionalidad'], ['Unidad de tiempo', $('fcUnit').value.trim() || 'Período'], ['Fecha del cálculo', rptDate(r.when)]] });
+    B.push({ t: 'h1', text: 'Resultados' });
+    B.push({ t: 'table', head: ['Medida de error', 'Entrenamiento (un paso)'].concat(vm ? ['Validación (descartadas)'] : []), align: ['l', 'r', 'r'], rows: [
+      ['Raíz del error cuadrático medio (RMSE)', f(tr.rmse)].concat(vm ? [f(vm.rmse)] : []), ['Error medio absoluto (MAE)', f(tr.mae)].concat(vm ? [f(vm.mae)] : []),
+      ['Error porcentual absoluto medio (MAPE)', fcPct(tr.mape)].concat(vm ? [fcPct(vm.mape)] : []), ['Sesgo (error medio)', f(tr.bias)].concat(vm ? [f(vm.bias)] : []), ['Observaciones evaluadas', String(tr.n)].concat(vm ? [String(vm.n)] : [])] });
+    const rows = []; if(r.d) r.valid.pred.forEach((pv, i) => rows.push([lbl(r.n - r.d + i) + ' (descartada)', f(r.valid.actual[i]), f(pv), f(r.valid.actual[i] - pv), '—', '—']));
+    r.point.forEach((pv, i) => rows.push([lbl(r.n + i), '—', f(pv), '—', f(r.p5[i]), f(r.p95[i])]));
+    B.push({ t: 'table', head: ['Período', 'Dato real', 'Previsión', 'Error', 'P5', 'P95'], align: ['l', 'r', 'r', 'r', 'r', 'r'], rows });
+    if(o.charts) B.push({ t: 'img', canvas: rptFCChart(r), caption: 'Figura 1. Serie, ajuste, previsión y banda P5–P95 (3.000 trayectorias con residuos remuestreados).' });
+    B.push({ t: 'h1', text: 'Análisis de los residuos' });
+    B.push({ t: 'p', text: 'Los residuos son la diferencia entre cada dato y lo que el método había previsto un paso antes. Si el método es adecuado, deben comportarse como ruido: media cercana a cero, sin patrón y sin autocorrelación.' });
+    rptVarBlocks(AR, f, o, { name: 'Los residuos', risk: false, precision: false }).forEach(b => B.push(b));
+    B.push({ t: 'kv', rows: [['Prueba de Ljung–Box', `Q = ${f(r.lb.Q)} con ${r.lb.df} grados de libertad (${r.lb.L} rezagos)`], ['Resultado', `${rptPtxt(r.lb.p)}: ${r.lb.p < 0.05 ? 'hay autocorrelación en los residuos' : 'no hay evidencia de autocorrelación'}`]] });
+    if(o.charts){ B.push({ t: 'img', canvas: rptFCRes(r), caption: 'Figura 2. Residuos de un paso adelante.' }); B.push({ t: 'img', canvas: rptFCAcf(r), caption: 'Figura 3. Autocorrelación de los residuos.' }); }
+    B.push({ t: 'h1', text: 'Comparación de métodos' });
+    B.push({ t: 'p', text: `Los cuatro métodos con parámetros optimizados, evaluados con ${r.cmpBasis}.` });
+    B.push({ t: 'table', head: ['Método', 'Parámetros', 'RMSE', 'MAE', 'MAPE', 'Sesgo'], align: ['l', 'l', 'r', 'r', 'r', 'r'], rows: r.cmp.map(c => [FC.names[c.m2] + (c === best ? ' ★' : ''), fcParamText(c.m2, c.p, r.st.m, r.st.mult), c.met ? f(c.met.rmse) : '—', c.met ? f(c.met.mae) : '—', c.met ? fcPct(c.met.mape) : '—', c.met ? f(c.met.bias) : '—']) });
+    if(r.st.m < 2) B.push({ t: 'note', text: 'El método de Winters no se comparó porque no se definió la estacionalidad.' });
+    rptMethod('fc').forEach(b => B.push(b));
+    return { title: o.title || `Previsión · ${r.name}`, sub, blocks: rptCommon(o, B) };
+  }
   throw new Error('No hay un análisis para el informe.');
 }
 
@@ -8524,7 +8668,7 @@ async function rptPdf(rep, author){
 
 /* ---------- ventana «Generar informe» ---------- */
 const RPT = { kind: null };
-const RPT_DEFAULT = { dist: 'Simulación Monte Carlo', model: 'Modelo de simulación Monte Carlo', bass: 'Proyección de demanda · modelo de Bass', vw: 'Sensibilidad al precio · Van Westendorp', fit: 'Ajuste de distribuciones' };
+const RPT_DEFAULT = { dist: 'Simulación Monte Carlo', model: 'Modelo de simulación Monte Carlo', bass: 'Proyección de demanda · modelo de Bass', vw: 'Sensibilidad al precio · Van Westendorp', fit: 'Ajuste de distribuciones', fc: 'Previsión de series de tiempo' };
 document.body.insertAdjacentHTML('beforeend', `
 <div class="sheet-backdrop" id="rptBackdrop"></div>
 <div class="sheet" id="rptSheet">
@@ -8546,7 +8690,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeRpt(); }
 function rptAvailable(kind){
   if(kind === 'dist') return !!(simData && resultsOwner === 'dist');
   if(kind === 'model') return !!(MDL.res && MDL.runDef && resultsOwner === 'model');
-  if(kind === 'bass') return !!BS.res; if(kind === 'vw') return !!VW.res; if(kind === 'fit') return !!(FITUI.all && FITUI.all.length);
+  if(kind === 'bass') return !!BS.res; if(kind === 'vw') return !!VW.res; if(kind === 'fc') return !!FCU.res; if(kind === 'fit') return !!(FITUI.all && FITUI.all.length);
   return false;
 }
 function rptOpen(kind){
@@ -8577,6 +8721,566 @@ $('rptBtnRes').onclick = () => rptOpen(resultsOwner === 'model' ? 'model' : 'dis
 $('bsReport').onclick = () => rptOpen('bass');
 $('vwReport').onclick = () => rptOpen('vw');
 $('fitReport').onclick = () => rptOpen('fit');
+
+/* =========================================================
+   PREVISIÓN CLÁSICA (como StatTools): promedios móviles y suavización exponencial simple, de Holt y de Winters
+   Los períodos «descartados» se reservan para validar; los parámetros se pueden optimizar (mínimo error cuadrático
+   de un paso adelante) y la incertidumbre se simula remuestreando los residuos.
+========================================================= */
+const FC = {};
+FC.names = { ma: 'Movimiento de promedios', ses: 'Suavización exponencial (simple)', holt: 'Suavización exponencial (Holt)', winters: 'Suavización exponencial (Winters)' };
+FC.nPar = { ma: 0, ses: 1, holt: 2, winters: 3 };
+FC.minLen = (mth, p, m) => (mth === 'ma' ? p.k + 2 : (mth === 'ses' ? 3 : (mth === 'holt' ? 4 : 2 * m + 2)));
+FC.clone = st => ({ ...st, buf: st.buf ? st.buf.slice() : undefined, S: st.S ? st.S.slice() : undefined });
+FC.init = (mth, y, p, m, mult) => {
+  const n = y.length;
+  if(mth === 'ma') return { st: { buf: Array.from(y.slice(0, p.k)) }, start: p.k };
+  if(mth === 'ses') return { st: { l: y[0] }, start: 1 };
+  if(mth === 'holt'){ const k = Math.min(4, n - 1); return { st: { l: y[0], b: (y[k] - y[0]) / k }, start: 1 }; }
+  let s1 = 0, s2 = 0; for(let i = 0; i < m; i++){ s1 += y[i]; s2 += y[m + i]; }
+  const m1 = s1 / m, m2 = s2 / m, b0 = (m2 - m1) / m, S = new Array(m);                 // nivel y tendencia iniciales de los dos primeros ciclos
+  for(let i = 0; i < m; i++){ const tr = m1 + b0 * (i - (m - 1) / 2); S[i] = mult ? y[i] / tr : y[i] - tr; }
+  return { st: { l: m1 + b0 * (m - 1) / 2, b: b0, S, pos: 0 }, start: m };
+};
+FC.predict = (mth, st, mult) => {
+  if(mth === 'ma'){ let s = 0; for(const v of st.buf) s += v; return s / st.buf.length; }
+  if(mth === 'ses') return st.l;
+  if(mth === 'holt') return st.l + st.b;
+  return mult ? (st.l + st.b) * st.S[st.pos] : (st.l + st.b) + st.S[st.pos];
+};
+FC.advance = (mth, st, y, p, mult, m) => {
+  if(mth === 'ma'){ st.buf.shift(); st.buf.push(y); return; }
+  if(mth === 'ses'){ st.l = p.a * y + (1 - p.a) * st.l; return; }
+  const l0 = st.l, b0 = st.b;
+  if(mth === 'holt'){ st.l = p.a * y + (1 - p.a) * (l0 + b0); st.b = p.b * (st.l - l0) + (1 - p.b) * b0; return; }
+  const s = st.S[st.pos];
+  st.l = mult ? p.a * (y / s) + (1 - p.a) * (l0 + b0) : p.a * (y - s) + (1 - p.a) * (l0 + b0);
+  st.b = p.b * (st.l - l0) + (1 - p.b) * b0;
+  st.S[st.pos] = mult ? p.g * (y / st.l) + (1 - p.g) * s : p.g * (y - st.l) + (1 - p.g) * s;
+  st.pos = (st.pos + 1) % m;
+};
+/* recorre la serie: valor previsto un paso adelante en cada instante, suma de cuadrados del error y estado final */
+FC.filter = (mth, y, p, m, mult, keep) => {
+  const n = y.length, ini = FC.init(mth, y, p, m, mult), st = ini.st, fitted = keep ? new Float64Array(n).fill(NaN) : null; let sse = 0, cnt = 0;
+  for(let t = ini.start; t < n; t++){
+    const f = FC.predict(mth, st, mult), e = y[t] - f;
+    if(Number.isFinite(e)){ sse += e * e; cnt++; } else { sse = Infinity; }
+    if(keep) fitted[t] = f;
+    FC.advance(mth, st, y[t], p, mult, m);
+  }
+  return { fitted, sse, cnt, state: st, start: ini.start };
+};
+FC.fit = (mth, y, o) => {                         // o: { optimize, k, a, b, g, m, mult }
+  const p = { k: o.k, a: o.a, b: o.b, g: o.g }, m = o.m, mult = o.mult;
+  if(o.optimize){
+    if(mth === 'ma'){
+      let best = null; const kmax = Math.max(2, Math.min(36, Math.floor(y.length / 3)));
+      for(let k = 1; k <= kmax; k++){ const r = FC.filter('ma', y, { k }, m, mult, false); if(r.cnt && (!best || r.sse / r.cnt < best.v)) best = { k, v: r.sse / r.cnt }; }
+      if(best) p.k = best.k;
+    } else {
+      const keys = mth === 'ses' ? ['a'] : (mth === 'holt' ? ['a', 'b'] : ['a', 'b', 'g']);
+      const sig = u => 0.0001 + 0.9998 / (1 + Math.exp(-u));
+      const f = u => { const q = { ...p }; keys.forEach((kk, i) => { q[kk] = sig(u[i]); }); const r = FC.filter(mth, y, q, m, mult, false); return r.cnt && Number.isFinite(r.sse) ? r.sse / r.cnt : Infinity; };
+      let best = null; [-1.6, 0, 1.6].forEach(s0 => { const r = SP.nelderMead(f, keys.map(() => s0), 0.8, 500); if(!best || r.f < best.f) best = r; });
+      keys.forEach((kk, i) => { p[kk] = sig(best.x[i]); });
+    }
+  }
+  const run = FC.filter(mth, y, p, m, mult, true), n = y.length, errs = [];
+  for(let t = run.start; t < n; t++) errs.push(y[t] - run.fitted[t]);
+  return { mth, p, m, mult, fitted: run.fitted, errs, start: run.start, state: run.state, n };
+};
+FC.forecast = (fit, H) => { const st = FC.clone(fit.state), out = []; for(let h = 0; h < H; h++){ const f = FC.predict(fit.mth, st, fit.mult); out.push(f); FC.advance(fit.mth, st, f, fit.p, fit.mult, fit.m); } return out; };
+FC.paths = (fit, H, B) => {                       // trayectorias futuras: cada paso suma un residuo sorteado al azar y actualiza el método
+  const out = Array.from({ length: H }, () => new Float64Array(B)), e = fit.errs;
+  for(let b = 0; b < B; b++){ const st = FC.clone(fit.state); for(let h = 0; h < H; h++){ const y = FC.predict(fit.mth, st, fit.mult) + e[(Math.random() * e.length) | 0]; out[h][b] = y; FC.advance(fit.mth, st, y, fit.p, fit.mult, fit.m); } }
+  return out;
+};
+FC.metrics = (actual, pred) => {
+  let n = 0, se = 0, ae = 0, ape = 0, na = 0;
+  for(let i = 0; i < actual.length; i++){ const e = actual[i] - pred[i]; if(!Number.isFinite(e)) continue; n++; se += e; ae += Math.abs(e); if(actual[i] !== 0){ ape += Math.abs(e / actual[i]); na++; } }
+  let sq = 0; for(let i = 0; i < actual.length; i++){ const e = actual[i] - pred[i]; if(Number.isFinite(e)) sq += e * e; }
+  return n ? { n, bias: se / n, mae: ae / n, rmse: Math.sqrt(sq / n), mape: na ? ape / na : NaN } : null;
+};
+FC.acf = (e, L) => { const n = e.length; let mu = 0; e.forEach(v => { mu += v; }); mu /= n; let d = 0; e.forEach(v => { d += (v - mu) ** 2; }); const r = []; for(let k = 1; k <= L; k++){ let c = 0; for(let t = k; t < n; t++) c += (e[t] - mu) * (e[t - k] - mu); r.push(d > 0 ? c / d : 0); } return r; };
+FC.ljung = (e, npar) => { const n = e.length, L = Math.max(1, Math.min(10, Math.floor(n / 5))), r = FC.acf(e, L); let Q = 0; r.forEach((v, i) => { Q += v * v / (n - i - 1); }); Q *= n * (n + 2); const df = Math.max(1, L - npar); return { Q, df, L, p: Math.min(1, Math.max(0, 1 - SP.gammaP(df / 2, Q / 2))) }; };
+
+/* ---- análisis de robustez de la previsión ---- */
+/* reconstruye, instante por instante, el nivel, la tendencia, el índice estacional y las previsiones (para el Excel con fórmulas vivas) */
+FC.trace = (mth, y, p, m, mult, Hh) => {
+  const n = y.length, T = n + Hh, z = () => new Array(T).fill(NaN), o = { lvl: z(), trd: z(), sea: z(), ext: z(), pred: z(), fut: z(), err: z() };
+  if(mth === 'ma'){
+    const k = p.k; for(let t = 0; t < n; t++) o.ext[t] = y[t];
+    for(let t = k; t < n; t++){ let s = 0; for(let j = t - k; j < t; j++) s += o.ext[j]; o.pred[t] = s / k; o.err[t] = y[t] - o.pred[t]; }
+    for(let t = n; t < T; t++){ let s = 0; for(let j = t - k; j < t; j++) s += o.ext[j]; o.fut[t] = s / k; o.ext[t] = o.fut[t]; }
+  } else if(mth === 'ses'){
+    o.lvl[0] = y[0];
+    for(let t = 1; t < n; t++){ o.pred[t] = o.lvl[t - 1]; o.lvl[t] = p.a * y[t] + (1 - p.a) * o.lvl[t - 1]; o.err[t] = y[t] - o.pred[t]; }
+    for(let t = n; t < T; t++) o.fut[t] = o.lvl[n - 1];
+  } else if(mth === 'holt'){
+    const k = Math.min(4, n - 1); o.lvl[0] = y[0]; o.trd[0] = (y[k] - y[0]) / k;
+    for(let t = 1; t < n; t++){ o.pred[t] = o.lvl[t - 1] + o.trd[t - 1]; o.lvl[t] = p.a * y[t] + (1 - p.a) * o.pred[t]; o.trd[t] = p.b * (o.lvl[t] - o.lvl[t - 1]) + (1 - p.b) * o.trd[t - 1]; o.err[t] = y[t] - o.pred[t]; }
+    for(let t = n; t < T; t++) o.fut[t] = o.lvl[n - 1] + (t - n + 1) * o.trd[n - 1];
+  } else {
+    let s1 = 0, s2 = 0; for(let i = 0; i < m; i++){ s1 += y[i]; s2 += y[m + i]; } const m1 = s1 / m, b0 = (s2 / m - m1) / m;
+    for(let i = 0; i < m; i++){ const tr = m1 + b0 * (i - (m - 1) / 2); o.sea[i] = mult ? y[i] / tr : y[i] - tr; }
+    o.lvl[m - 1] = m1 + b0 * (m - 1) / 2; o.trd[m - 1] = b0;
+    for(let t = m; t < n; t++){
+      const s = o.sea[t - m], base = o.lvl[t - 1] + o.trd[t - 1];
+      o.pred[t] = mult ? base * s : base + s;
+      o.lvl[t] = mult ? p.a * (y[t] / s) + (1 - p.a) * base : p.a * (y[t] - s) + (1 - p.a) * base;
+      o.trd[t] = p.b * (o.lvl[t] - o.lvl[t - 1]) + (1 - p.b) * o.trd[t - 1];
+      o.sea[t] = mult ? p.g * (y[t] / o.lvl[t]) + (1 - p.g) * s : p.g * (y[t] - o.lvl[t]) + (1 - p.g) * s;
+      o.err[t] = y[t] - o.pred[t];
+    }
+    for(let t = n; t < T; t++){ const h = t - n + 1, s = o.sea[n - m + ((h - 1) % m)], base = o.lvl[n - 1] + h * o.trd[n - 1]; o.fut[t] = mult ? base * s : base + s; }
+  }
+  return o;
+};
+/* sensibilidad del error (RMSE de un paso adelante) a cada parámetro, dejando los demás en su valor ajustado */
+FC.sensitivity = (mth, y, fit) => {
+  const grid = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99], out = {};
+  const rm = p => { const r = FC.filter(mth, y, p, fit.m, fit.mult, false); return r.cnt && Number.isFinite(r.sse) ? Math.sqrt(r.sse / r.cnt) : NaN; };
+  if(mth === 'ma'){ const kmax = Math.max(2, Math.min(24, Math.floor(y.length / 3))); out.k = []; for(let k = 1; k <= kmax; k++) out.k.push([k, rm({ ...fit.p, k })]); }
+  else { out.a = grid.map(v => [v, rm({ ...fit.p, a: v })]); if(mth !== 'ses') out.b = grid.map(v => [v, rm({ ...fit.p, b: v })]); if(mth === 'winters') out.g = grid.map(v => [v, rm({ ...fit.p, g: v })]); }
+  out.base = rm(fit.p); return out;
+};
+/* validación con origen móvil: se reajusta el método con cada vez más datos y se mide el error de prever 1, 2, … períodos hacia adelante */
+FC.rolling = (mth, y, st, p0) => {
+  const n = y.length, minTr = Math.max(FC.minLen(mth, p0, st.m) + 2, Math.floor(n / 2)), hmax = Math.max(1, Math.min(st.H, 6)), span = n - 1 - minTr;
+  if(span < 1) return null;
+  const step = Math.max(1, Math.floor(span / 9)), origins = [], byH = Array.from({ length: hmax }, () => ({ a: [], p: [] }));
+  for(let t0 = minTr; t0 <= n - 1; t0 += step) origins.push(t0);
+  origins.forEach(t0 => {
+    let fit; try{ fit = FC.fit(mth, y.slice(0, t0), { optimize: st.optimize, k: st.k, a: st.a, b: st.b, g: st.g, m: st.m, mult: st.mult }); } catch(e){ return; }
+    FC.forecast(fit, Math.min(hmax, n - t0)).forEach((f, h) => { byH[h].a.push(y[t0 + h]); byH[h].p.push(f); });
+  });
+  const rows = byH.map((o, i) => { const mm = FC.metrics(o.a, o.p); return mm ? { h: i + 1, ...mm } : null; }).filter(Boolean);
+  return rows.length ? { origins, rows, minTr } : null;
+};
+FC.outliers = (fit, label) => {
+  const e = fit.errs, n = e.length; let mu = 0; e.forEach(v => { mu += v; }); mu /= n; let sq = 0; e.forEach(v => { sq += (v - mu) ** 2; }); const sd = Math.sqrt(sq / Math.max(1, n - 1));
+  const all = e.map((v, i) => ({ t: fit.start + i, e: v, z: sd > 0 ? (v - mu) / sd : 0 })).sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+  return { list: all.filter(x => Math.abs(x.z) > 3).slice(0, 10).map(x => ({ ...x, label: label(x.t) })), top: all.slice(0, 3).map(x => ({ ...x, label: label(x.t) })), mu, sd, n };
+};
+
+/* ---- lectura de la pantalla ---- */
+const FCU = { res: null, table: null, col: 0, sig: '', tab: 'cfg' };
+const fcMethod = () => (document.querySelector('input[name="fcMethod"]:checked') || {}).value || 'ma';
+const fcSeasonM = () => { const v = $('fcSeason').value; return v === 'x' ? Math.round(+$('fcSeasonN').value) || 0 : +v; };
+const fcLabel = i => `${$('fcUnit').value.trim() || 'Período'} ${(Math.round(+$('fcStart').value) || 0) + i}`;
+function fcInfo(msg, err){ const el = $('fcInfo'); el.textContent = msg; el.classList.toggle('err', !!err); }
+function fcVarsRender(){
+  const tb = FCU.table, box = $('fcVars');
+  if(!tb || tb.cols.length < 2){ box.style.display = 'none'; $('fcVarList').innerHTML = ''; return; }
+  box.style.display = ''; const list = $('fcVarList'); list.innerHTML = '';
+  tb.cols.forEach((c, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (i === FCU.col ? ' sel' : ''); b.textContent = `${c.name} (${c.values.length.toLocaleString('es-ES')})`; b.onclick = () => { FCU.col = i; fcParseNow(); }; list.appendChild(b); });
+}
+function fcParseNow(){
+  const txt = $('fcData').value;
+  if(!txt.trim()){ fcInfo(''); FCU.table = null; fcVarsRender(); return { values: [], name: '' }; }
+  const tb = FIT.parseTable(txt); FCU.table = tb; let values, name = '';
+  if(tb){
+    const sig = tb.cols.length + '|' + tb.cols.map(c => c.name).join('\u0001'); if(FCU.sig !== sig){ FCU.sig = sig; FCU.col = 0; } if(FCU.col >= tb.cols.length) FCU.col = 0;
+    const c = tb.cols[FCU.col]; values = c.values; name = c.name;
+    fcInfo((tb.cols.length > 1 ? `Se detectaron ${tb.cols.length} variables. ` : '') + `Prediciendo «${c.name}»: ${values.length.toLocaleString('es-ES')} valores.` + (tb.skipped.length ? ` Columnas no numéricas omitidas: ${tb.skipped.join(', ')}.` : ''), values.length < 6);
+  } else {
+    FCU.sig = ''; const r = FIT.parse(txt); values = r.values;
+    fcInfo(`Se leyeron ${values.length.toLocaleString('es-ES')} valores` + (r.ignored ? ` · ${r.ignored} ignorados (no son números)` : '') + '.', values.length < 6);
+  }
+  fcVarsRender(); return { values, name };
+}
+function fcSyncParams(){
+  const m = fcMethod(), opt = $('fcOpt').checked;
+  document.querySelectorAll('#fcParams [data-for]').forEach(el => { const on = el.dataset.for.split(' ').includes(m); el.style.display = on ? '' : 'none'; });
+  ['fcK', 'fcA', 'fcB', 'fcG'].forEach(id => { $(id).disabled = opt; $(id).style.opacity = opt ? 0.5 : 1; });
+  $('fcParamHint').textContent = opt ? 'Con «Optimizar parámetros» activado, la app busca los valores que minimizan el error de previsión y te los muestra en el resultado.' : 'Parámetros fijos: se usan tal cual los escribes.';
+}
+document.querySelectorAll('input[name="fcMethod"]').forEach(r => { r.onchange = fcSyncParams; }); $('fcOpt').onchange = fcSyncParams; fcSyncParams();
+$('fcSeason').onchange = () => { $('fcSeasonOther').style.display = $('fcSeason').value === 'x' ? '' : 'none'; };
+document.querySelectorAll('#fcSeasType button').forEach(b => { b.onclick = () => { document.querySelectorAll('#fcSeasType button').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
+document.querySelectorAll('#fcTabs button').forEach(b => { b.onclick = () => { document.querySelectorAll('#fcTabs button').forEach(x => x.classList.toggle('active', x === b)); $('fcTabCfg').style.display = b.dataset.t === 'cfg' ? '' : 'none'; $('fcTabTime').style.display = b.dataset.t === 'time' ? '' : 'none'; $('fcTabCharts').style.display = b.dataset.t === 'charts' ? '' : 'none'; }; });
+$('fcData').addEventListener('input', () => { clearTimeout(FCU.t); FCU.t = setTimeout(fcParseNow, 200); });
+$('fcClearBtn').onclick = () => { $('fcData').value = ''; FCU.table = null; FCU.col = 0; FCU.sig = ''; fcInfo(''); fcVarsRender(); $('fcOut').style.display = 'none'; FCU.res = null; $('fcErr').textContent = ''; };
+$('fcFileBtn').onclick = () => $('fcFileInput').click();
+$('fcFileInput').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if(!f) return; const txt = await readDataFile(f); if(txt === null) return; $('fcData').value = txt; FCU.col = 0; FCU.sig = ''; fcParseNow(); };
+$('fcSampleBtn').onclick = () => {                 // 48 meses con tendencia, estacionalidad anual y ruido
+  const rnd = vwRng(2026), out = [];
+  for(let t = 0; t < 48; t++){ const noise = (rnd() + rnd() + rnd() - 1.5) * 8; out.push((100 + 1.4 * t + 16 * Math.sin(2 * Math.PI * (t % 12) / 12 - 0.6) + noise).toFixed(1).replace('.', ',')); }
+  $('fcData').value = out.join('\n'); FCU.table = null; fcParseNow();
+  $('fcSeason').value = '12'; $('fcSeason').onchange(); $('fcUnit').value = 'Mes'; $('fcStart').value = 1;
+  document.querySelector('input[name="fcMethod"][value="winters"]').checked = true; $('fcHold').value = 6; $('fcH').value = 12; fcSyncParams();
+  fcInfo($('fcInfo').textContent + ' Ejemplo: 48 meses con tendencia y estacionalidad anual (se dejaron 6 descartados para validar).');
+};
+
+/* ---- cálculo ---- */
+async function fcCompute(y, st){                   // st: configuración leída de la pantalla
+  const n = y.length, d = st.hold, mth = st.method;
+  const base = (mm, optimize) => ({ optimize, k: st.k, a: st.a, b: st.b, g: st.g, m: st.m, mult: st.mult });
+  const out = { y, st, mth, n, d, H: st.H };
+  const needN = FC.minLen(mth, { k: st.k }, st.m);
+  if(n - d < needN) throw new Error(`Para el método «${FC.names[mth]}» se necesitan al menos ${needN} datos de entrenamiento (tienes ${n - d}${d ? ' después de descartar ' + d : ''}).`);
+  if(mth === 'winters' && st.m < 2) throw new Error('Para el método de Winters indica la estacionalidad (períodos por ciclo) en la pestaña «Escala de tiempo».');
+  if(d > 0){                                       // validación: se ajusta sin las descartadas y se prevén esos períodos
+    const tr = y.slice(0, n - d), vf = FC.fit(mth, tr, base(mth, st.optimize)), pr = FC.forecast(vf, d);
+    out.valid = { fit: vf, pred: pr, actual: Array.from(y.slice(n - d)), m: FC.metrics(Array.from(y.slice(n - d)), pr) };
+  }
+  await runYield();
+  const fit = FC.fit(mth, y, base(mth, st.optimize));
+  out.fit = fit; out.point = FC.forecast(fit, st.H); out.train = FC.metrics(Array.from(y).slice(fit.start), Array.from(fit.fitted).slice(fit.start));
+  await runYield();
+  const paths = FC.paths(fit, st.H, 3000); out.p5 = []; out.p50 = []; out.p95 = [];
+  paths.forEach(a => { a.sort(); out.p5.push(rptQ(a, 0.05)); out.p50.push(rptQ(a, 0.5)); out.p95.push(rptQ(a, 0.95)); });
+  out.lb = FC.ljung(fit.errs, FC.nPar[mth]);
+  /* comparación de los cuatro métodos (con parámetros optimizados), sobre un mismo tramo */
+  out.cmp = [];
+  const train = d > 0 ? y.slice(0, n - d) : y, list = ['ma', 'ses', 'holt'].concat(st.m >= 2 ? ['winters'] : []);
+  const fits = list.map(m2 => { try{ if(train.length < FC.minLen(m2, { k: 3 }, st.m)) return null; return { m2, fit: FC.fit(m2, train, { optimize: true, k: 3, a: 0.3, b: 0.1, g: 0.1, m: st.m, mult: st.mult }) }; } catch(e){ return null; } }).filter(Boolean);
+  const common = Math.max(...fits.map(f => f.fit.start));
+  fits.forEach(f => {
+    const ref = d > 0 ? FC.metrics(Array.from(y.slice(n - d)), FC.forecast(f.fit, d)) : FC.metrics(Array.from(train).slice(common), Array.from(f.fit.fitted).slice(common));
+    out.cmp.push({ m2: f.m2, p: f.fit.p, met: ref });
+  });
+  await runYield();
+  out.rob = { sens: FC.sensitivity(mth, y, fit), roll: FC.rolling(mth, y, st, fit.p), outl: FC.outliers(fit, i => fcLabel(fit.start + (i - fit.start))) };
+  out.rob.outl = FC.outliers(fit, t => fcLabel(t));
+  out.cmpBasis = d > 0 ? `validación con los ${d} períodos descartados` : `error de un paso adelante en el tramo común (desde el dato ${common + 1})`;
+  return out;
+}
+$('fcRun').onclick = async () => {
+  $('fcErr').textContent = '';
+  const { values } = fcParseNow(); let y = values; const btn = $('fcRun');
+  if(y.length < 6){ $('fcErr').textContent = 'Se necesitan al menos 6 datos para hacer una previsión.'; return; }
+  if(y.length > 5000) y = y.slice(-5000);
+  const st = { method: fcMethod(), optimize: $('fcOpt').checked, H: Math.max(1, Math.min(120, Math.round(+$('fcH').value) || 6)), hold: Math.max(0, Math.min(60, Math.round(+$('fcHold').value) || 0)), k: Math.max(1, Math.round(+$('fcK').value) || 3), a: Math.min(1, Math.max(0.0001, +$('fcA').value || 0.3)), b: Math.min(1, Math.max(0, +$('fcB').value)), g: Math.min(1, Math.max(0, +$('fcG').value)), m: fcSeasonM(), mult: document.querySelector('#fcSeasType button.active').dataset.v === 'mul' };
+  btn.disabled = true; btn.textContent = 'Calculando…'; await runYield();
+  try{
+    const out = await fcCompute(Float64Array.from(y), st); out.name = (FCU.table ? FCU.table.cols[FCU.col].name : '') || 'Serie'; out.when = new Date(); FCU.res = out; fcRender();
+    $('fcOut').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(e){ $('fcErr').textContent = e.message; $('fcOut').style.display = 'none'; FCU.res = null; }
+  btn.disabled = false; btn.textContent = 'Calcular previsión →';
+};
+
+/* ---- resultado ---- */
+const fcPct = v => (Number.isFinite(v) ? (100 * v).toLocaleString('es-ES', { maximumFractionDigits: 2 }) + ' %' : '—');
+function fcParamText(mth, p, m, mult){
+  const f = v => v.toLocaleString('es-ES', { maximumFractionDigits: 4 });
+  if(mth === 'ma') return `extensión = ${p.k}`;
+  if(mth === 'ses') return `alfa = ${f(p.a)}`;
+  if(mth === 'holt') return `alfa = ${f(p.a)} · beta = ${f(p.b)}`;
+  return `alfa = ${f(p.a)} · beta = ${f(p.b)} · gamma = ${f(p.g)} · ciclo = ${m} · ${mult ? 'multiplicativa' : 'aditiva'}`;
+}
+/* datos del análisis de robustez (se muestran en pantalla y en el informe) */
+function fcRobData(r){
+  const rob = r.rob, f = v => (Number.isFinite(v) ? fmt(+Number(v).toPrecision(5)) : '—'), T = [], bul = [];
+  if(rob.roll){
+    T.push({ title: `Validación con origen móvil (${rob.roll.origins.length} orígenes, entrenando desde ${rob.roll.minTr} datos)`, head: ['Horizonte', 'Observaciones', 'RMSE', 'Error abs.', 'MAPE', 'Sesgo'], align: ['c', 'r', 'r', 'r', 'r', 'r'], rows: rob.roll.rows.map(x => [x.h, x.n, f(x.rmse), f(x.mae), fcPct(x.mape), f(x.bias)]) });
+    const a = rob.roll.rows[0], z = rob.roll.rows[rob.roll.rows.length - 1];
+    if(rob.roll.rows.length > 1 && a.rmse > 0) bul.push(`Al prever más lejos el error crece: el RMSE a ${z.h} períodos es ${(z.rmse / a.rmse).toLocaleString('es-ES', { maximumFractionDigits: 2 })} veces el de un período.`);
+    bul.push(`Con origen móvil, el RMSE a un período es ${f(a.rmse)}${r.train ? `, frente a ${f(r.train.rmse)} en el ajuste completo` : ''}${r.train && a.rmse > 1.3 * r.train.rmse ? ': el error fuera de muestra es claramente mayor, señal de que el ajuste completo es optimista.' : '.'}`);
+  } else bul.push('Con tan pocos datos no se pudo hacer la validación con origen móvil.');
+  const s = rob.sens, names = { a: 'alfa', b: 'beta', g: 'gamma' };
+  if(s.k){
+    T.push({ title: 'Sensibilidad del error a la extensión del promedio', head: ['Extensión', 'RMSE'], align: ['c', 'r'], rows: s.k.map(([k, v]) => [k + (k === r.fit.p.k ? ' ★' : ''), f(v)]) });
+    const mn = Math.min(...s.k.map(x => x[1])), ok = s.k.filter(x => x[1] <= mn * 1.05).map(x => x[0]); bul.push(`Extensiones de ${Math.min(...ok)} a ${Math.max(...ok)} dan un RMSE a menos de 5 % del mínimo (${f(mn)}).`);
+  } else {
+    const keys = ['a', 'b', 'g'].filter(k => s[k]), g = s.a;
+    T.push({ title: 'Sensibilidad del error (RMSE) a cada parámetro, con los demás fijos en su valor ajustado', head: ['Valor'].concat(keys.map(k => names[k])), align: Array(keys.length + 1).fill('r'), rows: g.map(([v], i) => [v.toLocaleString('es-ES')].concat(keys.map(k => f(s[k][i][1])))) });
+    keys.forEach(k => { const mn = Math.min(...s[k].map(x => x[1])), ok = s[k].filter(x => x[1] <= mn * 1.05).map(x => x[0]);
+      bul.push(`${names[k].charAt(0).toUpperCase() + names[k].slice(1)}: el valor ajustado es ${r.fit.p[k].toLocaleString('es-ES', { maximumFractionDigits: 4 })}; valores entre ${Math.min(...ok).toLocaleString('es-ES')} y ${Math.max(...ok).toLocaleString('es-ES')} dan un RMSE a menos de 5 % del mínimo de la rejilla (${f(mn)}). ${ok.length >= 6 ? 'El error es poco sensible a este parámetro.' : (ok.length <= 2 ? 'El error es sensible a este parámetro: conviene no alejarse del valor ajustado.' : '')}`); });
+  }
+  const o = rob.outl;
+  if(o.list.length){
+    T.push({ title: 'Valores atípicos en los residuos (más de 3 desviaciones)', head: ['Período', 'Residuo', 'Desviaciones'], align: ['l', 'r', 'r'], rows: o.list.map(x => [x.label, f(x.e), x.z.toLocaleString('es-ES', { maximumFractionDigits: 2 })]) });
+    bul.push(`Hay ${o.list.length} residuo${o.list.length === 1 ? '' : 's'} a más de 3 desviaciones: revisa esos períodos (errores de captura, eventos especiales); pueden distorsionar los parámetros.`);
+  } else bul.push(`Ningún residuo supera 3 desviaciones; el más extremo es el de ${o.top[0].label} (${o.top[0].z.toLocaleString('es-ES', { maximumFractionDigits: 2 })} desviaciones).`);
+  return { T, bul };
+}
+function fcRobHTML(r){
+  const d = fcRobData(r), tbl = t => `<div class="chart-sub" style="margin:12px 0 4px;"><b>${escH(t.title)}</b></div><div class="cmp-scroll"><table class="cmp-table"><thead><tr>${t.head.map(h => `<th>${escH(h)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(row => `<tr>${row.map((c, i) => `<td${i === 0 ? ' class="sc"' : ''}>${escH(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return `<div class="chart-title">Análisis de robustez</div><div class="chart-sub">Qué tan estable es la previsión ante nuevos datos, otros parámetros y valores raros.</div><div class="bs-analysis"><ul>${d.bul.map(x => `<li>${escH(x)}</li>`).join('')}</ul></div>` + d.T.map(tbl).join('');
+}
+
+function fcRender(){
+  const r = FCU.res; if(!r) return;
+  $('fcOut').style.display = ''; $('fcMethodName').textContent = FC.names[r.mth];
+  const box = (v, l) => `<div class="stat-box"><div class="v">${v}</div><div class="l">${l}</div></div>`, tr = r.train, vm = r.valid && r.valid.m;
+  $('fcStats').innerHTML = box(fmt(+tr.rmse.toPrecision(5)), 'RMSE (entren.)') + box(fmt(+tr.mae.toPrecision(5)), 'Error medio abs.') + box(fcPct(tr.mape), 'MAPE (entren.)') + (vm ? box(fmt(+vm.rmse.toPrecision(5)), 'RMSE (validación)') + box(fmt(+vm.mae.toPrecision(5)), 'Error abs. (valid.)') + box(fcPct(vm.mape), 'MAPE (validación)') : '');
+  $('fcChartSub').textContent = `${fcParamText(r.mth, r.fit.p, r.fit.m, r.fit.mult)}${r.st.optimize ? ' (optimizados)' : ' (fijos)'}. Banda: P5–P95 de 3.000 trayectorias que remuestrean los residuos.`;
+  $('fcLegend').innerHTML = `<span><i style="background:#8a96a8"></i>Datos</span><span><i style="background:#43C6B0"></i>Ajuste (un paso adelante)</span>${r.d ? '<span><i style="background:#FFC857"></i>Descartadas: previsión</span>' : ''}<span><i style="background:#FF7A50"></i>Previsión</span>`;
+  const rows = [];
+  if(r.d){ r.valid.pred.forEach((pv, i) => { const a = r.valid.actual[i]; rows.push(`<tr><td class="sc">${escH(fcLabel(r.n - r.d + i))} <span style="color:var(--text-faint)">(descartada)</span></td><td>${fmt(+a.toPrecision(6))}</td><td>${fmt(+pv.toPrecision(6))}</td><td>${fmt(+(a - pv).toPrecision(5))}</td></tr>`); }); }
+  r.point.forEach((pv, i) => { rows.push(`<tr><td class="sc">${escH(fcLabel(r.n + i))}</td><td>—</td><td class="hi">${fmt(+pv.toPrecision(6))}</td><td>${fmt(+r.p5[i].toPrecision(6))} – ${fmt(+r.p95[i].toPrecision(6))}</td></tr>`); });
+  $('fcTable').innerHTML = '<thead><tr><th>Período</th><th>Dato real</th><th>Previsión</th><th>Error o P5–P95</th></tr></thead><tbody>' + rows.join('') + '</tbody>';
+  const lb = r.lb;
+  $('fcDiag').innerHTML = `<div class="chart-title">Diagnóstico</div><div class="bs-analysis"><ul>` + [
+    `Parámetros: ${fcParamText(r.mth, r.fit.p, r.fit.m, r.fit.mult)} (${r.st.optimize ? 'optimizados minimizando el error cuadrático de un paso adelante' : 'fijos, escritos por ti'}).`,
+    `Error de entrenamiento: RMSE ${fmt(+tr.rmse.toPrecision(5))}, error medio absoluto ${fmt(+tr.mae.toPrecision(5))}${Number.isFinite(tr.mape) ? ', MAPE ' + fcPct(tr.mape) : ''}, sesgo medio ${fmt(+tr.bias.toPrecision(4))}.`,
+    vm ? `Validación con las ${r.d} descartadas: RMSE ${fmt(+vm.rmse.toPrecision(5))}, error medio absoluto ${fmt(+vm.mae.toPrecision(5))}${Number.isFinite(vm.mape) ? ', MAPE ' + fcPct(vm.mape) : ''}, sesgo ${fmt(+vm.bias.toPrecision(4))}${vm.rmse > 1.5 * tr.rmse ? '. El error fuera de muestra es bastante mayor que el de entrenamiento: el método puede estar sobreajustado o la serie cambió de comportamiento.' : '.'}` : 'No se descartaron datos: el método no se probó con datos que no hubiera visto (usa «Número de descartadas» para validar).',
+    `Prueba de Ljung–Box sobre los residuos (${lb.L} rezagos): Q = ${fmt(+lb.Q.toPrecision(4))}, ${rptPtxt(lb.p)} → ${lb.p < 0.05 ? 'los residuos están autocorrelacionados: el método deja estructura sin explicar (prueba otro método o revisa la estacionalidad).' : 'no hay evidencia de autocorrelación en los residuos.'}`].map(t => `<li>${escH(t)}</li>`).join('') + '</ul></div>';
+  $('fcRobCard').innerHTML = fcRobHTML(r);
+  const showRes = $('fcChRes').checked, showAcf = $('fcChAcf').checked, showCmp = $('fcChCmp').checked;
+  $('fcResCard').style.display = showRes ? '' : 'none'; $('fcAcfCard').style.display = showAcf ? '' : 'none'; $('fcCmpCard').style.display = showCmp ? '' : 'none'; $('fcCmpHint').style.display = showCmp ? '' : 'none';
+  const best = r.cmp.filter(c => c.met).sort((a, b) => a.met.rmse - b.met.rmse)[0];
+  $('fcCmpTable').innerHTML = '<thead><tr><th>Método</th><th>Parámetros</th><th>RMSE</th><th>Error abs.</th><th>MAPE</th><th>Sesgo</th></tr></thead><tbody>' + r.cmp.map(c => `<tr><td class="sc">${escH(FC.names[c.m2])}${c === best ? ' ★' : ''}</td><td style="white-space:normal; min-width:150px;">${escH(fcParamText(c.m2, c.p, r.st.m, r.st.mult))}</td><td class="${c === best ? 'hi' : ''}">${c.met ? fmt(+c.met.rmse.toPrecision(5)) : '—'}</td><td>${c.met ? fmt(+c.met.mae.toPrecision(5)) : '—'}</td><td>${c.met ? fcPct(c.met.mape) : '—'}</td><td>${c.met ? fmt(+c.met.bias.toPrecision(4)) : '—'}</td></tr>`).join('') + '</tbody>';
+  $('fcCmpHint').textContent = `Comparación de los métodos con parámetros optimizados: ${r.cmpBasis}.${best ? ` El menor RMSE es el de «${FC.names[best.m2]}» (★).` : ''}${r.st.m < 2 ? ' El método de Winters no aparece porque no definiste estacionalidad.' : ''}`;
+  requestAnimationFrame(fcDrawAll);
+}
+function fcDrawAll(){ if(!FCU.res) return; fcDraw(); if($('fcChRes').checked) fcDrawRes(); if($('fcChAcf').checked) fcDrawAcf(); }
+function fcCanvas(id, H){ const cv = $(id), dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 340; cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H); return { g, W, H }; }
+function fcDraw(){
+  const r = FCU.res, { g, W, H } = fcCanvas('fcChart', 280), y = r.y, n = r.n, Hh = r.H, d = r.d, ml = 54, mr = 10, mt = 12, mb = 28, pw = W - ml - mr, ph = H - mt - mb;
+  const showN = Math.min(n, Math.max(48, Hh * 4)), s0 = n - showN, last = n + Hh - 1;
+  let lo = Infinity, hi = -Infinity; const upd = v => { if(Number.isFinite(v)){ if(v < lo) lo = v; if(v > hi) hi = v; } };
+  for(let i = s0; i < n; i++) { upd(y[i]); upd(r.fit.fitted[i]); } r.p5.forEach(upd); r.p95.forEach(upd); if(r.valid) r.valid.pred.forEach(upd);
+  const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
+  const X = i => ml + (i - s0) / (last - s0) * pw, Y = v => mt + ph - (v - lo) / (hi - lo) * ph;
+  g.font = '10.5px "JetBrains Mono", monospace'; g.fillStyle = CV('text'); g.strokeStyle = CV('grid'); g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
+  for(let i = 0; i <= 4; i++){ const v = lo + (hi - lo) * i / 4; g.beginPath(); g.moveTo(ml, Y(v) + 0.5); g.lineTo(ml + pw, Y(v) + 0.5); g.stroke(); g.fillText(fmt(+v.toPrecision(4)), ml - 6, Y(v)); }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for(let i = 0; i <= 4; i++){ const idx = Math.round(s0 + (last - s0) * i / 4); g.fillText(String((Math.round(+$('fcStart').value) || 0) + idx), X(idx), mt + ph + 7); }
+  g.beginPath(); g.moveTo(X(n - 1), Y(y[n - 1])); for(let j = 0; j < Hh; j++) g.lineTo(X(n + j), Y(r.p95[j])); for(let j = Hh - 1; j >= 0; j--) g.lineTo(X(n + j), Y(r.p5[j])); g.closePath(); g.fillStyle = 'rgba(255,122,80,0.18)'; g.fill();
+  if(d){ g.setLineDash([4, 4]); g.strokeStyle = CV('ref-soft'); g.beginPath(); g.moveTo(X(n - d - 0.5), mt); g.lineTo(X(n - d - 0.5), mt + ph); g.stroke(); g.setLineDash([]); }
+  g.setLineDash([4, 4]); g.strokeStyle = CV('ref-soft'); g.beginPath(); g.moveTo(X(n - 0.5), mt); g.lineTo(X(n - 0.5), mt + ph); g.stroke(); g.setLineDash([]);
+  g.lineJoin = 'round'; g.lineWidth = 1.8; g.strokeStyle = '#8a96a8'; g.beginPath(); for(let i = s0; i < n; i++) (i === s0 ? g.moveTo : g.lineTo).call(g, X(i), Y(y[i])); g.stroke();
+  g.lineWidth = 1.5; g.strokeStyle = '#43C6B0'; g.beginPath(); let started = false; for(let i = Math.max(s0, r.fit.start); i < n; i++){ const f = r.fit.fitted[i]; if(!Number.isFinite(f)) continue; (started ? g.lineTo : g.moveTo).call(g, X(i), Y(f)); started = true; } g.stroke();
+  if(d){ g.lineWidth = 2.2; g.strokeStyle = '#FFC857'; g.beginPath(); r.valid.pred.forEach((v, i) => (i ? g.lineTo : g.moveTo).call(g, X(n - d + i), Y(v))); g.stroke(); }
+  g.lineWidth = 2.6; g.strokeStyle = '#FF7A50'; g.beginPath(); g.moveTo(X(n - 1), Y(y[n - 1])); r.point.forEach((v, j) => g.lineTo(X(n + j), Y(v))); g.stroke();
+  g.fillStyle = '#FF7A50'; r.point.forEach((v, j) => { g.beginPath(); g.arc(X(n + j), Y(v), 2.6, 0, Math.PI * 2); g.fill(); });
+}
+function fcDrawRes(){
+  const r = FCU.res, { g, W, H } = fcCanvas('fcResChart', 200), e = r.fit.errs, ml = 54, mr = 10, mt = 10, mb = 22, pw = W - ml - mr, ph = H - mt - mb;
+  let m = 0; e.forEach(v => { if(Math.abs(v) > m) m = Math.abs(v); }); m = (m || 1) * 1.1; const Y = v => mt + ph / 2 - v / m * ph / 2, bw = Math.max(1, pw / e.length - 1);
+  g.font = '10.5px "JetBrains Mono", monospace'; g.fillStyle = CV('text'); g.strokeStyle = CV('grid'); g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
+  [-m, 0, m].forEach(v => { g.beginPath(); g.moveTo(ml, Y(v) + 0.5); g.lineTo(ml + pw, Y(v) + 0.5); g.stroke(); g.fillText(fmt(+v.toPrecision(3)), ml - 6, Y(v)); });
+  e.forEach((v, i) => { g.fillStyle = v >= 0 ? '#43C6B0' : '#FF7A50'; const x = ml + i / e.length * pw, y0 = Y(0), y1 = Y(v); g.fillRect(x, Math.min(y0, y1), bw, Math.max(1, Math.abs(y1 - y0))); });
+}
+function fcDrawAcf(){
+  const r = FCU.res, { g, W, H } = fcCanvas('fcAcfChart', 200), e = r.fit.errs, L = Math.max(2, Math.min(20, Math.floor(e.length / 3))), ac = FC.acf(e, L), lim = 1.96 / Math.sqrt(e.length), ml = 54, mr = 10, mt = 10, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
+  const m = Math.max(0.5, lim * 1.5, ...ac.map(Math.abs)) * 1.05, Y = v => mt + ph / 2 - v / m * ph / 2, bw = pw / L;
+  g.font = '10.5px "JetBrains Mono", monospace'; g.fillStyle = CV('text'); g.strokeStyle = CV('grid'); g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
+  [-m, 0, m].forEach(v => { g.beginPath(); g.moveTo(ml, Y(v) + 0.5); g.lineTo(ml + pw, Y(v) + 0.5); g.stroke(); g.fillText(v.toFixed(2).replace('.', ','), ml - 6, Y(v)); });
+  g.setLineDash([5, 4]); g.strokeStyle = CV('ref'); [lim, -lim].forEach(v => { g.beginPath(); g.moveTo(ml, Y(v)); g.lineTo(ml + pw, Y(v)); g.stroke(); }); g.setLineDash([]);
+  ac.forEach((v, i) => { g.fillStyle = Math.abs(v) > lim ? '#FF7A50' : '#43C6B0'; const x = ml + i * bw + bw * 0.15, y0 = Y(0), y1 = Y(v); g.fillRect(x, Math.min(y0, y1), bw * 0.7, Math.max(1, Math.abs(y1 - y0))); });
+  g.fillStyle = CV('text'); g.textAlign = 'center'; g.textBaseline = 'top'; [1, Math.ceil(L / 2), L].forEach(k => g.fillText(String(k), ml + (k - 0.5) * bw, mt + ph + 6));
+}
+window.addEventListener('resize', () => { if(currentView === 'fit' && $('fitFC').style.display !== 'none') fcDrawAll(); });
+['fcChRes', 'fcChAcf', 'fcChCmp'].forEach(id => { $(id).onchange = () => { if(FCU.res) fcRender(); }; });
+
+/* ---- enviar la previsión al modelo libre ---- */
+$('fcToModel').onclick = () => {
+  const r = FCU.res; if(!r) return;
+  const used = new Set(), vars = r.point.map((v, i) => {
+    const a = Math.min(r.p5[i], v), b = Math.max(r.p95[i], v), nm = fitSafeName('Prev_' + (i + 1), used, i);
+    return b > a ? { name: nm, dist: 'triangular', params: { min: +a.toPrecision(8), mode: +v.toPrecision(8), max: +b.toPrecision(8) }, lo: null, hi: null } : { name: nm, dist: 'const', params: { value: +v.toPrecision(8) }, lo: null, hi: null };
+  });
+  const res = mdlSanitize({ vars, corr: [], outs: [{ name: 'Total_previsto', formula: vars.length === 1 ? vars[0].name : 'SUMA(' + vars.map(v => v.name).join('; ') + ')', format: 'num' }], iterations: 10000 });
+  if(!res.model){ toast(res.error); return; }
+  mdlApply(res.model); mdlAutosave(); setView('model'); mdlSetMode('free'); window.scrollTo({ top: 0 });
+  toast(`${vars.length} previsiones enviadas al modelo (triangulares entre P5 y P95) y el resultado Total_previsto. Las variables entran sin correlación entre sí.`);
+};
+$('fcReport').onclick = () => rptOpen('fc');
+
+/* ---- informe de la previsión ---- */
+function rptFCChart(r){
+  const o = rptNew(1100, 560), m = { l: 120, r: 30, t: 60, b: 84 }, { g } = o, y = r.y, n = r.n, H = r.H, d = r.d;
+  const showN = Math.min(n, Math.max(48, H * 4)), s0 = n - showN, last = n + H - 1; let lo = Infinity, hi = -Infinity;
+  const upd = v => { if(Number.isFinite(v)){ if(v < lo) lo = v; if(v > hi) hi = v; } };
+  for(let i = s0; i < n; i++){ upd(y[i]); upd(r.fit.fitted[i]); } r.p5.forEach(upd); r.p95.forEach(upd); if(r.valid) r.valid.pred.forEach(upd);
+  const pad = (hi - lo) * 0.06 || 1, start = Math.round(+$('fcStart').value) || 0;
+  const f = rptFrame(o, m, s0 + start, last + start, lo - pad, hi + pad, v => String(Math.round(v)), v => v.toLocaleString('es-ES', { maximumSignificantDigits: 4 }), $('fcUnit').value.trim() || 'Período', r.name);
+  const X = i => f.X(i + start), Y = f.Y;
+  g.beginPath(); g.moveTo(X(n - 1), Y(y[n - 1])); for(let j = 0; j < H; j++) g.lineTo(X(n + j), Y(r.p95[j])); for(let j = H - 1; j >= 0; j--) g.lineTo(X(n + j), Y(r.p5[j])); g.closePath(); g.fillStyle = RC.accent; g.globalAlpha = 0.16; g.fill(); g.globalAlpha = 1;
+  g.setLineDash([8, 7]); g.strokeStyle = RC.axis; g.lineWidth = 2; [d ? n - d - 0.5 : null, n - 0.5].forEach(i => { if(i == null) return; g.beginPath(); g.moveTo(X(i), m.t); g.lineTo(X(i), m.t + f.ph); g.stroke(); }); g.setLineDash([]);
+  g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = '#7b8798'; g.beginPath(); for(let i = s0; i < n; i++) (i === s0 ? g.moveTo : g.lineTo).call(g, X(i), Y(y[i])); g.stroke();
+  g.lineWidth = 2.5; g.strokeStyle = RC.teal; g.beginPath(); let st = false; for(let i = Math.max(s0, r.fit.start); i < n; i++){ const v = r.fit.fitted[i]; if(!Number.isFinite(v)) continue; (st ? g.lineTo : g.moveTo).call(g, X(i), Y(v)); st = true; } g.stroke();
+  if(d){ g.lineWidth = 3.5; g.strokeStyle = RC.gold; g.beginPath(); r.valid.pred.forEach((v, i) => (i ? g.lineTo : g.moveTo).call(g, X(n - d + i), Y(v))); g.stroke(); }
+  g.lineWidth = 4; g.strokeStyle = RC.accent; g.beginPath(); g.moveTo(X(n - 1), Y(y[n - 1])); r.point.forEach((v, j) => g.lineTo(X(n + j), Y(v))); g.stroke();
+  rptLegend(g, [['#7b8798', 'Datos'], [RC.teal, 'Ajuste'], ...(d ? [[RC.gold, 'Descartadas: previsión']] : []), [RC.accent, 'Previsión']], m.l, 26);
+  return o.c;
+}
+function rptFCRes(r){
+  const o = rptNew(1100, 380), { g, w, h } = o, e = r.fit.errs, ml = 120, mr = 30, mt = 30, mb = 50, pw = w - ml - mr, ph = h - mt - mb; let mx = 0; e.forEach(v => { if(Math.abs(v) > mx) mx = Math.abs(v); }); mx = (mx || 1) * 1.1;
+  const Y = v => mt + ph / 2 - v / mx * ph / 2; g.font = '500 19px "JetBrains Mono", monospace'; g.fillStyle = RC.dim; g.strokeStyle = RC.grid; g.lineWidth = 1.5; g.textAlign = 'right'; g.textBaseline = 'middle';
+  [-mx, 0, mx].forEach(v => { g.beginPath(); g.moveTo(ml, Y(v)); g.lineTo(ml + pw, Y(v)); g.stroke(); g.fillText(v.toLocaleString('es-ES', { maximumSignificantDigits: 3 }), ml - 10, Y(v)); });
+  const bw = Math.max(2, pw / e.length - 2); e.forEach((v, i) => { g.fillStyle = v >= 0 ? RC.teal : RC.accent; const x = ml + i / e.length * pw, y0 = Y(0), y1 = Y(v); g.fillRect(x, Math.min(y0, y1), bw, Math.max(1.5, Math.abs(y1 - y0))); });
+  g.fillStyle = RC.ink; g.font = '600 20px Inter, sans-serif'; g.textAlign = 'center'; g.fillText('Residuos (dato real − previsión de un paso)', ml + pw / 2, h - 14);
+  return o.c;
+}
+function rptFCAcf(r){
+  const o = rptNew(1100, 380), { g, w, h } = o, e = r.fit.errs, L = Math.max(2, Math.min(20, Math.floor(e.length / 3))), ac = FC.acf(e, L), lim = 1.96 / Math.sqrt(e.length), ml = 120, mr = 30, mt = 30, mb = 60, pw = w - ml - mr, ph = h - mt - mb;
+  const mx = Math.max(0.5, lim * 1.5, ...ac.map(Math.abs)) * 1.05, Y = v => mt + ph / 2 - v / mx * ph / 2, bw = pw / L;
+  g.font = '500 19px "JetBrains Mono", monospace'; g.fillStyle = RC.dim; g.strokeStyle = RC.grid; g.lineWidth = 1.5; g.textAlign = 'right'; g.textBaseline = 'middle';
+  [-mx, 0, mx].forEach(v => { g.beginPath(); g.moveTo(ml, Y(v)); g.lineTo(ml + pw, Y(v)); g.stroke(); g.fillText(v.toFixed(2).replace('.', ','), ml - 10, Y(v)); });
+  g.setLineDash([8, 6]); g.strokeStyle = RC.dim; g.lineWidth = 2; [lim, -lim].forEach(v => { g.beginPath(); g.moveTo(ml, Y(v)); g.lineTo(ml + pw, Y(v)); g.stroke(); }); g.setLineDash([]);
+  ac.forEach((v, i) => { g.fillStyle = Math.abs(v) > lim ? RC.accent : RC.teal; const x = ml + i * bw + bw * 0.15, y0 = Y(0), y1 = Y(v); g.fillRect(x, Math.min(y0, y1), bw * 0.7, Math.max(1.5, Math.abs(y1 - y0))); });
+  g.fillStyle = RC.dim; g.textAlign = 'center'; g.textBaseline = 'top'; for(let k = 1; k <= L; k += Math.max(1, Math.ceil(L / 10))) g.fillText(String(k), ml + (k - 0.5) * bw, mt + ph + 10);
+  g.fillStyle = RC.ink; g.font = '600 20px Inter, sans-serif'; g.fillText('Autocorrelación de los residuos por rezago (líneas: ±1,96/√n)', ml + pw / 2, h - 28);
+  return o.c;
+}
+
+/* =========================================================
+   EXPORTAR LA PREVISIÓN A EXCEL CON FÓRMULAS VIVAS
+   Ajuste (recursión del método en fórmulas), Validacion (descartadas), Analisis (diagnóstico y robustez) y Resumen (con gráficas).
+========================================================= */
+XL.buildFC = async r => {
+  const mth = r.mth, st = r.st, n = r.n, H = r.H, d = r.d, y = Array.from(r.y), m = st.m, mult = st.mult ? 1 : 0, rob = r.rob;
+  const unit = ($('fcUnit').value.trim() || 'Período'), start = Math.round(+$('fcStart').value) || 0, lab = t => `${unit} ${start + t}`;
+  const FIRST = 13, SA = 'Ajuste', SV = 'Validacion', SN = 'Analisis', SR = 'Resumen', qa = XL.q(SA), qv = XL.q(SV), qn = XL.q(SN);
+  const KEYS = { ma: ['ext', 'pred', 'fut', 'err', 'sq', 'abs', 'ape'], ses: ['lvl', 'pred', 'fut', 'err', 'sq', 'abs', 'ape'], holt: ['lvl', 'trd', 'pred', 'fut', 'err', 'sq', 'abs', 'ape'], winters: ['lvl', 'trd', 'sea', 'pred', 'fut', 'err', 'sq', 'abs', 'ape'] }[mth];
+  const HEAD = { ext: 'Serie extendida', lvl: 'Nivel', trd: 'Tendencia', sea: 'Índice estacional', pred: 'Previsión un paso (ajuste)', fut: 'Previsión futura', err: 'Error', sq: 'Error²', abs: '|Error|', ape: '|Error| / |Dato|', p5: 'P5 (bootstrap)', p95: 'P95 (bootstrap)' };
+  const fin = v => Number.isFinite(v);
+  /* ---- hoja de cálculo del método (se usa para el ajuste y para la validación) ---- */
+  const calc = (name, ys, p, Hh, actual, bands, title) => {
+    const N = ys.length, S = new XL.Sheet(name); S.grid = true;
+    const keys = KEYS.concat(bands ? ['p5', 'p95'] : []), col = {}; keys.forEach((k, i) => { col[k] = 3 + i; });
+    const L = k => XL.col(col[k]); S.widths = [12, 16, 14].concat(keys.map(() => 17));
+    const tr = FC.trace(mth, ys, p, m, st.mult, Hh), lastR = FIRST + N;
+    S.set(0, 0, title, 1);
+    S.set(0, 1, 'Los parámetros (celdas azules) y los datos se pueden cambiar: todo se recalcula con fórmulas. Para volver a optimizar usa Solver (instrucciones en la hoja Resumen).', 7);
+    XL.band(S, 2, 'PARÁMETROS', 4);
+    const prm = [['Alfa (nivel)', p.a, 6, mth !== 'ma'], ['Beta (tendencia)', p.b, 6, mth === 'holt' || mth === 'winters'], ['Gamma (estacionalidad)', p.g, 6, mth === 'winters'], ['Extensión k (promedio móvil)', p.k, 20, mth === 'ma'], ['Ciclo (períodos por ciclo; fijo)', m, 8, mth === 'winters'], ['Estacionalidad multiplicativa (1 = sí, 0 = aditiva)', mult, 20, mth === 'winters']];
+    prm.forEach(([t, v, sty, used], i) => { S.set(0, 3 + i, t, 9); S.set(1, 3 + i, used ? v : '', used ? sty : 3); if(!used) S.set(2, 3 + i, 'no se usa en este método', 7); });
+    let m1 = NaN, b0 = NaN;
+    if(mth === 'winters'){ let s1 = 0, s2 = 0; for(let i = 0; i < m; i++){ s1 += ys[i]; s2 += ys[m + i]; } m1 = s1 / m; b0 = (s2 / m - m1) / m;
+      S.set(0, 9, 'Media del primer ciclo', 9); S.setF(1, 9, `AVERAGE(C${FIRST + 1}:C${FIRST + m})`, m1, 4); S.set(0, 10, 'Tendencia inicial por período', 9); S.setF(1, 10, `(AVERAGE(C${FIRST + m + 1}:C${FIRST + 2 * m})-B10)/B8`, b0, 4); }
+    S.set(0, 12, 'Período', 2); S.set(1, 12, 'Etiqueta', 2); S.set(2, 12, actual ? 'Dato / real' : 'Dato', 2); keys.forEach(k => S.set(col[k], 12, HEAD[k], 2));
+    const AL = '$B$4', BE = '$B$5', GA = '$B$6', KK = '$B$7', MM = '$B$8', MU = '$B$9';
+    for(let t = 0; t < N + Hh; t++){
+      const R = FIRST + t + 1, row = FIRST + t, C = `C${R}`, ref = (k, dr) => `${L(k)}${R + (dr || 0)}`, put = (k, f, v, sty) => S.setF(col[k], row, f, v, sty || 4);
+      S.set(0, row, start + t, 8); S.set(1, row, lab(t), 3);
+      if(t < N) S.set(2, row, ys[t], 20); else if(actual) S.set(2, row, actual[t - N], 20);
+      const errCols = (predK) => {
+        const e = tr.err[t], isMA = mth === 'ma', E = ref('err'), P = ref(predK);
+        const fut = t >= N, ev = fut ? actual[t - N] - tr.fut[t] : e, yv = fut ? actual[t - N] : ys[t];
+        put('err', isMA && !fut ? `IF(${P}="","",${C}-${P})` : `${C}-${P}`, ev);
+        put('sq', isMA && !fut ? `IF(${E}="","",${E}^2)` : `${E}^2`, ev * ev);
+        put('abs', isMA && !fut ? `IF(${E}="","",ABS(${E}))` : `ABS(${E})`, Math.abs(ev));
+        put('ape', `IF(${C}=0,"",${isMA && !fut ? `IF(${E}="","",ABS(${E}/${C}))` : `ABS(${E}/${C})`})`, yv !== 0 ? Math.abs(ev / yv) : NaN, 5);
+      };
+      if(mth === 'ses'){
+        if(t === 0) put('lvl', C, tr.lvl[0]);
+        else if(t < N){ put('pred', ref('lvl', -1), tr.pred[t]); put('lvl', `${AL}*${C}+(1-${AL})*${ref('lvl', -1)}`, tr.lvl[t]); errCols('pred'); }
+        else { put('fut', `$${L('lvl')}$${lastR}`, tr.fut[t]); if(actual) errCols('fut'); }
+      } else if(mth === 'holt'){
+        if(t === 0){ const k = Math.min(4, N - 1); put('lvl', C, tr.lvl[0]); put('trd', `(C${R + k}-C${R})/${k}`, tr.trd[0]); }
+        else if(t < N){ put('pred', `${ref('lvl', -1)}+${ref('trd', -1)}`, tr.pred[t]); put('lvl', `${AL}*${C}+(1-${AL})*(${ref('lvl', -1)}+${ref('trd', -1)})`, tr.lvl[t]); put('trd', `${BE}*(${ref('lvl')}-${ref('lvl', -1)})+(1-${BE})*${ref('trd', -1)}`, tr.trd[t]); errCols('pred'); }
+        else { put('fut', `$${L('lvl')}$${lastR}+${t - N + 1}*$${L('trd')}$${lastR}`, tr.fut[t]); if(actual) errCols('fut'); }
+      } else if(mth === 'ma'){
+        if(t < N) put('ext', C, tr.ext[t]); else put('ext', ref('fut'), tr.ext[t]);
+        if(t >= 1 && t < N){ put('pred', `IF(ROW()-${FIRST + 1}>=${KK},AVERAGE(OFFSET(${ref('ext')},-${KK},0,${KK},1)),"")`, tr.pred[t]); errCols('pred'); }
+        else if(t >= N){ put('fut', `AVERAGE(OFFSET(${ref('ext')},-${KK},0,${KK},1))`, tr.fut[t]); if(actual) errCols('fut'); }
+      } else {
+        const sr = `$${L('sea')}$${FIRST + 1}:$${L('sea')}$${lastR}`;
+        if(t < m){ const base = `$B$10+$B$11*(${t}-${(m - 1) / 2})`; put('sea', `IF(${MU}=1,${C}/(${base}),${C}-(${base}))`, tr.sea[t]); }
+        if(t === m - 1){ put('lvl', `$B$10+$B$11*${(m - 1) / 2}`, tr.lvl[t]); put('trd', '$B$11', tr.trd[t]); }
+        if(t >= m && t < N){
+          const b = `(${ref('lvl', -1)}+${ref('trd', -1)})`, s = ref('sea', -m);
+          put('pred', `IF(${MU}=1,${b}*${s},${b}+${s})`, tr.pred[t]);
+          put('lvl', `IF(${MU}=1,${AL}*(${C}/${s})+(1-${AL})*${b},${AL}*(${C}-${s})+(1-${AL})*${b})`, tr.lvl[t]);
+          put('trd', `${BE}*(${ref('lvl')}-${ref('lvl', -1)})+(1-${BE})*${ref('trd', -1)}`, tr.trd[t]);
+          put('sea', `IF(${MU}=1,${GA}*(${C}/${ref('lvl')})+(1-${GA})*${s},${GA}*(${C}-${ref('lvl')})+(1-${GA})*${s})`, tr.sea[t]);
+          errCols('pred');
+        }
+        if(t >= N){ const h = t - N + 1, b = `($${L('lvl')}$${lastR}+${h}*$${L('trd')}$${lastR})`, s = `INDEX(${sr},${N - m + ((h - 1) % m) + 1})`; put('fut', `IF(${MU}=1,${b}*${s},${b}+${s})`, tr.fut[t]); if(actual) errCols('fut'); }
+      }
+      if(bands && t >= N){ S.set(col.p5, row, r.p5[t - N], 4); S.set(col.p95, row, r.p95[t - N], 4); }
+    }
+    return { S, col, L, N, tr, lastR, evalFrom: mth === 'ma' ? p.k : (mth === 'winters' ? m : 1) };
+  };
+  const A = calc(SA, y, r.fit.p, H, null, true, `Monte Carlo Lab — Previsión: ${FC.names[mth]}`);
+  const V = d > 0 ? calc(SV, y.slice(0, n - d), r.valid.fit.p, d, r.valid.actual, false, `Monte Carlo Lab — Validación con ${d} períodos descartados`) : null;
+  const rng = (sh, k, from, to) => `${sh === A ? qa : qv}!$${sh.L(k)}$${from}:$${sh.L(k)}$${to}`;
+  const trainFrom = FIRST + 1 + A.evalFrom, trainTo = FIRST + A.N;
+  const E = rng(A, 'err', trainFrom, trainTo);
+  /* ---- Analisis ---- */
+  const AN = new XL.Sheet(SN); AN.grid = true; AN.widths = [46, 18, 18, 18, 18, 18];
+  const e = r.fit.errs, ne = e.length, mu = e.reduce((a, b) => a + b, 0) / ne, sd = Math.sqrt(e.reduce((a, b) => a + (b - mu) ** 2, 0) / (ne - 1)), se = sd / Math.sqrt(ne);
+  const sx = [...e].sort((a, b) => a - b), med = (sx[(ne - 1) >> 1] + sx[ne >> 1]) / 2;
+  const z3 = e.reduce((a, v) => a + ((v - mu) / sd) ** 3, 0), z4 = e.reduce((a, v) => a + ((v - mu) / sd) ** 4, 0);
+  const sk = ne > 2 ? ne / ((ne - 1) * (ne - 2)) * z3 : NaN, ku = ne > 3 ? ne * (ne + 1) / ((ne - 1) * (ne - 2) * (ne - 3)) * z4 - 3 * (ne - 1) ** 2 / ((ne - 2) * (ne - 3)) : NaN;
+  const jb = ne / 6 * (sk ** 2 + ku ** 2 / 4), tcrit = rptTcrit(ne - 1), nOut = e.filter(v => Math.abs(v - mu) > 3 * sd).length;
+  let ar = 0; AN.set(0, ar++, 'Monte Carlo Lab — Diagnóstico y robustez de la previsión', 1);
+  AN.set(0, ar++, `Los residuos son los errores de un paso adelante del ajuste completo (hoja ${SA}). Las celdas con fórmula se recalculan si cambias parámetros o datos.`, 7); ar++;
+  ar = XL.band(AN, ar, 'DIAGNÓSTICO DE LOS RESIDUOS (fórmulas vivas)', 4);
+  const ef = (lab2, f, v, sty) => { AN.set(0, ar, lab2, 9); AN.setF(1, ar, `IFERROR(${f},"n/d")`, v, sty || 4); return ar++; };
+  const rN = ef('Número de residuos', `COUNT(${E})`, ne, 8), rM = ef('Media', `AVERAGE(${E})`, mu), rS = ef('Desviación estándar', `STDEV(${E})`, sd), rSE = ef('Error estándar de la media', `B${rS + 1}/SQRT(B${rN + 1})`, se);
+  ef('IC 95 % de la media: límite inferior', `B${rM + 1}-TINV(0.05,B${rN + 1}-1)*B${rSE + 1}`, mu - tcrit * se); ef('IC 95 % de la media: límite superior', `B${rM + 1}+TINV(0.05,B${rN + 1}-1)*B${rSE + 1}`, mu + tcrit * se);
+  ef('Mediana', `MEDIAN(${E})`, med); ef('Mínimo', `MIN(${E})`, sx[0]); ef('Máximo', `MAX(${E})`, sx[ne - 1]);
+  const rSk = ef('Asimetría (SKEW de Excel)', `SKEW(${E})`, sk), rKu = ef('Curtosis en exceso (KURT de Excel)', `KURT(${E})`, ku);
+  const rJB = ef('Jarque–Bera', `B${rN + 1}/6*(B${rSk + 1}^2+B${rKu + 1}^2/4)`, jb); ef('Valor p de Jarque–Bera', `EXP(-B${rJB + 1}/2)`, Math.exp(-jb / 2), 4);
+  AN.set(0, ar, 'Lectura de normalidad', 9); AN.setF(1, ar, `IFERROR(IF(B${ar}<0.05,"Se rechaza la normalidad al 5 %","No se rechaza la normalidad al 5 %"),"n/d")`, Math.exp(-jb / 2) < 0.05 ? 'Se rechaza la normalidad al 5 %' : 'No se rechaza la normalidad al 5 %', 3); ar++;
+  ef('Residuos a más de 3 desviaciones', `SUMPRODUCT(--(ABS(${E}-B${rM + 1})>3*B${rS + 1}))`, nOut, 8); ar++;
+  ar = XL.band(AN, ar, 'AUTOCORRELACIÓN DE LOS RESIDUOS Y PRUEBA DE LJUNG–BOX (fórmulas vivas)', 4);
+  ['Rezago', 'Autocorrelación', 'Límite ±1,96/√n'].forEach((h, c) => AN.set(c, ar, h, 2)); ar++;
+  const Lg = r.lb.L, acv = FC.acf(e, Lg), acStart = ar, eFrom = trainFrom, eTo = trainTo, errCol = `${qa}!$${A.L('err')}$`;
+  for(let k = 1; k <= Lg; k++, ar++){
+    const a1 = `${errCol}${eFrom + k}:$${A.L('err')}$${eTo}`, a2 = `${errCol}${eFrom}:$${A.L('err')}$${eTo - k}`;
+    AN.set(0, ar, k, 8); AN.setF(1, ar, `IFERROR(SUMPRODUCT((${a1}-$B$${rM + 1})*(${a2}-$B$${rM + 1}))/SUMPRODUCT((${E}-$B$${rM + 1})^2),"n/d")`, acv[k - 1], 4); AN.setF(2, ar, `1.96/SQRT($B$${rN + 1})`, 1.96 / Math.sqrt(ne), 4);
+  }
+  const acEnd = ar - 1, rQ = ar; AN.set(0, ar, 'Estadístico Q de Ljung–Box', 9); AN.setF(1, ar, `IFERROR($B$${rN + 1}*($B$${rN + 1}+2)*SUMPRODUCT(B${acStart + 1}:B${acEnd + 1}^2/($B$${rN + 1}-A${acStart + 1}:A${acEnd + 1})),"n/d")`, r.lb.Q, 4); ar++;
+  AN.set(0, ar, 'Grados de libertad (rezagos − parámetros)', 9); AN.set(1, ar, r.lb.df, 8); ar++;
+  AN.set(0, ar, 'Valor p de Ljung–Box', 9); AN.setF(1, ar, `IFERROR(CHIDIST(B${rQ + 1},B${rQ + 2}),"n/d")`, r.lb.p, 4); ar++;
+  AN.set(0, ar, 'Lectura', 9); AN.setF(1, ar, `IFERROR(IF(B${ar}<0.05,"Hay autocorrelación: el método deja estructura sin explicar","Sin evidencia de autocorrelación"),"n/d")`, r.lb.p < 0.05 ? 'Hay autocorrelación: el método deja estructura sin explicar' : 'Sin evidencia de autocorrelación', 3); ar += 2;
+  /* valores fijos de la simulación: robustez */
+  ar = XL.band(AN, ar, 'ROBUSTEZ (valores fijos calculados por la app con los datos exportados)', 6);
+  if(rob.roll){
+    AN.set(0, ar++, `Validación con origen móvil: ${rob.roll.origins.length} orígenes, entrenando desde ${rob.roll.minTr} datos; en cada origen se reajusta el método${st.optimize ? ' (con optimización)' : ' (con los parámetros fijos)'}.`, 7);
+    ['Horizonte', 'Observaciones', 'RMSE', 'Error medio abs.', 'MAPE', 'Sesgo'].forEach((h, c) => AN.set(c, ar, h, 2)); ar++;
+    rob.roll.rows.forEach(x => { AN.set(0, ar, x.h, 8); AN.set(1, ar, x.n, 8); AN.set(2, ar, x.rmse, 4); AN.set(3, ar, x.mae, 4); AN.set(4, ar, x.mape, 5); AN.set(5, ar, x.bias, 4); ar++; }); ar++;
+  }
+  const sgrid = rob.sens, sg = sgrid.k ? null : sgrid.a; let sensRow0 = ar, sensCols = [];
+  AN.set(0, ar++, 'Sensibilidad del RMSE (un paso adelante) a cada parámetro, con los demás en su valor ajustado:', 7);
+  if(sgrid.k){ ['Extensión k', 'RMSE'].forEach((h, c) => AN.set(c, ar, h, 2)); ar++; sensRow0 = ar; sgrid.k.forEach(([k, v]) => { AN.set(0, ar, k, 8); AN.set(1, ar, v, 4); ar++; }); sensCols = [['RMSE', 1]]; }
+  else { const ks = ['a', 'b', 'g'].filter(k => sgrid[k]), nm = { a: 'Alfa', b: 'Beta', g: 'Gamma' }; ['Valor del parámetro'].concat(ks.map(k => 'RMSE según ' + nm[k].toLowerCase())).forEach((h, c) => AN.set(c, ar, h, 2)); ar++; sensRow0 = ar;
+    sg.forEach(([v], i) => { AN.set(0, ar, v, 4); ks.forEach((k, j) => AN.set(1 + j, ar, sgrid[k][i][1], 4)); ar++; }); sensCols = ks.map((k, j) => ['RMSE según ' + nm[k].toLowerCase(), 1 + j]); }
+  const sensEnd = ar - 1; ar++;
+  AN.set(0, ar++, 'Valores atípicos en los residuos:', 7);
+  if(rob.outl.list.length){ ['Período', 'Residuo', 'Desviaciones'].forEach((h, c) => AN.set(c, ar, h, 2)); ar++; rob.outl.list.forEach(x => { AN.set(0, ar, x.label, 3); AN.set(1, ar, x.e, 4); AN.set(2, ar, x.z, 4); ar++; }); }
+  else { AN.set(0, ar++, `Ningún residuo supera 3 desviaciones. El más extremo: ${rob.outl.top[0].label} (${rob.outl.top[0].z.toFixed(2)} desviaciones).`, 3); } ar++;
+  AN.set(0, ar++, `Comparación de los cuatro métodos con parámetros optimizados (${r.cmpBasis}):`, 7);
+  ['Método', 'RMSE', 'Error medio abs.', 'MAPE', 'Sesgo'].forEach((h, c) => AN.set(c, ar, h, 2)); ar++;
+  r.cmp.forEach(c => { AN.set(0, ar, FC.names[c.m2], 3); if(c.met){ AN.set(1, ar, c.met.rmse, 4); AN.set(2, ar, c.met.mae, 4); AN.set(3, ar, c.met.mape, 5); AN.set(4, ar, c.met.bias, 4); } ar++; });
+  /* ---- Resumen ---- */
+  const RS = new XL.Sheet(SR); RS.widths = [40, 20, 20, 20]; let rr = 0;
+  RS.set(0, rr++, 'Monte Carlo Lab — Previsión de series de tiempo', 1);
+  RS.set(0, rr++, `${r.name} · ${FC.names[mth]} · ${rptDate(r.when)}`, 7); rr++;
+  rr = XL.band(RS, rr, 'DATOS Y CONFIGURACIÓN', 4);
+  [['Variable', r.name], ['Datos usados', n], ['Método', FC.names[mth]], ['Parámetros', r.st.optimize ? 'Optimizados por la app (se pueden cambiar en la hoja Ajuste)' : 'Fijos, escritos por el usuario'], ['Períodos previstos', H], ['Períodos descartados para validar', d], ['Estacionalidad (períodos por ciclo)', m >= 2 ? m : 'Sin estacionalidad']].forEach(([a, b]) => { RS.set(0, rr, a, 9); RS.set(1, rr, b, typeof b === 'number' ? 8 : 3); rr++; });
+  rr++; rr = XL.band(RS, rr, 'PARÁMETROS (vínculo a la hoja Ajuste)', 4);
+  [['Alfa (nivel)', 'B4', r.fit.p.a, mth !== 'ma'], ['Beta (tendencia)', 'B5', r.fit.p.b, mth === 'holt' || mth === 'winters'], ['Gamma (estacionalidad)', 'B6', r.fit.p.g, mth === 'winters'], ['Extensión k', 'B7', r.fit.p.k, mth === 'ma']].forEach(([a, c, v, used]) => { if(!used) return; RS.set(0, rr, a, 9); RS.setF(1, rr, `${qa}!${c}`, v, 4); rr++; });
+  rr++; rr = XL.band(RS, rr, 'MEDIDAS DE ERROR (fórmulas vivas)', 4);
+  ['Medida', 'Entrenamiento (un paso)'].concat(d > 0 ? ['Validación (descartadas)'] : []).forEach((h, c) => RS.set(c, rr, h, 2)); rr++;
+  const Ev = d > 0 ? rng(V, 'err', FIRST + 1 + V.N, FIRST + V.N + d) : null, Av = d > 0 ? rng(V, 'abs', FIRST + 1 + V.N, FIRST + V.N + d) : null, Pv = d > 0 ? rng(V, 'ape', FIRST + 1 + V.N, FIRST + V.N + d) : null;
+  const Aa = rng(A, 'abs', trainFrom, trainTo), Ap = rng(A, 'ape', trainFrom, trainTo), tm = r.train, vm = r.valid && r.valid.m;
+  [['RMSE', `SQRT(SUMSQ(${E})/COUNT(${E}))`, tm.rmse, d > 0 ? `SQRT(SUMSQ(${Ev})/COUNT(${Ev}))` : null, vm && vm.rmse, 4], ['Error medio absoluto (MAE)', `AVERAGE(${Aa})`, tm.mae, d > 0 ? `AVERAGE(${Av})` : null, vm && vm.mae, 4],
+    ['Error porcentual absoluto medio (MAPE)', `AVERAGE(${Ap})`, tm.mape, d > 0 ? `AVERAGE(${Pv})` : null, vm && vm.mape, 5], ['Sesgo (error medio)', `AVERAGE(${E})`, tm.bias, d > 0 ? `AVERAGE(${Ev})` : null, vm && vm.bias, 4], ['Observaciones evaluadas', `COUNT(${E})`, tm.n, d > 0 ? `COUNT(${Ev})` : null, vm && vm.n, 8]]
+    .forEach(([a, f1, v1, f2, v2, sty]) => { RS.set(0, rr, a, 9); RS.setF(1, rr, f1, v1, sty); if(f2) RS.setF(2, rr, f2, v2, sty); rr++; });
+  rr++; rr = XL.band(RS, rr, 'PREVISIÓN', 4);
+  ['Período', 'Previsión (fórmula viva)', 'P5 (bootstrap)', 'P95 (bootstrap)'].forEach((h, c) => RS.set(c, rr, h, 2)); rr++;
+  for(let j = 0; j < H; j++, rr++){ const row = FIRST + n + j + 1; RS.set(0, rr, lab(n + j), 9); RS.setF(1, rr, `${qa}!${A.L('fut')}${row}`, r.point[j], 4); RS.set(2, rr, r.p5[j], 4); RS.set(3, rr, r.p95[j], 4); }
+  rr++;
+  ['La banda P5–P95 sale de 3.000 trayectorias simuladas que remuestrean los residuos; es un valor fijo (no se recalcula en Excel).',
+   'Para volver a optimizar los parámetros: Datos → Solver; celda objetivo = RMSE de entrenamiento (celda B' + (rr - H - 12 > 0 ? '' : '') + 'de esta hoja, fila «RMSE»), Mín.; cambiando las celdas azules de la hoja Ajuste; restricciones: 0 ≤ parámetro ≤ 1.',
+   'El ciclo estacional (Winters) y la extensión del promedio móvil usados en el análisis de residuos corresponden a los valores exportados.'].forEach(t => RS.set(0, rr++, t, 7));
+  /* ---- gráficas ---- */
+  const xr = `${qa}!$A$${FIRST + 1}:$A$${FIRST + n + H}`, yr = k => `${qa}!$${A.L(k)}$${FIRST + 1}:$${A.L(k)}$${FIRST + n + H}`, nm = c => `${qa}!$${c}$13`;
+  const ser1 = [['C', yr2 => `${qa}!$C$${FIRST + 1}:$C$${FIRST + n + H}`, '7B8798'], [A.L('pred'), () => yr('pred'), '0E8A76'], [A.L('fut'), () => yr('fut'), 'E5532A'], [A.L('p5'), () => yr('p5'), 'F2B8A3'], [A.L('p95'), () => yr('p95'), 'F2B8A3']];
+  const chart1 = XL.scatterChart({ title: 'Serie, ajuste y previsión', xTitle: unit, yTitle: r.name, yPct: false, series: ser1.map(([c, yf, color]) => ({ nameRef: nm(c), xRef: xr, yRef: yf(), color })) });
+  const chart2 = XL.scatterChart({ title: 'Residuos (error de un paso adelante)', xTitle: unit, yTitle: 'Error', yPct: false, series: [{ nameRef: nm(A.L('err')), xRef: `${qa}!$A$${trainFrom}:$A$${trainTo}`, yRef: `${qa}!$${A.L('err')}$${trainFrom}:$${A.L('err')}$${trainTo}`, color: '0E8A76' }] });
+  const chart3 = XL.scatterChart({ title: 'RMSE según cada parámetro', xTitle: sgrid.k ? 'Extensión k' : 'Valor del parámetro', yTitle: 'RMSE', yPct: false, series: sensCols.map(([t, c], i) => ({ nameRef: `${qn}!$${XL.col(c)}$${sensRow0}`, xRef: `${qn}!$A$${sensRow0 + 1}:$A$${sensEnd + 1}`, yRef: `${qn}!$${XL.col(c)}$${sensRow0 + 1}:$${XL.col(c)}$${sensEnd + 1}`, color: XL.palette[i % XL.palette.length] })) });
+  RS.hasDrawing = true; AN.hasDrawing = true;
+  const sheets = [{ name: SR, xml: RS.xml(), drawing: 0 }, { name: SA, xml: A.S.xml(), drawing: null }]; if(V) sheets.push({ name: SV, xml: V.S.xml(), drawing: null }); sheets.push({ name: SN, xml: AN.xml(), drawing: 1 });
+  const blob = await XL.pack({ sheets, charts: [chart1, chart2, chart3], drawings: [{ anchors: [{ chart: 0, c0: 5, r0: 2, w: 700, h: 360 }, { chart: 1, c0: 5, r0: 22, w: 700, h: 300 }] }, { anchors: [{ chart: 2, c0: 7, r0: 2, w: 640, h: 340 }] }] });
+  const pad = x => String(x).padStart(2, '0'), w = new Date();
+  return { blob, filename: `MonteCarloLab_Prevision_${w.getFullYear()}${pad(w.getMonth() + 1)}${pad(w.getDate())}_${pad(w.getHours())}${pad(w.getMinutes())}.xlsx` };
+};
+$('fcExport').onclick = async () => {
+  const btn = $('fcExport'), span = btn.querySelector('span'); if(!FCU.res) return; btn.disabled = true; span.textContent = 'Generando Excel…';
+  await new Promise(r => setTimeout(r, 30));
+  try{ const { blob, filename } = await XL.buildFC(FCU.res); await XL.download(blob, filename); span.textContent = 'Excel generado ✓'; }
+  catch(e){ console.error(e); span.textContent = 'No se pudo generar el Excel'; }
+  setTimeout(() => { span.textContent = 'Exportar a Excel (fórmulas vivas)'; btn.disabled = false; }, 2500);
+};
 
 /*@@FEATURES_END@@*/
 
