@@ -357,6 +357,9 @@
   .ts-eq{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); line-height:1.55; margin-top:10px;}
   .ts-par{display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:6px; font-family:var(--font-mono); font-size:13px; color:var(--text);}
   .ts-par span b{color:var(--accent-2); font-weight:600;}
+  .fn-help{margin:10px 0 4px; border:1px solid var(--border); border-radius:12px; background:var(--surface); padding:2px 12px;}
+  .fn-help summary{cursor:pointer; padding:10px 0; font-size:12.5px; color:var(--accent-2); font-family:var(--font-display); font-weight:600;}
+  .fn-help b{color:var(--accent-2); font-family:var(--font-mono); font-weight:600;}
 
 /*@@FEATURES_CSS_END@@*/
   .thr-hint{font-family:var(--font-mono); font-size:11.5px; color:var(--accent-2); margin-top:6px; min-height:0;}
@@ -641,6 +644,7 @@
 <div class="chips-row" style="margin-top:6px;">
   <button type="button" class="chip accent" id="mdlExUtil">Ejemplo: utilidad</button>
   <button type="button" class="chip accent" id="mdlExNpv">Ejemplo: VAN y TIR</button>
+  <button type="button" class="chip accent" id="mdlExTS">Ejemplo: VAN con precio GBM</button>
   <span class="years-box">Años del proyecto <input type="number" id="mdlYears" value="5" min="1" max="15" inputmode="numeric"></span>
 </div>
 <div class="section-label"><span class="n">01</span> Variables de entrada</div>
@@ -656,6 +660,10 @@
 <div class="var-chips" id="mdlChips"></div>
 <button type="button" class="add-row-btn" id="mdlAddOut">+ Añadir resultado</button>
 <div class="hint-line">Operadores: + − * / ^ ( ) y %. Funciones: SUMA, PROMEDIO, MIN, MAX, ABS, RAIZ, EXP, LN, LOG10, POTENCIA, REDONDEAR, SI(condición; si; no), Y, O, NO, VNA(tasa; flujos…) para el valor presente desde el año 1, y TIR(flujos…) con el año 0 primero. Para demanda de productos nuevos: BASS(N; p; q; t) da las ventas del período t con el modelo de Bass y BASSACUM(N; p; q; t) las ventas acumuladas hasta t (p y q como fracciones o con %, por ejemplo 20%). Separa argumentos con «;» si usas coma decimal. Un resultado puede usar los anteriores por su nombre.</div>
+<details class="fn-help"><summary>Funciones de series de tiempo (precios, demanda, tasas…)</summary>
+  <div class="hint-line" style="margin-top:8px;">Simulan la evolución de una variable período a período. En cada iteración se simula <b>una trayectoria</b> y todas las llamadas con los mismos parámetros usan esa misma trayectoria (así los flujos de varios años salen de un solo precio coherente). Para tener trayectorias independientes con los mismos parámetros, agrega un último argumento con un número de serie. Los parámetros van en el orden de la pestaña Ajuste y t es el período (1, 2, 3…).<br><br>
+  <b>GBM</b>(S0; μ; σ; t) · <b>BMMR</b>(S0; κ; m; σ; t) · <b>GBMJD</b>(S0; μ; σ; λ; μJ; σJ; t) · <b>BMMRJD</b>(S0; κ; m; σ; λ; μJ; σJ; t) · <b>AR1</b>(Xn; c; φ; σ; t) · <b>AR2</b>(Xn; Xn1; c; φ1; φ2; σ; t) · <b>MA1</b>(μ; θ; σ; en; t) · <b>MA2</b>(μ; θ1; θ2; σ; en; en1; t) · <b>ARMA11</b>(Xn; en; μ; φ; θ; σ; t) · <b>ARCH1</b>(μ; ω; α; en; t) · <b>GARCH11</b>(μ; ω; α; β; en; sn2; t)<br><br>
+  S0 es el valor actual, Xn el último dato, en el último error y sn2 la última varianza condicional. El botón «Usar en el modelo» de Ajuste → Series de tiempo los entrega ya calculados.</div></details>
 <div class="section-label"><span class="n">04</span> Iteraciones</div>
 <div class="segmented" id="mdlIter">
   <button type="button" data-v="1000">1.000</button>
@@ -812,7 +820,8 @@
   </div>
   <div class="card" id="tsModelCard" style="margin-top:12px;"></div>
   <div class="card" style="padding:6px 0; margin-top:12px; max-height:380px; overflow:auto;"><table class="cmp-table" id="tsFcTable"></table></div>
-  <div class="action-row" style="margin-top:14px;"><button type="button" class="action-btn" id="tsExport"><span>Exportar a Excel</span></button></div>
+  <div class="action-row" style="margin-top:14px;"><button type="button" class="action-btn" id="tsToModel"><span>Usar en el modelo</span></button><button type="button" class="action-btn" id="tsExport"><span>Exportar a Excel</span></button></div>
+  <div class="hint-line">«Usar en el modelo» crea las variables del modelo elegido (parámetros y último dato) y un resultado con la función de fórmula correspondiente (por ejemplo, GBM), para usar la serie dentro de un VAN o de cualquier fórmula.</div>
   <div class="hint-line">Los modelos se estiman por máxima verosimilitud condicional sobre la misma ventana de datos (desde la 3.ª observación), y los modelos de precios se evalúan sobre los niveles, así que el AIC y el BIC son comparables entre todos. Menor es mejor.</div>
 </div>
 
@@ -4338,12 +4347,58 @@ MODEL.bassAt = (N, p, q, t, cumulative) => {          // valor en el período t 
   return cumulative ? acc : x;
 };
 
+/* ---- series de tiempo dentro del modelo: en cada iteración, todas las llamadas con los mismos parámetros leen
+        la misma trayectoria simulada (se extiende al período pedido); el argumento opcional «serie» separa trayectorias ---- */
+MODEL.TSF = {
+  gbm:     { fn: 'GBM',     params: ['S0', 'μ', 'σ'] },
+  bmmr:    { fn: 'BMMR',    params: ['S0', 'κ', 'm', 'σ'] },
+  gbmjd:   { fn: 'GBMJD',   params: ['S0', 'μ', 'σ', 'λ', 'μJ', 'σJ'] },
+  bmmrjd:  { fn: 'BMMRJD',  params: ['S0', 'κ', 'm', 'σ', 'λ', 'μJ', 'σJ'] },
+  ar1:     { fn: 'AR1',     params: ['Xn', 'c', 'φ', 'σ'] },
+  ar2:     { fn: 'AR2',     params: ['Xn', 'Xn1', 'c', 'φ1', 'φ2', 'σ'] },
+  ma1:     { fn: 'MA1',     params: ['μ', 'θ', 'σ', 'en'] },
+  ma2:     { fn: 'MA2',     params: ['μ', 'θ1', 'θ2', 'σ', 'en', 'en1'] },
+  arma11:  { fn: 'ARMA11',  params: ['Xn', 'en', 'μ', 'φ', 'θ', 'σ'] },
+  arch1:   { fn: 'ARCH1',   params: ['μ', 'ω', 'α', 'en'] },
+  garch11: { fn: 'GARCH11', params: ['μ', 'ω', 'α', 'β', 'en', 'sn2'] }
+};
+MODEL.tsMap = new Map();
+MODEL.tsZero = false;                                  // solo para pruebas: sin ruido (trayectoria media)
+MODEL.poisson = l => { if(!(l > 0)) return 0; const L = Math.exp(-l); let k = 0, p = 1; do { k++; p *= Math.random(); } while(p > L && k < 400); return k - 1; };
+const _Zn = () => (MODEL.tsZero ? 0 : randNormal(0, 1)), _Pn = l => (MODEL.tsZero ? 0 : MODEL.poisson(l));
+const _jump = (lam, muJ, sJ) => { const N = _Pn(lam); return N * muJ + (N > 0 ? Math.sqrt(N) * sJ * _Zn() : 0); };
+MODEL.TSGEN = {
+  gbm: a => { const [S0, mu, sg] = a; if(!(S0 > 0) || !(sg >= 0)) return null; let S = S0; const md = mu - sg * sg / 2; return { v0: S0, step: () => (S *= Math.exp(md + sg * _Zn())) }; },
+  bmmr: a => { const [S0, k, m, sg] = a; if(!(S0 > 0) || !(sg >= 0)) return null; let x = Math.log(S0); return { v0: S0, step: () => { x += k * (m - x) + sg * _Zn(); return Math.exp(x); } }; },
+  gbmjd: a => { const [S0, mu, sg, lam, muJ, sJ] = a; if(!(S0 > 0) || !(sg >= 0) || !(lam >= 0) || !(sJ >= 0)) return null; let S = S0; const md = mu - sg * sg / 2 - lam * (Math.exp(muJ + sJ * sJ / 2) - 1); return { v0: S0, step: () => (S *= Math.exp(md + sg * _Zn() + _jump(lam, muJ, sJ))) }; },
+  bmmrjd: a => { const [S0, k, m, sg, lam, muJ, sJ] = a; if(!(S0 > 0) || !(sg >= 0) || !(lam >= 0) || !(sJ >= 0)) return null; let x = Math.log(S0); return { v0: S0, step: () => { x += k * (m - x) + sg * _Zn() + _jump(lam, muJ, sJ); return Math.exp(x); } }; },
+  ar1: a => { const [x0, c, ph, sg] = a; if(!(sg >= 0)) return null; let x = x0; return { v0: x0, step: () => (x = c + ph * x + sg * _Zn()) }; },
+  ar2: a => { const [x1, x2, c, p1, p2, sg] = a; if(!(sg >= 0)) return null; let u = x1, w = x2; return { v0: x1, step: () => { const v = c + p1 * u + p2 * w + sg * _Zn(); w = u; u = v; return v; } }; },
+  ma1: a => { const [mu, th, sg, e0] = a; if(!(sg >= 0)) return null; let ep = e0; return { v0: NaN, step: () => { const e = sg * _Zn(), v = mu + e + th * ep; ep = e; return v; } }; },
+  ma2: a => { const [mu, t1, t2, sg, e0, e1] = a; if(!(sg >= 0)) return null; let ea = e0, eb = e1; return { v0: NaN, step: () => { const e = sg * _Zn(), v = mu + e + t1 * ea + t2 * eb; eb = ea; ea = e; return v; } }; },
+  arma11: a => { const [x0, e0, mu, ph, th, sg] = a; if(!(sg >= 0)) return null; let xp = x0, ep = e0; return { v0: x0, step: () => { const e = sg * _Zn(), v = mu + ph * (xp - mu) + e + th * ep; xp = v; ep = e; return v; } }; },
+  arch1: a => { const [mu, om, al, e0] = a; if(!(om > 0) || !(al >= 0)) return null; let ep = e0; return { v0: NaN, step: () => { const e = Math.sqrt(om + al * ep * ep) * _Zn(); ep = e; return mu + e; } }; },
+  garch11: a => { const [mu, om, al, be, e0, s0] = a; if(!(om > 0) || !(al >= 0) || !(be >= 0) || !(s0 >= 0)) return null; let ep = e0, sp = s0; return { v0: NaN, step: () => { const v = om + al * ep * ep + be * sp, e = Math.sqrt(v) * _Zn(); ep = e; sp = v; return mu + e; } }; }
+};
+MODEL.tsValue = (kind, a, t, serie) => {
+  t = Math.round(t);
+  if(!(t >= 0) || t > 600) return NaN;
+  for(let i = 0; i < a.length; i++) if(!Number.isFinite(a[i])) return NaN;
+  const key = kind + '|' + serie + '|' + a.join(',');
+  let st = MODEL.tsMap.get(key);
+  if(!st){ const g = MODEL.TSGEN[kind](a); if(!g) return NaN; st = { g, vals: [] }; MODEL.tsMap.set(key, st); }
+  if(t === 0) return st.g.v0;
+  while(st.vals.length < t) st.vals.push(st.g.step());
+  return st.vals[t - 1];
+};
+
 /* ---- analizador de fórmulas (sin eval) ---- */
 const MODEL_FUNCS = {
   SUMA: 'sum', SUM: 'sum', PROMEDIO: 'avg', AVERAGE: 'avg', MIN: 'min', MAX: 'max', ABS: 'abs', RAIZ: 'sqrt', SQRT: 'sqrt',
   EXP: 'exp', LN: 'ln', LOG10: 'log10', POTENCIA: 'pow', POWER: 'pow', REDONDEAR: 'round', ROUND: 'round', SI: 'if', IF: 'if',
   Y: 'and', AND: 'and', O: 'or', OR: 'or', NO: 'not', NOT: 'not', VNA: 'npv', NPV: 'npv', VAN: 'npv', TIR: 'irr', IRR: 'irr', PI: 'pi', BASS: 'bass', BASSACUM: 'bassacum'
 };
+for(const k of Object.keys(MODEL.TSF)) MODEL_FUNCS[MODEL.TSF[k].fn] = 'ts:' + k;
 const _norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 MODEL.normName = _norm;
 
@@ -4383,6 +4438,7 @@ MODEL.parse = (text, names) => {
   const idx = new Map(names.map((n, i) => [_norm(n), i]));
   const toks = MODEL.tokenize(text.replace(/^\s*=/, ''));
   const uses = new Set();
+  let usesTS = false;
   let p = 0;
   const peek = () => toks[p], next = () => toks[p++];
   const isOp = (t, v) => t && t.t === 'op' && t.v === v;
@@ -4454,7 +4510,8 @@ MODEL.parse = (text, names) => {
         const key = MODEL_FUNCS[t.v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()];
         if(!key) throw new Error(`Función desconocida: ${t.v}`);
         const args = parseArgs();
-        arity(t.v, args, ...ARITY[key]);
+        if(key.startsWith('ts:')){ usesTS = true; const np = MODEL.TSF[key.slice(3)].params.length; arity(t.v, args, np + 1, np + 2); }
+        else arity(t.v, args, ...ARITY[key]);
         return key === 'pi' ? { t: 'pi' } : { t: 'call', key, name: t.v, args };
       }
       const nm = _norm(t.v);
@@ -4467,7 +4524,7 @@ MODEL.parse = (text, names) => {
   };
   const ast = parseCompare();
   if(p < toks.length) throw new Error('Sobra texto al final de la fórmula');
-  return { ast, uses };
+  return { ast, uses, ts: usesTS };
 };
 
 /* Convierte el árbol en una función rápida: fn(v) con v = valores de las variables en una iteración */
@@ -4501,6 +4558,7 @@ MODEL.build = ast => {
       }
     }
     case 'call': {
+      if(ast.key.startsWith('ts:')) return MODEL._buildTS(ast);
       const a = ast.args.map(b);
       switch(ast.key){
         case 'sum': return v => { let s = 0; for(let i = 0; i < a.length; i++) s += a[i](v); return s; };
@@ -4527,9 +4585,14 @@ MODEL.build = ast => {
   }
   throw new Error('Función no disponible');
 };
+/* funciones de series de tiempo: (parámetros…, t [, serie]) */
+MODEL._buildTS = ast => {
+  const kind = ast.key.slice(3), np = MODEL.TSF[kind].params.length, a = ast.args.map(MODEL.build);
+  return v => { const pa = new Array(np); for(let i = 0; i < np; i++) pa[i] = a[i](v); return MODEL.tsValue(kind, pa, a[np](v), a.length > np + 1 ? Math.round(a[np + 1](v)) : 0); };
+};
 
 /* Compatibilidad: analiza y construye en un solo paso. Devuelve { fn, uses } */
-MODEL.compile = (text, names) => { const r = MODEL.parse(text, names); return { fn: MODEL.build(r.ast), uses: r.uses }; };
+MODEL.compile = (text, names) => { const r = MODEL.parse(text, names); return { fn: MODEL.build(r.ast), uses: r.uses, ts: r.ts }; };
 
 /* ---- traducción a fórmulas de Excel ----
    ctx: { name(i) → nombre en Excel de la variable i, loc: { sep, dec, names:{clave→nombre} }, helper(argumentosTexto) → referencia al rango de flujos (para TIR) } */
@@ -4559,6 +4622,7 @@ MODEL.toExcel = (ast, ctx) => {
       case 'cmp': { const l = emit(n.a), r = emit(n.b); return { s: (l.p <= 1 ? '(' + l.s + ')' : l.s) + n.op + (r.p <= 1 ? '(' + r.s + ')' : r.s), p: 1 }; }
       case 'call': {
         const args = n.args.map(a => emit(a).s), name = loc.fn[n.key];
+        if(n.key.startsWith('ts:')) return { s: ctx.ts(args, n.args, n.key.slice(3)), p: ATOM };           // se arma una tabla de períodos con innovaciones de @RISK
         if(n.key === 'bass' || n.key === 'bassacum') return { s: ctx.bass(args, n.args, n.key), p: ATOM };       // Excel no tiene esta función: se arma una tabla de períodos con fórmulas
         if(n.key === 'irr') return { s: name + '(' + ctx.helper(args, n.args) + ')', p: ATOM };       // IRR de Excel pide un rango: los flujos van a celdas auxiliares
         if(n.key === 'round' && args.length === 1) args.push('0');
@@ -4606,10 +4670,11 @@ MODEL.run = spec => {
   const n = spec.n, k = spec.vars.length, names = spec.vars.map(v => v.name);
   // un resultado puede usar los anteriores por su nombre (si es un identificador válido)
   const isIdent = t => /^[\p{L}_][\p{L}\p{N}_.]*$/u.test(t);
+  MODEL.tsMap.clear();
   const outs = spec.outs.map((o, i) => {
     const prev = spec.outs.slice(0, i).map((q, j) => (isIdent(q.name) ? q.name : '\u0001' + j));
     const c = MODEL.compile(o.formula, names.concat(prev));
-    return { name: o.name, fn: c.fn, uses: c.uses };
+    return { name: o.name, fn: c.fn, uses: c.uses, ts: c.ts };
   });
   const inputs = spec.vars.map(v => { const a = new Float64Array(n); const s = v.sample; for(let i = 0; i < n; i++) a[i] = s(); return a; });
   const applied = [];
@@ -4629,10 +4694,11 @@ MODEL.run = spec => {
   }
   const datas = outs.map(() => new Float64Array(n)), v = new Float64Array(k + outs.length);
   for(let i = 0; i < n; i++){
+    if(MODEL.tsMap.size) MODEL.tsMap.clear();                 // cada iteración simula sus propias trayectorias
     for(let j = 0; j < k; j++) v[j] = inputs[j][i];
     for(let o = 0; o < outs.length; o++){ const x = outs[o].fn(v); datas[o][i] = x; v[k + o] = x; }
   }
-  return { n, names, inputs, outputs: outs.map((o, i) => ({ name: o.name, data: datas[i], uses: o.uses })), applied };
+  return { n, names, usesTS: outs.some(o => o.ts), inputs, outputs: outs.map((o, i) => ({ name: o.name, data: datas[i], uses: o.uses })), applied };
 };
 
 /* ---- sensibilidad: correlación de rangos de cada entrada con una salida ---- */
@@ -4838,6 +4904,20 @@ function mdlExampleNpv(){
   mdlRenderAll(); toast(`Proyecto a ${years} años cargado. Cambia las distribuciones por las de tu caso.`);
 }
 $('mdlExUtil').onclick = () => mdlExampleUtil(false);
+function mdlExampleTS(){
+  let years = Math.round(parseFloat($('mdlYears').value)); if(!(years >= 1)) years = 5; years = Math.min(15, years); $('mdlYears').value = years;
+  MDL.vars = [mdlNewVar('Precio0', 'const', { value: 100 }), mdlNewVar('mu', 'const', { value: 0.05 }), mdlNewVar('sigma', 'triangular', { min: 0.15, mode: 0.20, max: 0.30 }, 0),
+    mdlNewVar('Volumen', 'triangular', { min: 900, mode: 1000, max: 1200 }, 0), mdlNewVar('Costo', 'const', { value: 60 }), mdlNewVar('Inversion', 'triangular', { min: 100000, mode: 120000, max: 150000 }, 0),
+    mdlNewVar('Tasa', 'triangular', { min: 0.08, mode: 0.10, max: 0.14 }, 0)];
+  MDL.corr = [];
+  const flows = Array.from({ length: years }, (_, i) => `Volumen*(GBM(Precio0; mu; sigma; ${i + 1}) - Costo)`).join('; ');
+  MDL.outs = [
+    { id: mdlId(), name: 'VAN', formula: `-Inversion + VNA(Tasa; ${flows})`, format: 'cur' },
+    { id: mdlId(), name: 'Precio_final', formula: `GBM(Precio0; mu; sigma; ${years})`, format: 'cur' }
+  ];
+  mdlRenderAll(); toast(`Proyecto a ${years} años: el precio sigue un GBM y todos los años usan la misma trayectoria simulada.`);
+}
+$('mdlExTS').onclick = mdlExampleTS;
 $('mdlExNpv').onclick = mdlExampleNpv;
 
 /* ---- validación ---- */
@@ -5007,6 +5087,7 @@ function mdlRenderTornado(idx){
   const vary = MDL.sens.filter(s => Math.abs(s.rho) > 1e-9).length;
   $('mdlTorNote').textContent = vary === 0 ? 'Ninguna variable de entrada influye en este resultado.' :
     'Correlación de rangos de Spearman (de −1 a 1): positiva = cuando la variable sube, el resultado sube. El % de la varianza reparte la influencia entre las variables.';
+  if(res.usesTS) $('mdlTorNote').textContent += ' Este modelo usa series de tiempo: su aleatoriedad propia (las trayectorias) no es una variable de entrada y por eso no aparece en el gráfico, aunque sí afecta el resultado.';
   $('mdlApplied').textContent = res.applied.length ? 'Correlaciones aplicadas: ' + res.applied.map(a => `${res.names[a.a]} ↔ ${res.names[a.b]} objetivo ${String(a.target).replace('.', ',')}, lograda ${a.achieved.toFixed(2).replace('.', ',')}`).join(' · ') + '.' : '';
   mdlDrawTornado();
 }
@@ -5242,11 +5323,12 @@ XL.buildModel = async m => {
   vars.forEach(v => xn.push(XL.xlName(v.name, used)));
   outs.forEach(o => xn.push(XL.xlName(o.name, used)));
   const parsed = outs.map((o, j) => MODEL.parse(o.formula, vars.map(v => v.name).concat(outs.slice(0, j).map((q, i) => (isIdent(q.name) ? q.name : '\u0001' + i)))));
-  const helpers = [], bassCalls = [], bassTxt = new Map();
+  const helpers = [], bassCalls = [], bassTxt = new Map(), tsCalls = [], tsTxt = new Map();
   const mkCtx = (j, loc, record) => {
-    let cnt = 0, bc = 0;
+    let cnt = 0, bc = 0, tc = 0;
     return { name: i => xn[i], loc,
       helper: (args, nodes) => { const key = `${j}:${cnt++}`; if(record) helpers.push({ key, j, args, nodes }); return `\u0002${key}\u0002`; },
+      ts: (args, nodes, kind) => { const key = `s${j}:${tc++}`; if(record) tsCalls.push({ key, j, args, nodes, kind }); else tsTxt.set(key, args); return `\u0004${key}\u0004`; },
       bass: (args, nodes, kind) => { const key = `b${j}:${bc++}`; if(record) bassCalls.push({ key, j, args, nodes, kind }); else bassTxt.set(key, args[3]); return `\u0003${key}\u0003`; } };
   };
   const stdF = outs.map((o, j) => MODEL.toExcel(parsed[j].ast, mkCtx(j, MODEL.LOC_STD, true)));
@@ -5259,7 +5341,9 @@ XL.buildModel = async m => {
   const inCached = vars.map((v, j) => v.dist === 'const' ? v.params.value : (heavy(v.dist) ? median(res.inputs[j]) : mean(res.inputs[j])));
   const valid = res.outputs.map(o => finiteArr(o.data));
   const vv = new Float64Array(k + nOut); inCached.forEach((x, j) => { vv[j] = x; });
+  const zPrev = MODEL.tsZero; MODEL.tsMap.clear(); MODEL.tsZero = true;           // valores guardados de las series: trayectoria sin ruido
   const outCached = outs.map((o, j) => { let x = MODEL.build(parsed[j].ast)(vv); if(!Number.isFinite(x)) x = valid[j].length ? mean(valid[j]) : NaN; vv[k + j] = x; return x; });
+  MODEL.tsZero = zPrev; MODEL.tsMap.clear();
 
   /* ----- diseño de la hoja del modelo ----- */
   const inRow = j => 1 + j, outRow = j => 1 + k + j;
@@ -5292,7 +5376,30 @@ XL.buildModel = async m => {
     const rng = `$C$${row}:$${bcol(b.T)}$${row}`, targ = txt ? bassTxt.get(key) : c.args[3];
     return txt && semi ? `INDICE(${rng};REDONDEAR(${targ};0))` : `INDEX(${rng},ROUND(${targ},0))`;
   });
-  const fixAll = (s, txt) => fixBass(fixHelpers(s), txt);
+  // series de tiempo: una tabla de períodos por cada combinación distinta de (modelo, parámetros, serie)
+  const TSL = { gbm: { I: 1, rows: ['Z', 'V'] }, bmmr: { I: 1, rows: ['Z', 'X', 'V'] }, gbmjd: { I: 1, rows: ['Z', 'N', 'ZJ', 'V'] }, bmmrjd: { I: 1, rows: ['Z', 'N', 'ZJ', 'X', 'V'] },
+    ar1: { I: 1, rows: ['E', 'V'] }, ar2: { I: 2, rows: ['E', 'V'] }, ma1: { I: 1, rows: ['E', 'V'] }, ma2: { I: 2, rows: ['E', 'V'] }, arma11: { I: 1, rows: ['E', 'V'] },
+    arch1: { I: 1, rows: ['Z', 'S2', 'E', 'V'] }, garch11: { I: 1, rows: ['Z', 'S2', 'E', 'V'] } };
+  const TSLAB = { Z: 'Innovación Z', N: 'Saltos N', ZJ: 'Innovación del salto', X: 'ln S', V: 'Valor', E: 'Error ε', S2: 'Varianza σ²' };
+  const tsBlocks = [];
+  tsCalls.forEach(c => {
+    const np = MODEL.TSF[c.kind].params.length, serie = c.args.length > np + 1 ? c.args[np + 1] : '0', sig = c.kind + '|' + c.args.slice(0, np).join('|') + '|' + serie;
+    let b = tsBlocks.find(x => x.sig === sig);
+    if(!b){ b = { sig, kind: c.kind, np, args: c.args.slice(0, np), nodes: c.nodes.slice(0, np), T: 1, j: c.j }; tsBlocks.push(b); }
+    c.block = b; const tn = c.nodes[np]; c.tConst = tn.t === 'num' ? Math.round(tn.v) : null;
+    b.T = Math.max(b.T, c.tConst !== null ? Math.max(1, c.tConst) : 60);
+  });
+  let tRow = bRow + (tsBlocks.length ? 1 : 0);
+  tsBlocks.forEach(b => { b.r0 = tRow; b.L = TSL[b.kind]; tRow += 3 + b.L.rows.length + 1; });
+  const tcol = (b, tau) => XL.col(2 + tau + b.L.I - 1);
+  const tsRowNum = (b, key) => b.r0 + 3 + b.L.rows.indexOf(key) + 1;
+  const fixTS = (s, txt) => s.replace(/\u0004([^\u0004]+)\u0004/g, (_, key) => {
+    const c = tsCalls.find(x => x.key === key), b = c.block, row = tsRowNum(b, 'V'), hasV0 = ['gbm', 'bmmr', 'gbmjd', 'bmmrjd', 'ar1', 'ar2', 'arma11'].includes(b.kind);
+    if(c.tConst !== null) return c.tConst >= 1 || (c.tConst === 0 && hasV0) ? `$${tcol(b, c.tConst)}$${row}` : 'NA()';
+    const rng = `$${tcol(b, 1)}$${row}:$${tcol(b, b.T)}$${row}`, targ = txt ? tsTxt.get(key)[b.np] : c.args[b.np];
+    return txt && semi ? `INDICE(${rng};REDONDEAR(${targ};0))` : `INDEX(${rng},ROUND(${targ},0))`;
+  });
+  const fixAll = (s, txt) => fixTS(fixBass(fixHelpers(s), txt), txt);
   const stdFinal = stdF.map(x => fixAll(x, false)), txtFinal = txtF.map(x => fixAll(x, true));
 
   const R = new XL.Sheet(RISKS); R.grid = true; R.widths = [28, 24, 30, 84, 48];
@@ -5371,7 +5478,52 @@ XL.buildModel = async m => {
       }
     });
   }
-  hBand = bassBlocks.length ? bRow : helpersEnd;
+  if(tsBlocks.length){
+    XL.band(R, bRow, 'SERIES DE TIEMPO: tablas de períodos; las innovaciones son funciones RiskNormal / RiskPoisson de @RISK (en cada iteración todas las llamadas con los mismos parámetros usan la misma trayectoria)', 5);
+    tsBlocks.forEach(b => {
+      const L = b.L, I = L.I, pr = b.r0 + 1, labs = MODEL.TSF[b.kind].params, par = b.nodes.map(nd => MODEL.build(nd)(vv));
+      const P = i => `$${XL.col(2 + i)}$${pr + 1}`, pv = i => par[i];
+      R.set(0, b.r0, `${MODEL.TSF[b.kind].fn} de «${outs[b.j].name}»`, 9); labs.forEach((l, i) => R.set(2 + i, b.r0, l, 2));
+      R.set(0, pr, 'Parámetros', 3); b.args.forEach((a, i) => R.setF(2 + i, pr, fixAll(a, false), keep(pv(i)), 14));
+      R.set(0, b.r0 + 2, 'Período t', 3); for(let tau = -(I - 1); tau <= b.T; tau++) R.set(2 + tau + I - 1, b.r0 + 2, tau, 8);
+      const rr = {}; L.rows.forEach((k, i) => { rr[k] = b.r0 + 3 + i; R.set(0, rr[k], TSLAB[k], 3); });
+      const num = {}; L.rows.forEach(k => { num[k] = {}; });
+      const put = (k, tau, f, v) => { num[k][tau] = v; const c = 2 + tau + I - 1; if(f === null) R.set(c, rr[k], v, 14); else R.setF(c, rr[k], f, keep(v), 14); };
+      const ref = (k, tau) => `${XL.col(2 + tau + I - 1)}${rr[k] + 1}`;
+      const ZN = plain ? null : 'RiskNormal(0,1)', PN = l => (plain ? null : `RiskPoisson(${l})`);
+      // valores de arranque
+      switch(b.kind){
+        case 'gbm': case 'gbmjd': put('V', 0, P(0), pv(0)); break;
+        case 'bmmr': case 'bmmrjd': put('X', 0, `LN(${P(0)})`, Math.log(pv(0))); put('V', 0, P(0), pv(0)); break;
+        case 'ar1': put('V', 0, P(0), pv(0)); break;
+        case 'ar2': put('V', -1, P(1), pv(1)); put('V', 0, P(0), pv(0)); break;
+        case 'ma1': put('E', 0, P(3), pv(3)); break;
+        case 'ma2': put('E', -1, P(5), pv(5)); put('E', 0, P(4), pv(4)); break;
+        case 'arma11': put('V', 0, P(0), pv(0)); put('E', 0, P(1), pv(1)); break;
+        case 'arch1': put('E', 0, P(3), pv(3)); break;
+        case 'garch11': put('E', 0, P(4), pv(4)); put('S2', 0, P(5), pv(5)); break;
+      }
+      for(let t = 1; t <= b.T; t++){                    // las innovaciones se guardan con valor 0 (trayectoria media) hasta que @RISK simule
+        const z = () => put('Z', t, ZN, 0), zj = () => put('ZJ', t, ZN, 0), nn = lam => put('N', t, PN(lam), 0);
+        switch(b.kind){
+          case 'gbm': { z(); const v = num.V[t - 1] * Math.exp(pv(1) - pv(2) ** 2 / 2); put('V', t, `${ref('V', t - 1)}*EXP((${P(1)}-${P(2)}^2/2)+${P(2)}*${ref('Z', t)})`, v); break; }
+          case 'bmmr': { z(); const x = num.X[t - 1] + pv(1) * (pv(2) - num.X[t - 1]); put('X', t, `${ref('X', t - 1)}+${P(1)}*(${P(2)}-${ref('X', t - 1)})+${P(3)}*${ref('Z', t)}`, x); put('V', t, `EXP(${ref('X', t)})`, Math.exp(x)); break; }
+          case 'gbmjd': { z(); nn(P(3)); zj(); const md = pv(1) - pv(2) ** 2 / 2 - pv(3) * (Math.exp(pv(4) + pv(5) ** 2 / 2) - 1);
+            put('V', t, `${ref('V', t - 1)}*EXP((${P(1)}-${P(2)}^2/2-${P(3)}*(EXP(${P(4)}+${P(5)}^2/2)-1))+${P(2)}*${ref('Z', t)}+${ref('N', t)}*${P(4)}+SQRT(${ref('N', t)})*${P(5)}*${ref('ZJ', t)})`, num.V[t - 1] * Math.exp(md)); break; }
+          case 'bmmrjd': { z(); nn(P(4)); zj(); const x = num.X[t - 1] + pv(1) * (pv(2) - num.X[t - 1]);
+            put('X', t, `${ref('X', t - 1)}+${P(1)}*(${P(2)}-${ref('X', t - 1)})+${P(3)}*${ref('Z', t)}+${ref('N', t)}*${P(5)}+SQRT(${ref('N', t)})*${P(6)}*${ref('ZJ', t)}`, x); put('V', t, `EXP(${ref('X', t)})`, Math.exp(x)); break; }
+          case 'ar1': { put('E', t, `${P(3)}*${plain ? '0' : 'RiskNormal(0,1)'}`, 0); put('V', t, `${P(1)}+${P(2)}*${ref('V', t - 1)}+${ref('E', t)}`, pv(1) + pv(2) * num.V[t - 1]); break; }
+          case 'ar2': { put('E', t, `${P(5)}*${plain ? '0' : 'RiskNormal(0,1)'}`, 0); put('V', t, `${P(2)}+${P(3)}*${ref('V', t - 1)}+${P(4)}*${ref('V', t - 2)}+${ref('E', t)}`, pv(2) + pv(3) * num.V[t - 1] + pv(4) * num.V[t - 2]); break; }
+          case 'ma1': { put('E', t, `${P(2)}*${plain ? '0' : 'RiskNormal(0,1)'}`, 0); put('V', t, `${P(0)}+${ref('E', t)}+${P(1)}*${ref('E', t - 1)}`, pv(0) + pv(1) * num.E[t - 1]); break; }
+          case 'ma2': { put('E', t, `${P(3)}*${plain ? '0' : 'RiskNormal(0,1)'}`, 0); put('V', t, `${P(0)}+${ref('E', t)}+${P(1)}*${ref('E', t - 1)}+${P(2)}*${ref('E', t - 2)}`, pv(0) + pv(1) * num.E[t - 1] + pv(2) * num.E[t - 2]); break; }
+          case 'arma11': { put('E', t, `${P(5)}*${plain ? '0' : 'RiskNormal(0,1)'}`, 0); put('V', t, `${P(2)}+${P(3)}*(${ref('V', t - 1)}-${P(2)})+${ref('E', t)}+${P(4)}*${ref('E', t - 1)}`, pv(2) + pv(3) * (num.V[t - 1] - pv(2)) + pv(4) * num.E[t - 1]); break; }
+          case 'arch1': { z(); const s2 = pv(1) + pv(2) * num.E[t - 1] ** 2; put('S2', t, `${P(1)}+${P(2)}*${ref('E', t - 1)}^2`, s2); put('E', t, `SQRT(${ref('S2', t)})*${ref('Z', t)}`, 0); put('V', t, `${P(0)}+${ref('E', t)}`, pv(0)); break; }
+          case 'garch11': { z(); const s2 = pv(1) + pv(2) * num.E[t - 1] ** 2 + pv(3) * num.S2[t - 1]; put('S2', t, `${P(1)}+${P(2)}*${ref('E', t - 1)}^2+${P(3)}*${ref('S2', t - 1)}`, s2); put('E', t, `SQRT(${ref('S2', t)})*${ref('Z', t)}`, 0); put('V', t, `${P(0)}+${ref('E', t)}`, pv(0)); break; }
+        }
+      }
+    });
+  }
+  hBand = tsBlocks.length ? tRow : (bassBlocks.length ? bRow : helpersEnd);
   let nr = hBand + 1;
   [ 'La columna C son fórmulas reales: con @RISK cargado funcionan sin copiar nada. Abre @RISK antes que este archivo; si lo abriste después, presiona Ctrl+Alt+F9.',
     'Para simular: pestaña @RISK → Iniciar simulación. Las celdas de resultado ya están marcadas con RiskOutput.',
@@ -6199,6 +6351,21 @@ TS.forecast = (d, r, h, N) => {
   return out;
 };
 
+/* ---- del ajuste al modelo: parámetros y estado inicial en el orden de la función de fórmula correspondiente (MODEL.TSF) ---- */
+TS.VARN = { 'S0': 'S0', 'μ': 'mu', 'σ': 'sigma', 'κ': 'kappa', 'm': 'm', 'λ': 'lambda', 'μJ': 'muJ', 'σJ': 'sigmaJ', 'c': 'c', 'φ': 'phi', 'φ1': 'phi1', 'φ2': 'phi2', 'θ': 'theta', 'θ1': 'theta1', 'θ2': 'theta2', 'ω': 'omega', 'α': 'alpha', 'β': 'beta', 'Xn': 'Xn', 'Xn1': 'Xn1', 'en': 'en', 'en1': 'en1', 'sn2': 'sn2' };
+TS.toModelArgs = (r, d) => {
+  const f = r.fit, n = d.n, x = d.x, last = x[n - 1], prev = x[n - 2];
+  const V = {
+    gbm: () => [last, f.params[0][1], f.sigma], bmmr: () => [last, f.kap, f.mlr, f.sigma],
+    gbmjd: () => [last, f.params[0][1], f.sigma, f.lam, f.muJ, f.sJ], bmmrjd: () => [last, f.kap, f.mlr, f.sigma, f.lam, f.muJ, f.sJ],
+    ar1: () => [last, f.c, f.phis[0], f.sigma], ar2: () => [last, prev, f.c, f.phis[0], f.phis[1], f.sigma],
+    ma1: () => [f.mu, f.theta[0], f.sigma, f.e[n - 1]], ma2: () => [f.mu, f.theta[0], f.theta[1], f.sigma, f.e[n - 1], f.e[n - 2]],
+    arma11: () => [last, f.e[n - 1], f.mu, f.phi[0], f.theta[0], f.sigma],
+    arch1: () => [f.mu, f.om, f.al, f.lastEps], garch11: () => [f.mu, f.om, f.al, f.be, f.lastEps, f.lastS2]
+  }[r.key](), spec = MODEL.TSF[r.key];
+  return { fn: spec.fn, labels: spec.params, names: spec.params.map(l => TS.VARN[l]), values: V };
+};
+
 /* =========================================================
    INTERFAZ DEL AJUSTE DE SERIES DE TIEMPO (dentro de la pestaña Ajuste)
 ========================================================= */
@@ -6359,6 +6526,15 @@ $('tsExport').onclick = async () => {
     await XL.download(blob, filename); span.textContent = 'Excel generado ✓';
   } catch(e){ console.error(e); span.textContent = 'No se pudo generar el Excel'; }
   setTimeout(() => { span.textContent = 'Exportar a Excel'; btn.disabled = false; }, 2500);
+};
+
+/* ---- llevar el modelo ajustado a una fórmula del Modelo ---- */
+$('tsToModel').onclick = () => {
+  const r = TSU.res.results.find(q => q.key === TSU.sel), a = TS.toModelArgs(r, TSU.res.d), h = TSU.h;
+  const vars = a.names.map((nm, i) => ({ name: nm, dist: 'const', params: { value: a.values[i] }, lo: null, hi: null }));
+  mdlApply({ vars, corr: [], outs: [{ name: `Valor_${h}`, formula: `${a.fn}(${a.names.join('; ')}; ${h})`, format: 'num' }], iterations: 10000 });
+  mdlAutosave(); setView('model'); mdlSetMode('free'); window.scrollTo({ top: 0 });
+  toast(`${r.name} enviado al modelo: ${a.names.length} variables y el resultado Valor_${h} con ${a.fn}(…; ${h}).`);
 };
 
 /* =========================================================
