@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1218" id="metaTheme">
+<script>try{var _t=localStorage.getItem('mcl_theme_v1');document.documentElement.setAttribute('data-theme',_t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <title>Monte Carlo Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,11 +28,57 @@
     --font-display:'Space Grotesk', sans-serif;
     --font-body:'Inter', sans-serif;
     --font-mono:'JetBrains Mono', monospace;
+    --bg-top:#1A2029;
+    --err:var(--err);
+    --on-accent-2:#06201C;
+    --cv-text:rgba(150,165,185,0.9);
+    --cv-text-strong:rgba(200,210,225,0.92);
+    --cv-text-mid:rgba(160,172,190,0.95);
+    --cv-text-low:rgba(130,145,165,0.8);
+    --cv-grid:rgba(120,135,155,0.2);
+    --cv-grid-strong:rgba(120,135,155,0.45);
+    --cv-grid-soft:rgba(255,255,255,0.08);
+    --cv-axis:rgba(255,255,255,0.35);
+    --cv-ref:rgba(230,236,245,0.7);
+    --cv-ref-soft:rgba(230,236,245,0.45);
+    --cv-line:rgba(200,214,235,0.95);
+    color-scheme:dark;
   }
+  :root[data-theme="light"]{
+    --bg:#F4F6FA; --bg-2:#E9EDF4; --bg-top:#FFFFFF;
+    --surface:#FFFFFF; --surface-2:#EEF1F6; --border:#D3DAE5;
+    --text:#161B24; --text-dim:#566174; --text-faint:#7B8798;
+    --accent:#E5532A; --accent-dim:#F6C9BB;
+    --accent-2:#0E8A76; --accent-2-dim:#BFE6DF;
+    --accent-3:#C98A00; --danger:#D6284A; --err:#C62828;
+    --on-accent-2:#FFFFFF;
+    --cv-text:rgba(70,84,104,0.95);
+    --cv-text-strong:rgba(30,40,56,0.95);
+    --cv-text-mid:rgba(60,72,92,0.95);
+    --cv-text-low:rgba(90,104,124,0.9);
+    --cv-grid:rgba(70,90,120,0.16);
+    --cv-grid-strong:rgba(70,90,120,0.4);
+    --cv-grid-soft:rgba(20,30,50,0.1);
+    --cv-axis:rgba(20,30,50,0.45);
+    --cv-ref:rgba(30,40,56,0.75);
+    --cv-ref-soft:rgba(30,40,56,0.5);
+    --cv-line:rgba(40,56,86,0.9);
+    color-scheme:light;
+  }
+  :root[data-theme="light"] .sheet-backdrop{background:rgba(20,28,40,0.35);}
+  :root[data-theme="light"] .sheet{box-shadow:0 -10px 40px -10px rgba(20,30,50,0.25);}
+  .sheet:not(.show){box-shadow:none !important;}
+  .theme-btn{width:34px; height:34px; border-radius:10px; background:var(--surface); border:1px solid var(--border); color:var(--text-dim); display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;}
+  .theme-btn:active{border-color:var(--accent); color:var(--accent);}
+  .theme-btn svg{width:17px; height:17px;}
+  .theme-btn .i-sun{display:none;}
+  :root[data-theme="light"] .theme-btn .i-sun{display:block;}
+  :root[data-theme="light"] .theme-btn .i-moon{display:none;}
+  .topbar-right{display:flex; align-items:center; gap:12px;}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0;}
   body{
-    background:radial-gradient(ellipse 120% 80% at 50% -10%, #1A2029 0%, var(--bg) 45%, var(--bg-2) 100%);
+    background:radial-gradient(ellipse 120% 80% at 50% -10%, var(--bg-top) 0%, var(--bg) 45%, var(--bg-2) 100%);
     color:var(--text);
     font-family:var(--font-body);
     min-height:100vh;
@@ -247,7 +295,7 @@
   .chip:active{border-color:var(--accent); color:var(--accent);}
   .chip.accent{border-color:var(--accent-2); color:var(--accent-2);}
   .data-info{font-size:12px; color:var(--text-faint); margin-top:10px; line-height:1.5; min-height:18px;}
-  .data-info.err{color:#FF8A8A;}
+  .data-info.err{color:var(--err);}
   .hint-line{font-size:11.5px; color:var(--text-faint); line-height:1.5; margin:8px 2px 12px;}
   .legend{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font-size:11.5px; color:var(--text-dim);}
   .legend i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px;}
@@ -256,7 +304,7 @@
   .fit-row.off{opacity:0.55;}
   .fit-rank{width:24px; height:24px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
     background:var(--surface-2); font-family:var(--font-mono); font-size:11.5px; color:var(--text-dim);}
-  .fit-row.best .fit-rank{background:var(--accent-2); color:#06201C; font-weight:700;}
+  .fit-row.best .fit-rank{background:var(--accent-2); color:var(--on-accent-2); font-weight:700;}
   .fit-body{flex:1; min-width:0;}
   .fit-name{font-family:var(--font-display); font-weight:600; font-size:14px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
   .fit-dot{width:10px; height:10px; border-radius:3px; flex-shrink:0; background:var(--border);}
@@ -280,7 +328,7 @@
   .var-params{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
   .var-params .field label{font-size:11px; margin-bottom:4px;}
   .var-params .field input[type=number]{padding:8px 10px; font-size:14px;}
-  .var-err{color:#FF8A8A; font-size:11.5px; line-height:1.45; margin-top:6px; min-height:0;}
+  .var-err{color:var(--err); font-size:11.5px; line-height:1.45; margin-top:6px; min-height:0;}
   .var-err:empty{display:none;}
   .out-card .out-formula{width:100%; margin-top:8px; font-family:var(--font-mono) !important; font-size:13.5px !important;}
   .corr-row{display:flex; align-items:center; gap:8px; margin-top:8px;}
@@ -307,7 +355,7 @@
   .cmp-table thead th{border-top:none; font-family:var(--font-display); font-size:12px; color:var(--text);}
   .cmp-table th:first-child, .cmp-table td:first-child{text-align:left; color:var(--text-dim); position:sticky; left:0; background:var(--surface);}
   .cmp-table td{font-family:var(--font-mono); color:var(--text);}
-  .cmp-table td.hi{color:#43C6B0; font-weight:700;} .cmp-table td.lo{color:#FF7A50; font-weight:700;} .cmp-table td.na{color:var(--text-faint);}
+  .cmp-table td.hi{color:var(--accent-2); font-weight:700;} .cmp-table td.lo{color:var(--accent); font-weight:700;} .cmp-table td.na{color:var(--text-faint);}
   .cmp-table th i{display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:6px;}
   .prob-row{margin-top:10px;} .prob-row:first-child{margin-top:0;}
   .prob-row .top{display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:4px; gap:10px;}
@@ -315,7 +363,7 @@
   .prob-bar{height:8px; border-radius:5px; background:var(--surface-2); overflow:hidden;}
   .prob-bar span{display:block; height:100%; border-radius:5px;}
   .tab{position:relative;}
-  .tab-badge{position:absolute; top:2px; right:4px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:var(--accent-2); color:#06201C;
+  .tab-badge{position:absolute; top:2px; right:4px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:var(--accent-2); color:var(--on-accent-2);
     font-family:var(--font-mono); font-size:10px; font-weight:700; line-height:16px; text-align:center;}
   .tab.active .tab-badge{background:#1A0E08; color:var(--accent);}
   .var-limits{display:flex; gap:8px; align-items:center; margin-top:10px;}
@@ -419,7 +467,8 @@
     padding:9px 4px; border-radius:9px; font-family:var(--font-mono); font-size:12.5px; font-weight:600;
     transition:all .15s;
   }
-  .segmented button.active{background:var(--accent-2); color:#06201C;}
+  .segmented button.active{background:var(--accent-2); color:var(--on-accent-2);}
+  #mdlMode button{font-size:11px; padding:9px 2px; letter-spacing:-0.02em; white-space:nowrap;}
 
   /* Run button */
   .run-btn{
@@ -467,7 +516,7 @@
     padding:9px 11px; border-radius:9px; font-family:var(--font-mono); font-size:13px; font-weight:600;
     white-space:nowrap; transition:all .15s;
   }
-  .prob-dir button.active{background:var(--accent-2); color:#06201C;}
+  .prob-dir button.active{background:var(--accent-2); color:var(--on-accent-2);}
   .prob-controls input{
     flex:1; min-width:0; background:var(--surface-2); border:1px solid var(--border); border-radius:11px;
     padding:9px 12px; color:var(--text); font-family:var(--font-mono); font-size:14px; outline:none;
@@ -524,7 +573,13 @@
         <div class="brand-sub">Simulación de riesgo</div>
       </div>
     </div>
-    <div class="live-dot" title="Simulación local en tu dispositivo"></div>
+    <div class="topbar-right">
+      <div class="live-dot" title="Simulación local en tu dispositivo"></div>
+      <button type="button" class="theme-btn" id="themeBtn" aria-label="Cambiar entre modo claro y oscuro" title="Modo claro / oscuro">
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
   </div>
 
   <nav class="tabs" id="tabs">
@@ -634,18 +689,14 @@
 <div class="segmented" id="mdlMode" style="margin-top:12px;">
   <button type="button" data-m="free" class="active">Modelo libre</button>
   <button type="button" data-m="bass">Difusión de Bass</button>
+  <button type="button" data-m="vw">Van Westendorp</button>
 </div>
 <div id="mdlFree">
 <p class="view-intro">Define las variables inciertas de tu problema y una fórmula que las combine. La app simula el resultado, te muestra qué variables lo mueven más (tornado) y permite correlacionar las entradas.</p>
 <div class="chips-row">
   <button type="button" class="chip accent" id="mdlModelsBtn">Mis modelos</button>
+  <button type="button" class="chip accent" id="mdlExBtn">Ejemplos ▾</button>
   <button type="button" class="chip" id="mdlClear">Vaciar</button>
-</div>
-<div class="chips-row" style="margin-top:6px;">
-  <button type="button" class="chip accent" id="mdlExUtil">Ejemplo: utilidad</button>
-  <button type="button" class="chip accent" id="mdlExNpv">Ejemplo: VAN y TIR</button>
-  <button type="button" class="chip accent" id="mdlExTS">Ejemplo: VAN con precio GBM</button>
-  <span class="years-box">Años del proyecto <input type="number" id="mdlYears" value="5" min="1" max="15" inputmode="numeric"></span>
 </div>
 <div class="section-label"><span class="n">01</span> Variables de entrada</div>
 <div id="mdlVars"></div>
@@ -694,7 +745,7 @@
 <div id="mdlBass" style="display:none;"><!--@@BASS_BEGIN@@-->
 <p class="view-intro">Proyecta la demanda de un producto nuevo con el modelo de difusión de Bass: <b>S(t+1) = p·N + (q−p)·Q(t) − (q/N)·Q(t)²</b>. N es el mercado potencial, p el coeficiente de innovación (compra espontánea) y q el de imitación (efecto boca a boca). Puedes comparar varios países o escenarios y, si quieres, ver el efecto de la incertidumbre en N, p y q.</p>
 <div class="chips-row">
-  <button type="button" class="chip accent" id="bsEx">Cargar ejercicio HI-TEC</button>
+  <button type="button" class="chip accent" id="bsEx">Ejemplos ▾</button>
   <button type="button" class="chip" id="bsClear">Vaciar</button>
 </div>
 <div class="section-label"><span class="n">01</span> Escenarios (país, producto o mercado)</div>
@@ -738,6 +789,48 @@
 </div>
 
 <!--@@BASS_END@@--></div>
+<div id="mdlVW" style="display:none;">
+<p class="view-intro">Estima el precio de un producto con la encuesta de <b>Van Westendorp</b> (medidor de sensibilidad al precio). Cada encuestado dice a partir de qué precio le parece <b>muy barato</b> (dudaría de la calidad), <b>barato</b> (una ganga), <b>caro</b> (lo pensaría) y <b>muy caro</b> (no lo compraría). La app cruza las curvas acumuladas y calcula el precio óptimo, el de indiferencia y el rango aceptable.</p>
+<div class="section-label"><span class="n">01</span> Respuestas de la encuesta</div>
+<div class="card">
+  <textarea id="vwData" class="data-area" rows="7" placeholder="Una fila por encuestado:&#10;40; 65; 100; 140&#10;35; 60; 95; 150" spellcheck="false" autocomplete="off"></textarea>
+  <div class="data-tools">
+    <button type="button" class="chip" id="vwFileBtn">Cargar archivo</button>
+    <button type="button" class="chip" id="vwExBtn">Usar ejemplo</button>
+    <button type="button" class="chip" id="vwClear">Borrar</button>
+    <input type="file" id="vwFileInput" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden>
+  </div>
+  <div class="hint-line" id="vwInfo" style="margin-bottom:0; margin-top:10px;">Columnas, en este orden: muy barato · barato · caro · muy caro. Sepáralas con tabulador (pegado desde Excel), punto y coma, coma o espacio, y escribe los precios sin separador de miles (45000, no 45.000). Un archivo .csv, .tsv o .txt debe tener esas cuatro columnas primero.</div>
+</div>
+<div class="section-label"><span class="n">02</span> Opciones</div>
+<div class="field"><label>Símbolo de moneda</label><input type="text" id="vwUnit" value="$" maxlength="6" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 12px; color:var(--text); font-size:15px; outline:none;"></div>
+<label style="display:flex; gap:8px; align-items:flex-start; font-size:12.5px; line-height:1.45; color:var(--text-dim); margin-top:12px;"><input type="checkbox" id="vwExcl" checked style="margin-top:2px; accent-color:var(--accent-2);"> Excluir respuestas incoherentes (que no cumplan muy barato ≤ barato ≤ caro ≤ muy caro)</label>
+<div class="var-err" id="vwErr"></div>
+<button type="button" class="run-btn" id="vwRun" style="margin-top:14px;">Calcular precio óptimo →</button>
+<div id="vwOut" style="display:none;">
+  <div class="section-label"><span class="n">03</span> Resultado</div>
+  <div class="card" style="text-align:center; padding:18px 14px;">
+    <div class="chart-sub" style="margin:0 0 4px;">Precio óptimo (OPP)</div>
+    <div id="vwHero" style="font-family:var(--font-display); font-size:34px; font-weight:700; color:var(--accent); letter-spacing:-0.02em;"></div>
+    <div class="chart-sub" id="vwHeroSub" style="margin:6px 0 0;"></div>
+  </div>
+  <div class="card" style="padding:6px 0; margin-top:12px;"><div class="cmp-scroll"><table class="cmp-table" id="vwTable"></table></div></div>
+  <div class="card" style="margin-top:12px;">
+    <div class="chart-title">Curvas de Van Westendorp</div>
+    <div class="chart-sub">Porcentaje acumulado de encuestados según el precio. Las líneas verticales marcan los cuatro puntos.</div>
+    <canvas id="vwChart" height="290" style="width:100%; display:block;"></canvas>
+    <div class="legend" id="vwLegend"></div>
+  </div>
+  <div class="section-label"><span class="n">04</span> Análisis</div>
+  <div class="card"><div id="vwAnalysis" class="bs-analysis"></div></div>
+  <div class="action-row" style="margin-top:14px;">
+    <button type="button" class="action-btn" id="vwExport"><span>Exportar a Excel</span></button>
+    <button type="button" class="action-btn" id="vwToModel"><span>Enviar al modelo libre</span></button>
+  </div>
+  <div class="hint-line">«Enviar al modelo libre» crea las variables PMC, OPP, IPP y PME (triangulares, con la banda P5–P95 del bootstrap) y los resultados «Precio_optimo» y «Rango_aceptable», para que sigas con costos, volúmenes o ingresos.</div>
+  <div class="hint-line">Definiciones: <b>PMC</b> (precio mínimo aceptable) = cruce de «muy barato» con «no barato» (1 − barato). <b>OPP</b> (precio óptimo) = «muy barato» con «muy caro». <b>IPP</b> (indiferencia) = «barato» con «caro». <b>PME</b> (precio máximo aceptable) = «muy caro» con «no caro» (1 − caro). Las bandas P5–P95 salen de repetir el cálculo 500 veces con encuestados remuestreados al azar (bootstrap).</div>
+</div>
+</div>
 
 <!--@@MODEL_VIEW_END@@--></div>
   <div id="viewFit" class="view" style="display:none;"><!--@@FIT_VIEW_BEGIN@@-->
@@ -889,6 +982,23 @@
 </div>
 
 <script>
+/* ---- tema claro / oscuro ---- */
+const CV = k => getComputedStyle(document.documentElement).getPropertyValue('--cv-' + k).trim() || '#888';
+(function(){
+  const root = document.documentElement, btn = document.getElementById('themeBtn'), meta = document.getElementById('metaTheme');
+  const apply = t => {
+    root.setAttribute('data-theme', t);
+    if(meta) meta.setAttribute('content', t === 'light' ? '#F4F6FA' : '#0E1218');
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+  };
+  apply(root.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
+  btn.onclick = () => {
+    const t = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    apply(t);
+    try{ localStorage.setItem('mcl_theme_v1', t); }catch(e){}
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 30); /* vuelve a dibujar los gráficos con los colores del tema */
+  };
+})();
 /* ---------------------------------------------------------
    GENERADORES ALEATORIOS
 --------------------------------------------------------- */
@@ -2707,7 +2817,7 @@ function animateHistogram(stats, discrete, opts){
     ctx.clearRect(0,0,cssW,cssH);
 
     // baseline
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.strokeStyle = CV('grid-soft');
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(padL, padT+plotH);
@@ -2753,7 +2863,7 @@ function animateHistogram(stats, discrete, opts){
     }
 
     // axis labels
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillStyle = CV('axis');
     ctx.font = '10px JetBrains Mono, monospace';
     ctx.textAlign = 'left';
     ctx.fillText(fmtV(stats.min), padL, cssH-4);
@@ -2785,7 +2895,7 @@ function drawCDF(stats){
   const step = Math.max(1, Math.floor(n/nPts));
 
   ctx.clearRect(0,0,cssW,cssH);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.strokeStyle = CV('grid-soft');
   ctx.lineWidth=1;
   for(let g=0; g<=4; g++){
     const y = padT + plotH*g/4;
@@ -2802,7 +2912,7 @@ function drawCDF(stats){
   }
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillStyle = CV('axis');
   ctx.font = '10px JetBrains Mono, monospace';
   ctx.textAlign='left'; ctx.fillText(fmtV(stats.min), padL, cssH-4);
   ctx.textAlign='right'; ctx.fillText(fmtV(stats.max), padL+plotW, cssH-4);
@@ -2925,7 +3035,7 @@ XL.stylesXml = () => XL.HEAD + `<styleSheet xmlns="${XL.NS_MAIN}">
 <border><left/><right/><top/><bottom style="thin"><color rgb="FFD9DEE5"/></bottom><diagonal/></border>
 </borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="20">
+<cellXfs count="22">
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
 <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
 <xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
@@ -2946,6 +3056,8 @@ XL.stylesXml = () => XL.HEAD + `<styleSheet xmlns="${XL.NS_MAIN}">
 <xf numFmtId="168" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>
 <xf numFmtId="167" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
 <xf numFmtId="168" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="4" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="2" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>`;
@@ -4281,7 +4393,7 @@ function fitDraw(colorOf){
   });
   const ymax = Math.max(hmax, ...curves.map(c => Math.min(Math.max(...c.ys), hmax * 3))) * 1.12;
   const X = x => ml + (x - lo) / (hi - lo) * pw, Y = y => mt + ph - Math.min(y, ymax) / ymax * ph;
-  g.strokeStyle = 'rgba(120,135,155,0.25)'; g.lineWidth = 1; g.beginPath(); g.moveTo(ml, mt + ph + 0.5); g.lineTo(ml + pw, mt + ph + 0.5); g.stroke();
+  g.strokeStyle = CV('grid'); g.lineWidth = 1; g.beginPath(); g.moveTo(ml, mt + ph + 0.5); g.lineTo(ml + pw, mt + ph + 0.5); g.stroke();
   g.fillStyle = 'rgba(255,122,80,0.55)';
   dens.forEach((d, i) => { const x0 = X(r.min + i * bw), x1 = X(r.min + (i + 1) * bw); g.fillRect(x0 + 0.5, Y(d), Math.max(1, x1 - x0 - 1), mt + ph - Y(d)); });
   curves.forEach(c => {
@@ -4289,7 +4401,7 @@ function fitDraw(colorOf){
     c.ys.forEach((v, i) => { const x = X(lo + (hi - lo) * i / 200); if(i === 0) g.moveTo(x, Y(v)); else g.lineTo(x, Y(v)); });
     g.stroke();
   });
-  g.fillStyle = 'rgba(150,165,185,0.9)'; g.font = '10.5px "JetBrains Mono", monospace'; g.textBaseline = 'top';
+  g.fillStyle = CV('text'); g.font = '10.5px "JetBrains Mono", monospace'; g.textBaseline = 'top';
   for(let i = 0; i <= 4; i++){ const x = lo + (hi - lo) * i / 4, t = fmt(x); g.textAlign = i === 0 ? 'left' : (i === 4 ? 'right' : 'center'); g.fillText(t, X(x), mt + ph + 7); }
 }
 window.addEventListener('resize', () => { if(FITUI.res && currentView === 'fit'){ const c = {}; [...FITUI.visible].forEach((k, i) => { c[k] = FIT_COLORS[i % FIT_COLORS.length]; }); fitDraw(c); } });
@@ -4903,7 +5015,6 @@ function mdlExampleNpv(){
   ];
   mdlRenderAll(); toast(`Proyecto a ${years} años cargado. Cambia las distribuciones por las de tu caso.`);
 }
-$('mdlExUtil').onclick = () => mdlExampleUtil(false);
 function mdlExampleTS(){
   let years = Math.round(parseFloat($('mdlYears').value)); if(!(years >= 1)) years = 5; years = Math.min(15, years); $('mdlYears').value = years;
   MDL.vars = [mdlNewVar('Precio0', 'const', { value: 100 }), mdlNewVar('mu', 'const', { value: 0.05 }), mdlNewVar('sigma', 'triangular', { min: 0.15, mode: 0.20, max: 0.30 }, 0),
@@ -4915,10 +5026,33 @@ function mdlExampleTS(){
     { id: mdlId(), name: 'VAN', formula: `-Inversion + VNA(Tasa; ${flows})`, format: 'cur' },
     { id: mdlId(), name: 'Precio_final', formula: `GBM(Precio0; mu; sigma; ${years})`, format: 'cur' }
   ];
-  mdlRenderAll(); toast(`Proyecto a ${years} años: el precio sigue un GBM y todos los años usan la misma trayectoria simulada.`);
+  mdlRenderAll(); toast(`Proyecto a ${years} años: el precio sigue un MGB y todos los años usan la misma trayectoria simulada.`);
 }
-$('mdlExTS').onclick = mdlExampleTS;
-$('mdlExNpv').onclick = mdlExampleNpv;
+/* ---- selector de ejemplos (hoja inferior) ---- */
+document.body.insertAdjacentHTML('beforeend', `
+<div class="sheet-backdrop" id="exBackdrop"></div>
+<div class="sheet" id="exSheet">
+  <div class="sheet-handle"></div>
+  <div class="comp-head"><div class="sheet-title">Ejemplos</div><button type="button" class="row-remove" id="exClose" aria-label="Cerrar">✕</button></div>
+  <div class="sheet-list" id="exList"></div>
+  <div class="chips-row" style="padding:0 12px; margin:10px 0 0;"><span class="years-box">Años del proyecto (para los ejemplos de VAN) <input type="number" id="mdlYears" value="5" min="1" max="15" inputmode="numeric"></span></div>
+</div>`);
+const exSheet = $('exSheet'), exBackdrop = $('exBackdrop');
+const closeEx = () => { exSheet.classList.remove('show'); exBackdrop.classList.remove('show'); };
+$('exClose').onclick = closeEx; exBackdrop.onclick = closeEx;
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeEx(); });
+[
+  { name: 'Utilidad', desc: 'Precio, cantidad y costos; demanda correlacionada con el precio.', fn: () => mdlExampleUtil(false) },
+  { name: 'VAN y TIR', desc: 'Proyecto con inversión, flujos por año y tasa de descuento inciertos.', fn: mdlExampleNpv },
+  { name: 'VAN con precio MGB', desc: 'El precio sigue un movimiento browniano geométrico (MGB) a lo largo de los años.', fn: mdlExampleTS },
+  { name: 'Van Westendorp (precio óptimo)', desc: 'Abre el modo Van Westendorp con una encuesta simulada y calcula el precio óptimo.', fn: () => { mdlSetMode('vw'); vwLoadExample(0, true); window.scrollTo({ top: 0 }); toast('Van Westendorp: encuesta simulada de 150 personas.'); } }
+].forEach(ex => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-item';
+  b.innerHTML = `<div class="sheet-item-body"><div class="sheet-item-top"><span class="sheet-item-name">${ex.name}</span></div><div class="saved-meta">${ex.desc}</div></div>`;
+  b.onclick = () => { closeEx(); ex.fn(); };
+  $('exList').appendChild(b);
+});
+$('mdlExBtn').onclick = () => { exSheet.classList.add('show'); exBackdrop.classList.add('show'); };
 
 /* ---- validación ---- */
 function mdlValidateVar(v){
@@ -5103,21 +5237,21 @@ function mdlDrawTornado(){
   g.font = '12px "Inter", sans-serif'; g.textBaseline = 'middle';
   rows.forEach((r, i) => {
     const y = 10 + i * rh, v = mode === 'rho' ? r.rho : r.contrib, len = Math.abs(v) * scale;
-    g.fillStyle = 'rgba(200,210,225,0.92)'; g.textAlign = 'right';
+    g.fillStyle = CV('text-strong'); g.textAlign = 'right';
     let label = r.name; while(g.measureText(label).width > labW && label.length > 3) label = label.slice(0, -2);
     if(label !== r.name) label += '…';
     g.fillText(label, labW, y + rh / 2 - 3);
     g.fillStyle = r.rho >= 0 ? '#43C6B0' : '#FF7A50';
     const bx = mode === 'rho' && v < 0 ? cx - len : cx;
     g.beginPath(); g.roundRect ? g.roundRect(bx, y + 3, Math.max(len, 1), rh - 12, 4) : g.rect(bx, y + 3, Math.max(len, 1), rh - 12); g.fill();
-    g.fillStyle = 'rgba(160,172,190,0.95)'; g.font = '11px "JetBrains Mono", monospace';
+    g.fillStyle = CV('text-mid'); g.font = '11px "JetBrains Mono", monospace';
     const txt = mode === 'rho' ? (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2).replace('.', ',') : (100 * v).toFixed(0) + ' %';
     g.textAlign = mode === 'rho' && v < 0 ? 'right' : 'left';
     g.fillText(txt, mode === 'rho' && v < 0 ? bx - 5 : bx + len + 5, y + rh / 2 - 3);
     g.font = '12px "Inter", sans-serif';
   });
-  g.strokeStyle = 'rgba(120,135,155,0.45)'; g.lineWidth = 1; g.beginPath(); g.moveTo(cx + 0.5, 4); g.lineTo(cx + 0.5, H - 18); g.stroke();
-  g.fillStyle = 'rgba(130,145,165,0.8)'; g.font = '10px "JetBrains Mono", monospace'; g.textAlign = 'center';
+  g.strokeStyle = CV('grid-strong'); g.lineWidth = 1; g.beginPath(); g.moveTo(cx + 0.5, 4); g.lineTo(cx + 0.5, H - 18); g.stroke();
+  g.fillStyle = CV('text-low'); g.font = '10px "JetBrains Mono", monospace'; g.textAlign = 'center';
   if(mode === 'rho'){ g.fillText('−1', x0, H - 8); g.fillText('0', cx, H - 8); g.fillText('+1', x1, H - 8); }
   else { g.fillText('0 %', x0 + 6, H - 8); }
 }
@@ -5772,7 +5906,7 @@ function cmpDraw(){
     ymax = Math.max(...curves.map(c => Math.max(...c.ys))) * 1.1 || 1;
   }
   const Y = y => mt + ph - Math.min(y, ymax) / ymax * ph;
-  g.font = '10.5px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(150,165,185,0.9)'; g.strokeStyle = 'rgba(120,135,155,0.18)'; g.lineWidth = 1;
+  g.font = '10.5px "JetBrains Mono", monospace'; g.fillStyle = CV('text'); g.strokeStyle = CV('grid'); g.lineWidth = 1;
   if(cdfMode){
     g.textAlign = 'right'; g.textBaseline = 'middle';
     [0, 0.25, 0.5, 0.75, 1].forEach(v => { g.beginPath(); g.moveTo(ml, Y(v) + 0.5); g.lineTo(ml + pw, Y(v) + 0.5); g.stroke(); g.fillText(Math.round(v * 100) + '%', ml - 5, Y(v)); });
@@ -5784,9 +5918,9 @@ function cmpDraw(){
     g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.strokeStyle = c.it.color; g.lineWidth = 2.2; g.stroke();
   });
   if(Number.isFinite(CMP.thr) && CMP.thr >= lo && CMP.thr <= hi){
-    g.setLineDash([4, 4]); g.strokeStyle = 'rgba(230,236,245,0.7)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(X(CMP.thr), mt); g.lineTo(X(CMP.thr), mt + ph); g.stroke(); g.setLineDash([]);
+    g.setLineDash([4, 4]); g.strokeStyle = CV('ref'); g.lineWidth = 1.2; g.beginPath(); g.moveTo(X(CMP.thr), mt); g.lineTo(X(CMP.thr), mt + ph); g.stroke(); g.setLineDash([]);
   }
-  g.fillStyle = 'rgba(150,165,185,0.9)'; g.textBaseline = 'top';
+  g.fillStyle = CV('text'); g.textBaseline = 'top';
   for(let i = 0; i <= 4; i++){ const x = lo + (hi - lo) * i / 4; g.textAlign = i === 0 ? 'left' : (i === 4 ? 'right' : 'center'); g.fillText(fmt(x), X(x), mt + ph + 7); }
 }
 document.querySelectorAll('#cmpMode button').forEach(b => {
@@ -5839,7 +5973,35 @@ function bsRender(){
   });
 }
 $('bsAdd').onclick = () => { if(BS.rows.length >= 12){ toast('Puedes comparar hasta 12 escenarios'); return; } BS.rows.push({ id: BS.seq++, name: 'Escenario ' + (BS.rows.length + 1), hab: 1000000, mer: 50, p: 3, q: 38 }); bsRender(); };
-$('bsEx').onclick = () => { bsLoadExercise(); toast('Ejercicio de HI-TEC cargado: 5 países, 20 meses.'); };
+/* ---- selector de ejemplos de Bass (hoja inferior) ---- */
+function bsLoadRows(rows, t, unit, unc){
+  BS.rows = rows.map(([name, hab, mer, p, q]) => ({ id: BS.seq++, name, hab, mer, p, q }));
+  $('bsT').value = t; $('bsUnit').value = unit; $('bsUnc').value = unc;
+  BS.res = null; $('bsOut').style.display = 'none'; $('bsErr').textContent = '';
+  bsRender();
+}
+document.body.insertAdjacentHTML('beforeend', `
+<div class="sheet-backdrop" id="bsExBackdrop"></div>
+<div class="sheet" id="bsExSheet">
+  <div class="sheet-handle"></div>
+  <div class="comp-head"><div class="sheet-title">Ejemplos de difusión de Bass</div><button type="button" class="row-remove" id="bsExClose" aria-label="Cerrar">✕</button></div>
+  <div class="sheet-list" id="bsExList"></div>
+</div>`);
+const bsExSheet = $('bsExSheet'), bsExBackdrop = $('bsExBackdrop');
+const closeBsEx = () => { bsExSheet.classList.remove('show'); bsExBackdrop.classList.remove('show'); };
+$('bsExClose').onclick = closeBsEx; bsExBackdrop.onclick = closeBsEx;
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeBsEx(); });
+[
+  { name: 'HI-TEC', desc: 'Dispositivo WIFI 5G en cinco países, 20 meses.', fn: () => { bsLoadExercise(); toast('Ejercicio de HI-TEC cargado: 5 países, 20 meses.'); } },
+  { name: 'Un solo producto', desc: 'Un mercado de 1 millón de habitantes, 24 meses, para ver la curva básica.', fn: () => { bsLoadRows([['Producto nuevo', 1000000, 50, 3, 38]], 24, 'Mes', 0); toast('Ejemplo cargado: un producto, 24 meses.'); } },
+  { name: 'Innovadores vs. imitadores', desc: 'Mismo mercado con tres combinaciones de p y q, 20 años.', fn: () => { bsLoadRows([['Impulsado por innovación', 1000000, 60, 10, 20], ['Equilibrado', 1000000, 60, 3, 38], ['Impulsado por imitación', 1000000, 60, 0.5, 50]], 20, 'Año', 0); toast('Ejemplo cargado: tres perfiles de p y q.'); } }
+].forEach(ex => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-item';
+  b.innerHTML = `<div class="sheet-item-body"><div class="sheet-item-top"><span class="sheet-item-name">${ex.name}</span></div><div class="saved-meta">${ex.desc}</div></div>`;
+  b.onclick = () => { closeBsEx(); ex.fn(); };
+  $('bsExList').appendChild(b);
+});
+$('bsEx').onclick = () => { bsExSheet.classList.add('show'); bsExBackdrop.classList.add('show'); };
 $('bsClear').onclick = () => { BS.rows = []; BS.res = null; bsRender(); $('bsOut').style.display = 'none'; $('bsErr').textContent = ''; };
 
 /* ---- validación ---- */
@@ -5938,7 +6100,7 @@ function bsDraw(cv, key){
   let ymax = 0; items.forEach(it => { const b = band(it), l = line(it); for(let t = 0; t < T; t++) ymax = Math.max(ymax, l[t], b ? b.hi[t] : 0); });
   ymax = (ymax || 1) * 1.08;
   const X = t => ml + (T === 1 ? pw / 2 : (t - 1) / (T - 1) * pw), Y = v => mt + ph - Math.min(v, ymax) / ymax * ph;
-  g.font = '10.5px "JetBrains Mono", monospace'; g.strokeStyle = 'rgba(120,135,155,0.2)'; g.fillStyle = 'rgba(150,165,185,0.9)'; g.lineWidth = 1;
+  g.font = '10.5px "JetBrains Mono", monospace'; g.strokeStyle = CV('grid'); g.fillStyle = CV('text'); g.lineWidth = 1;
   g.textAlign = 'right'; g.textBaseline = 'middle';
   for(let i = 0; i <= 4; i++){ const v = ymax * i / 4; g.beginPath(); g.moveTo(ml, Y(v) + 0.5); g.lineTo(ml + pw, Y(v) + 0.5); g.stroke(); g.fillText(bsAbbr(v), ml - 6, Y(v)); }
   g.textAlign = 'center'; g.textBaseline = 'top';
@@ -5997,14 +6159,250 @@ $('bsExport').onclick = async () => {
   setTimeout(() => { span.textContent = 'Exportar a Excel'; btn.disabled = false; }, 2500);
 };
 
+/* =========================================================
+   MODO «VAN WESTENDORP» (dentro de la pestaña Modelo)
+========================================================= */
+const VW = { res: null };
+const VW_KEY = 'mcl_vw_v1';
+const VW_COL = { tc: '#5AA9FF', ch: '#43C6B0', ex: '#FFC857', te: '#FF5470' };
+const VW_B = 500;
+const VW_EXAMPLES = [
+  { name: 'Producto de consumo', desc: '150 encuestados simulados; precios alrededor de $ 100.', unit: '$', median: 100, n: 150, seed: 7, step: 1 },
+  { name: 'Plan mensual en pesos', desc: '200 encuestados simulados; precios alrededor de $ 45.000.', unit: '$', median: 45000, n: 200, seed: 21, step: 500 }
+];
+function vwRng(seed){ let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function vwGenerate(ex){
+  const rnd = vwRng(ex.seed), U = (a, b) => a + (b - a) * rnd(), rows = [];
+  const norm = () => { let u = 0; while(!u) u = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd()); };
+  const r = x => Math.max(ex.step, Math.round(x / ex.step) * ex.step);
+  for(let i = 0; i < ex.n; i++){
+    const w = ex.median * Math.exp(0.28 * norm());
+    rows.push([r(w * U(0.35, 0.62)), r(w * U(0.62, 0.88)), r(w * U(0.95, 1.25)), r(w * U(1.25, 1.8))]);
+  }
+  return rows;
+}
+function vwParse(text){
+  const rows = []; let skipped = 0;
+  text.split(/\r?\n/).forEach(line => {
+    line = line.trim(); if(!line) return;
+    let parts;
+    if(/[\t;]/.test(line)) parts = line.split(/[\t;]+/);
+    else if(/\s/.test(line)) parts = line.split(/\s+/);
+    else parts = line.split(',');
+    const nums = parts.map(x => x.trim()).filter(x => x !== '').map(x => { const t = x.replace(/\s/g, '').replace(',', '.'); return /^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(t) ? parseFloat(t) : NaN; });
+    if(nums.length >= 4 && nums.slice(0, 4).every(Number.isFinite)) rows.push(nums.slice(0, 4)); else skipped++;
+  });
+  return { rows, skipped };
+}
+function vwLB(a, x){ let lo = 0, hi = a.length; while(lo < hi){ const m = (lo + hi) >> 1; if(a[m] < x) lo = m + 1; else hi = m; } return lo; }
+function vwUB(a, x){ let lo = 0, hi = a.length; while(lo < hi){ const m = (lo + hi) >> 1; if(a[m] <= x) lo = m + 1; else hi = m; } return lo; }
+/* cols: cuatro columnas ordenadas (muy barato, barato, caro, muy caro). Devuelve las curvas acumuladas en cada precio de la malla */
+function vwCurves(cols, grid){
+  const n = cols[0].length, o = { tc: [], ch: [], ex: [], te: [], nc: [], ne: [] };
+  for(let i = 0; i < grid.length; i++){
+    const x = grid[i];
+    const a = (n - vwLB(cols[0], x)) / n, b = (n - vwLB(cols[1], x)) / n, c = vwUB(cols[2], x) / n, d = vwUB(cols[3], x) / n;
+    o.tc.push(a); o.ch.push(b); o.ex.push(c); o.te.push(d); o.nc.push(1 - b); o.ne.push(1 - c);
+  }
+  return o;
+}
+function vwCross(grid, A, B){
+  for(let i = 0; i < grid.length; i++){
+    const d = A[i] - B[i];
+    if(d === 0) return grid[i];
+    if(i > 0){ const p = A[i - 1] - B[i - 1]; if(p * d < 0) return grid[i - 1] + (grid[i] - grid[i - 1]) * p / (p - d); }
+  }
+  return NaN;
+}
+function vwPoints(grid, c){ return { pmc: vwCross(grid, c.tc, c.nc), opp: vwCross(grid, c.tc, c.te), ipp: vwCross(grid, c.ch, c.ex), pme: vwCross(grid, c.te, c.ne) }; }
+function vwSortedCols(rows){ return [0, 1, 2, 3].map(k => Float64Array.from(rows, r => r[k]).sort()); }
+function vwGrid(rows){
+  const set = new Set(); rows.forEach(r => r.forEach(v => set.add(v)));
+  let g = [...set].sort((a, b) => a - b);
+  if(g.length > 800){ const lo = g[0], hi = g[g.length - 1]; g = Array.from({ length: 800 }, (_, i) => lo + (hi - lo) * i / 799); }
+  return g;
+}
+function vwPctl(arr, p){ if(!arr.length) return NaN; const a = arr.slice().sort((x, y) => x - y), i = (a.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return a[lo] + (a[hi] - a[lo]) * (i - lo); }
+function vwBootstrap(rows, grid, B){
+  const n = rows.length, out = { pmc: [], opp: [], ipp: [], pme: [] };
+  const cols = [0, 1, 2, 3].map(() => new Float64Array(n));
+  for(let b = 0; b < B; b++){
+    for(let i = 0; i < n; i++){ const r = rows[(Math.random() * n) | 0]; for(let k = 0; k < 4; k++) cols[k][i] = r[k]; }
+    cols.forEach(c => c.sort());
+    const pt = vwPoints(grid, vwCurves(cols, grid));
+    Object.keys(out).forEach(k => { if(Number.isFinite(pt[k])) out[k].push(pt[k]); });
+  }
+  const ci = {}; Object.keys(out).forEach(k => { ci[k] = [vwPctl(out[k], 0.05), vwPctl(out[k], 0.95)]; });
+  return ci;
+}
+function vwFmt(v, res){ if(!Number.isFinite(v)) return '—'; return res.unit + ' ' + v.toLocaleString('es-ES', { minimumFractionDigits: res.dec, maximumFractionDigits: res.dec }); }
+function vwInfoUpdate(){
+  const { rows, skipped } = vwParse($('vwData').value);
+  $('vwInfo').textContent = rows.length ? `${rows.length.toLocaleString('es-ES')} respuestas leídas${skipped ? ` (${skipped} líneas ignoradas por no tener 4 números)` : ''}.` : 'Columnas, en este orden: muy barato · barato · caro · muy caro. Sepáralas con tabulador (pegado desde Excel), punto y coma, coma o espacio, y escribe los precios sin separador de miles (45000, no 45.000). Un archivo .csv, .tsv o .txt debe tener esas cuatro columnas primero.';
+}
+function vwRun(){
+  $('vwErr').textContent = '';
+  const parsed = vwParse($('vwData').value), unit = ($('vwUnit').value || '').trim().slice(0, 6) || '$';
+  let rows = parsed.rows; const nAll = rows.length;
+  if(rows.some(r => r.some(v => v <= 0))){ $('vwErr').textContent = 'Todos los precios deben ser mayores que 0.'; return false; }
+  if($('vwExcl').checked) rows = rows.filter(r => r[0] <= r[1] && r[1] <= r[2] && r[2] <= r[3]);
+  const excluded = nAll - rows.length;
+  if(rows.length < 10){ $('vwErr').textContent = nAll < 10 ? 'Se necesitan al menos 10 respuestas (cuatro precios por fila).' : `Solo ${rows.length} respuestas son coherentes; se necesitan al menos 10.`; return false; }
+  const grid = vwGrid(rows), cols = vwSortedCols(rows), cur = vwCurves(cols, grid), pts = vwPoints(grid, cur);
+  const maxP = grid[grid.length - 1], dec = maxP >= 1000 ? 0 : (maxP >= 10 ? 1 : 2);
+  const share = {};
+  if(Number.isFinite(pts.opp)) share.opp = vwCurves(cols, [pts.opp]).tc[0];
+  if(Number.isFinite(pts.ipp)) share.ipp = vwCurves(cols, [pts.ipp]).ch[0];
+  const res = { rows, n: rows.length, nAll, excluded, grid, cur, pts, share, unit, dec, B: VW_B, ci: null };
+  VW.res = res;
+  vwRender(); // primero se muestra el resultado exacto y luego se calculan las bandas
+  $('vwRun').disabled = true; $('vwRun').textContent = 'Calculando bandas…';
+  setTimeout(() => {
+    try{ res.ci = vwBootstrap(rows, grid, VW_B); }catch(e){ console.error(e); }
+    if(VW.res === res) vwRender();
+    $('vwRun').disabled = false; $('vwRun').textContent = 'Calcular precio óptimo →';
+  }, 30);
+  return true;
+}
+function vwRender(){
+  const res = VW.res; if(!res) return;
+  const f = v => vwFmt(v, res), fn = v => v.toLocaleString('es-ES', { minimumFractionDigits: res.dec, maximumFractionDigits: res.dec }), P = res.pts, ci = res.ci;
+  $('vwOut').style.display = '';
+  $('vwHero').textContent = f(P.opp);
+  $('vwHeroSub').textContent = Number.isFinite(P.pmc) && Number.isFinite(P.pme) ? `Rango aceptable: ${f(P.pmc)} a ${f(P.pme)}` : '';
+  const rowsT = [['PMC', 'Mínimo aceptable', 'pmc'], ['OPP', 'Precio óptimo', 'opp'], ['IPP', 'Indiferencia', 'ipp'], ['PME', 'Máximo aceptable', 'pme']];
+  $('vwTable').innerHTML = '<thead><tr><th>Punto</th><th>Precio</th><th>P5 – P95 (bootstrap)</th></tr></thead><tbody>' + rowsT.map(([sig, name, k]) =>
+    `<tr><td class="sc" style="line-height:1.25;">${sig}<br><span style="color:var(--text-faint); font-family:var(--font-body); font-size:10.5px;">${name}</span></td><td class="${k === 'opp' ? 'lo' : ''}">${f(P[k])}</td><td class="${ci ? '' : 'na'}">${ci && Number.isFinite(ci[k][0]) ? fn(ci[k][0]) + ' – ' + fn(ci[k][1]) : '…'}</td></tr>`).join('') + '</tbody>';
+  $('vwLegend').innerHTML = [['tc', 'Muy barato', 1], ['ch', 'Barato', 1], ['ex', 'Caro', 1], ['te', 'Muy caro', 1], ['ch', 'No barato (1 − barato)', 0.45], ['ex', 'No caro (1 − caro)', 0.45]]
+    .map(([k, t, o]) => `<span><i style="background:${VW_COL[k]}; opacity:${o};"></i>${t}</span>`).join('');
+  const li = [], pc = v => (100 * v).toLocaleString('es-ES', { maximumFractionDigits: 0 }) + ' %';
+  if(Number.isFinite(P.opp)) li.push(`<b>Precio óptimo (OPP): ${f(P.opp)}</b>. Es el precio donde coincide el porcentaje de encuestados que lo ve «muy barato» con el que lo ve «muy caro» (≈ ${pc(res.share.opp)} en cada caso).`);
+  else li.push('No se encontró el cruce de «muy barato» con «muy caro»: revisa los datos.');
+  if(Number.isFinite(P.pmc) && Number.isFinite(P.pme)){
+    if(P.pmc <= P.pme) li.push(`Rango de precios aceptables: de <b>${f(P.pmc)}</b> (PMC) a <b>${f(P.pme)}</b> (PME).`);
+    else li.push(`El PMC (${f(P.pmc)}) resultó mayor que el PME (${f(P.pme)}): las respuestas se solapan demasiado y el rango no es interpretable.`);
+  }
+  if(Number.isFinite(P.ipp)) li.push(`Precio de indiferencia (IPP): <b>${f(P.ipp)}</b>, donde tantos lo ven barato como caro (≈ ${pc(res.share.ipp)}).`);
+  if(ci && Number.isFinite(ci.opp[0])) li.push(`Con ${res.B} remuestreos de los encuestados, el precio óptimo queda entre <b>${f(ci.opp[0])}</b> (P5) y <b>${f(ci.opp[1])}</b> (P95).`);
+  li.push(`Se usaron ${res.n.toLocaleString('es-ES')} de ${res.nAll.toLocaleString('es-ES')} respuestas${res.excluded ? `; ${res.excluded.toLocaleString('es-ES')} se excluyeron por no cumplir muy barato ≤ barato ≤ caro ≤ muy caro` : ''}.`);
+  if(res.n < 100) li.push('Con menos de 100 respuestas los puntos pueden variar bastante; mira el rango P5–P95.');
+  $('vwAnalysis').innerHTML = '<ul>' + li.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+  requestAnimationFrame(vwDraw);
+}
+function vwDraw(){
+  const res = VW.res, cv = $('vwChart'); if(!res || !cv.clientWidth) return;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue('--' + n).trim();
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 290;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const ml = 38, mr = 10, mt = 36, mb = 28, pw = W - ml - mr, ph = H - mt - mb;
+  const grid = res.grid;
+  let iLo = 0, iHi = grid.length - 1;
+  for(let i = 0; i < grid.length; i++){ if(res.cur.tc[i] >= 0.97) iLo = i; else break; }
+  for(let i = 0; i < grid.length; i++){ if(res.cur.te[i] >= 0.95){ iHi = i; break; } }
+  let lo = grid[iLo], hi = grid[iHi]; if(!(hi > lo)){ lo = grid[0]; hi = grid[grid.length - 1]; }
+  const padX = (hi - lo) * 0.04; lo = Math.max(grid[0], lo - padX); hi = Math.min(grid[grid.length - 1], hi + padX);
+  const X = x => ml + (x - lo) / ((hi - lo) || 1) * pw, Y = v => mt + ph - v * ph;
+  g.font = '10.5px "JetBrains Mono", monospace'; g.lineWidth = 1;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for(let i = 0; i <= 4; i++){ const v = i / 4; g.strokeStyle = CV('grid'); g.fillStyle = CV('text'); g.beginPath(); g.moveTo(ml, Y(v) + 0.5); g.lineTo(ml + pw, Y(v) + 0.5); g.stroke(); g.fillText(Math.round(v * 100) + '%', ml - 6, Y(v)); }
+  g.textBaseline = 'top';
+  for(let i = 0; i <= 4; i++){ const x = lo + (hi - lo) * i / 4; g.textAlign = i === 0 ? 'left' : (i === 4 ? 'right' : 'center'); g.fillStyle = CV('text'); g.fillText(x.toLocaleString('es-ES', { maximumFractionDigits: res.dec }), X(x), mt + ph + 8); }
+  const P = res.pts;
+  if(Number.isFinite(P.pmc) && Number.isFinite(P.pme) && P.pme > P.pmc){ g.fillStyle = css('accent-2'); g.globalAlpha = 0.09; g.fillRect(X(P.pmc), mt, X(P.pme) - X(P.pmc), ph); g.globalAlpha = 1; }
+  g.save(); g.beginPath(); g.rect(ml, mt - 1, pw, ph + 2); g.clip();
+  const line = (arr, color, dashed) => { g.beginPath(); arr.forEach((v, i) => (i ? g.lineTo(X(grid[i]), Y(v)) : g.moveTo(X(grid[i]), Y(v)))); g.strokeStyle = color; g.lineWidth = dashed ? 1.5 : 2.2; g.globalAlpha = dashed ? 0.5 : 1; g.setLineDash(dashed ? [4, 4] : []); g.lineJoin = 'round'; g.stroke(); g.setLineDash([]); g.globalAlpha = 1; };
+  line(res.cur.nc, VW_COL.ch, true); line(res.cur.ne, VW_COL.ex, true);
+  line(res.cur.tc, VW_COL.tc); line(res.cur.ch, VW_COL.ch); line(res.cur.ex, VW_COL.ex); line(res.cur.te, VW_COL.te);
+  g.restore();
+  [['pmc', 'PMC', 0], ['opp', 'OPP', 1], ['ipp', 'IPP', 0], ['pme', 'PME', 0]].forEach(([k, lab, main], i) => {
+    const x = P[k]; if(!Number.isFinite(x)) return;
+    g.strokeStyle = main ? css('accent') : CV('ref-soft'); g.lineWidth = main ? 2 : 1.2; g.setLineDash(main ? [] : [4, 4]);
+    g.beginPath(); g.moveTo(X(x) + 0.5, i % 2 ? mt - 14 : mt - 2); g.lineTo(X(x) + 0.5, mt + ph); g.stroke(); g.setLineDash([]);
+    g.fillStyle = main ? css('accent') : CV('text'); g.font = (main ? '700 ' : '') + '10.5px "JetBrains Mono", monospace'; g.textAlign = 'center'; g.textBaseline = 'bottom';
+    g.fillText(lab, Math.min(Math.max(X(x), ml + 12), ml + pw - 12), mt - 4 - (i % 2 ? 12 : 0));
+  });
+}
+window.addEventListener('resize', () => { if(currentView === 'model' && BS.mode === 'vw' && VW.res) vwDraw(); });
+function vwLoadExample(i, quiet){
+  const ex = VW_EXAMPLES[i];
+  $('vwData').value = vwGenerate(ex).map(r => r.join('; ')).join('\n');
+  $('vwUnit').value = ex.unit; $('vwExcl').checked = true;
+  vwInfoUpdate(); vwRun(); vwSave();
+  if(!quiet) toast(`Ejemplo cargado: ${ex.name}. ${ex.desc.replace(/\.$/, '')}.`);
+}
+document.body.insertAdjacentHTML('beforeend', `
+<div class="sheet-backdrop" id="vwExBackdrop"></div>
+<div class="sheet" id="vwExSheet">
+  <div class="sheet-handle"></div>
+  <div class="comp-head"><div class="sheet-title">Ejemplos de Van Westendorp</div><button type="button" class="row-remove" id="vwExClose" aria-label="Cerrar">✕</button></div>
+  <div class="sheet-list" id="vwExList"></div>
+</div>`);
+const vwExSheet = $('vwExSheet'), vwExBackdrop = $('vwExBackdrop');
+const closeVwEx = () => { vwExSheet.classList.remove('show'); vwExBackdrop.classList.remove('show'); };
+$('vwExClose').onclick = closeVwEx; vwExBackdrop.onclick = closeVwEx;
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeVwEx(); });
+VW_EXAMPLES.forEach((ex, i) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-item';
+  b.innerHTML = `<div class="sheet-item-body"><div class="sheet-item-top"><span class="sheet-item-name">${ex.name}</span></div><div class="saved-meta">${ex.desc}</div></div>`;
+  b.onclick = () => { closeVwEx(); vwLoadExample(i); };
+  $('vwExList').appendChild(b);
+});
+$('vwExBtn').onclick = () => { vwExSheet.classList.add('show'); vwExBackdrop.classList.add('show'); };
+$('vwClear').onclick = () => { $('vwData').value = ''; VW.res = null; $('vwOut').style.display = 'none'; $('vwErr').textContent = ''; vwInfoUpdate(); vwSave(); };
+$('vwRun').onclick = () => { vwRun(); vwSave(); };
+$('vwData').addEventListener('input', vwInfoUpdate);
+$('vwFileBtn').onclick = () => $('vwFileInput').click();
+$('vwFileInput').onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { $('vwData').value = String(r.result); vwInfoUpdate(); vwSave(); };
+  r.readAsText(f); e.target.value = '';
+};
+let vwSaveTimer = null;
+function vwSave(){ clearTimeout(vwSaveTimer); vwSaveTimer = setTimeout(() => Persist.set(VW_KEY, JSON.stringify({ text: $('vwData').value.slice(0, 200000), unit: $('vwUnit').value, excl: $('vwExcl').checked })), 300); }
+['input', 'change'].forEach(ev => $('mdlVW').addEventListener(ev, vwSave));
+$('vwToModel').onclick = () => {
+  const res = VW.res; if(!res) return;
+  const P = res.pts, ci = res.ci;
+  const mk = (name, k) => {
+    const v = P[k]; if(!Number.isFinite(v)) return null;
+    const a = ci && Number.isFinite(ci[k][0]) ? Math.min(ci[k][0], v) : v, b = ci && Number.isFinite(ci[k][1]) ? Math.max(ci[k][1], v) : v;
+    return b > a ? { name, dist: 'triangular', params: { min: a, mode: v, max: b }, lo: 0, hi: null } : { name, dist: 'const', params: { value: v }, lo: null, hi: null };
+  };
+  const vars = [mk('OPP', 'opp'), mk('PMC', 'pmc'), mk('IPP', 'ipp'), mk('PME', 'pme')].filter(Boolean);
+  if(!vars.length){ toast('No hay puntos calculados para enviar.'); return; }
+  const has = n => vars.some(v => v.name === n), outs = [];
+  if(has('OPP')) outs.push({ name: 'Precio_optimo', formula: 'OPP', format: 'cur' });
+  if(has('PMC') && has('PME')) outs.push({ name: 'Rango_aceptable', formula: 'PME-PMC', format: 'cur' });
+  mdlApply({ vars, corr: [], outs, iterations: 10000 });
+  mdlAutosave(); mdlSetMode('free'); window.scrollTo({ top: 0 });
+  toast(ci ? 'Van Westendorp enviado al modelo: cada punto es una variable triangular con su banda P5–P95.' : 'Van Westendorp enviado al modelo: los puntos entraron como valores fijos.');
+};
+$('vwExport').onclick = async () => {
+  const btn = $('vwExport'), span = btn.querySelector('span'); btn.disabled = true; span.textContent = 'Generando Excel…';
+  await new Promise(r => setTimeout(r, 30));
+  try{ const { blob, filename } = await XL.buildVW(VW.res); await XL.download(blob, filename); span.textContent = 'Excel generado ✓'; }
+  catch(e){ console.error(e); span.textContent = 'No se pudo generar el Excel'; }
+  setTimeout(() => { span.textContent = 'Exportar a Excel'; btn.disabled = false; }, 2500);
+};
+
+(function vwRestore(){
+  try{
+    const s = JSON.parse(Persist.get(VW_KEY) || 'null');
+    if(s && typeof s.text === 'string'){ $('vwData').value = s.text; $('vwUnit').value = String(s.unit || '$').slice(0, 6); $('vwExcl').checked = s.excl !== false; vwInfoUpdate(); }
+  }catch(e){ /* se ignora */ }
+})();
+
 /* ---- cambio entre modelo libre y Bass ---- */
 function mdlSetMode(m){
   BS.mode = m;
   document.querySelectorAll('#mdlMode button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
-  $('mdlFree').style.display = m === 'free' ? '' : 'none'; $('mdlBass').style.display = m === 'bass' ? '' : 'none';
+  $('mdlFree').style.display = m === 'free' ? '' : 'none'; $('mdlBass').style.display = m === 'bass' ? '' : 'none'; $('mdlVW').style.display = m === 'vw' ? '' : 'none';
   const show = m === 'free' && resultsOwner === 'model' && !!MDL.res;
   if(resultsOwner === 'model') resultsEl.style.display = show ? 'block' : 'none';
   $('mdlTornadoCard').style.display = show && MDL.sens ? 'block' : 'none';
+  if(m === 'vw' && VW.res) requestAnimationFrame(vwDraw);
   if(m === 'bass' && BS.res) requestAnimationFrame(() => { bsDraw($('bsChartS'), 'S'); bsDraw($('bsChartQ'), 'Q'); });
 }
 document.querySelectorAll('#mdlMode button').forEach(b => { b.onclick = () => { mdlSetMode(b.dataset.m); window.scrollTo({ top: 0 }); }; });
@@ -6094,6 +6492,83 @@ XL.buildBass = async (res, opts) => {
   const blob = await XL.pack({ sheets, charts, drawings: [{ anchors }] });
   const pad = x => String(x).padStart(2, '0'), w = res.when || new Date();
   return { blob, filename: `MonteCarloLab_Bass_${w.getFullYear()}${pad(w.getMonth() + 1)}${pad(w.getDate())}_${pad(w.getHours())}${pad(w.getMinutes())}.xlsx` };
+};
+
+/* =========================================================
+   EXPORTAR VAN WESTENDORP A EXCEL
+   Hoja Datos (respuestas), hoja Curvas (curvas y cruces con fórmulas vivas) y hoja Resumen (puntos y gráfica).
+========================================================= */
+XL.buildVW = async res => {
+  const { rows, grid, cur, pts, ci, unit } = res, n = rows.length, g = grid.length;
+  const SH = 'Resumen', DT = 'Datos', CVN = 'Curvas', qs = XL.q(SH), qd = XL.q(DT), qc = XL.q(CVN);
+  const dr = k => `${qd}!$${'ABCD'[k]}$2:$${'ABCD'[k]}$${n + 1}`, cnt = k => `COUNT(${dr(k)})`;
+  /* Datos */
+  const D = new XL.Sheet(DT); D.grid = true; D.widths = [16, 16, 16, 16];
+  ['Muy barato', 'Barato', 'Caro', 'Muy caro'].forEach((h, c) => D.set(c, 0, h, 2));
+  rows.forEach((r, i) => r.forEach((v, c) => D.set(c, i + 1, v, 20)));
+  /* Curvas */
+  const C = new XL.Sheet(CVN); C.grid = true; C.widths = [14, 14, 14, 14, 14, 20, 20, 14, 14, 14, 14];
+  [`Precio (${unit})`, 'Muy barato', 'Barato', 'Caro', 'Muy caro', 'No barato (1 − barato)', 'No caro (1 − caro)', 'Cruce PMC', 'Cruce OPP', 'Cruce IPP', 'Cruce PME'].forEach((h, c) => C.set(c, 0, h, 2));
+  const cross = (A, B, i, neg) => { if(i === 0) return NaN; const p = A[i - 1] - B[i - 1], d = A[i] - B[i]; return (neg ? (p < 0 && d >= 0) : (p > 0 && d <= 0)) ? grid[i - 1] + (grid[i] - grid[i - 1]) * p / (p - d) : NaN; };
+  const crossF = (a, b, R, neg) => { const P = R - 1, dP = `${a}${P}-${b}${P}`, dR = `${a}${R}-${b}${R}`; return `IF(AND(${dP}${neg ? '<0' : '>0'},${dR}${neg ? '>=0' : '<=0'}),$A${P}+($A${R}-$A${P})*(${dP})/((${dP})-(${dR})),"")`; };
+  for(let i = 0; i < g; i++){
+    const R = i + 2, r0 = i + 1;
+    C.set(0, r0, grid[i], 20);
+    C.setF(1, r0, `COUNTIF(${dr(0)},">="&$A${R})/${cnt(0)}`, cur.tc[i], 5);
+    C.setF(2, r0, `COUNTIF(${dr(1)},">="&$A${R})/${cnt(1)}`, cur.ch[i], 5);
+    C.setF(3, r0, `COUNTIF(${dr(2)},"<="&$A${R})/${cnt(2)}`, cur.ex[i], 5);
+    C.setF(4, r0, `COUNTIF(${dr(3)},"<="&$A${R})/${cnt(3)}`, cur.te[i], 5);
+    C.setF(5, r0, `1-C${R}`, cur.nc[i], 5);
+    C.setF(6, r0, `1-D${R}`, cur.ne[i], 5);
+    if(i > 0){
+      C.setF(7, r0, crossF('B', 'F', R, false), cross(cur.tc, cur.nc, i, false), 21);
+      C.setF(8, r0, crossF('B', 'E', R, false), cross(cur.tc, cur.te, i, false), 21);
+      C.setF(9, r0, crossF('C', 'D', R, false), cross(cur.ch, cur.ex, i, false), 21);
+      C.setF(10, r0, crossF('E', 'G', R, true), cross(cur.te, cur.ne, i, true), 21);
+    }
+  }
+  /* Resumen */
+  const S = new XL.Sheet(SH); S.widths = [34, 16, 16, 16, 58];
+  let r = 0;
+  S.set(0, r++, 'Monte Carlo Lab — Van Westendorp (medidor de sensibilidad al precio)', 1);
+  S.set(0, r, 'Respuestas válidas', 9); S.setF(1, r++, `COUNT(${dr(0)})`, n, 8);
+  S.set(0, r, 'Excluidas por incoherentes', 9); S.set(1, r++, res.excluded, 8);
+  S.set(0, r, 'Símbolo de moneda', 9); S.set(1, r++, unit, 3);
+  r++;
+  r = XL.band(S, r, 'PUNTOS (se recalculan si cambias las respuestas de la hoja Datos)', 5);
+  ['Punto', 'Precio', 'P5 (bootstrap)', 'P95 (bootstrap)', 'Definición'].forEach((h, c) => S.set(c, r, h, 2)); r++;
+  const defs = [['PMC · Precio mínimo aceptable', 'pmc', 'H', 'Cruce de «muy barato» con «no barato» (1 − barato)'], ['OPP · Precio óptimo', 'opp', 'I', 'Cruce de «muy barato» con «muy caro»'], ['IPP · Precio de indiferencia', 'ipp', 'J', 'Cruce de «barato» con «caro»'], ['PME · Precio máximo aceptable', 'pme', 'K', 'Cruce de «muy caro» con «no caro» (1 − caro)']];
+  const pr = {};
+  defs.forEach(([name, k, col, def]) => {
+    pr[k] = r; S.set(0, r, name, 9);
+    const rng = `${qc}!$${col}$2:$${col}$${g + 1}`;
+    S.setF(1, r, `IF(COUNT(${rng})=0,"n/d",MIN(${rng}))`, pts[k], 21);
+    S.set(2, r, ci ? ci[k][0] : NaN, 21); S.set(3, r, ci ? ci[k][1] : NaN, 21); S.set(4, r, def, 3);
+    r++;
+  });
+  S.set(0, r, 'Rango aceptable (PME − PMC)', 9);
+  S.setF(1, r, `IF(AND(ISNUMBER(B${pr.pme + 1}),ISNUMBER(B${pr.pmc + 1})),B${pr.pme + 1}-B${pr.pmc + 1},"n/d")`, pts.pme - pts.pmc, 21); r++;
+  S.set(0, r++, `P5 y P95 salen de repetir el cálculo ${res.B} veces con encuestados remuestreados al azar (bootstrap); son valores fijos que no se recalculan en Excel.`, 7);
+  S.set(0, r++, 'La columna de precios de la hoja Curvas contiene los precios distintos de la encuesta original; si cambias o agregas respuestas, actualiza también esa columna.', 7);
+  r++;
+  r = XL.band(S, r, 'LÍNEAS VERTICALES DE LA GRÁFICA (se actualizan solas)', 3);
+  const vl = {};
+  defs.forEach(([name, k]) => {
+    vl[k] = r;
+    S.set(0, r, k.toUpperCase(), 9); S.setF(1, r, `IF(ISNUMBER(B${pr[k] + 1}),B${pr[k] + 1},NA())`, pts[k], 21); S.set(2, r, 0, 8);
+    S.set(0, r + 1, '', 3); S.setF(1, r + 1, `B${r + 1}`, pts[k], 21); S.set(2, r + 1, 1, 8);
+    r += 2;
+  });
+  S.hasDrawing = true;
+  const xr = `${qc}!$A$2:$A$${g + 1}`, yr = col => `${qc}!$${col}$2:$${col}$${g + 1}`;
+  const series = [['B', '5AA9FF'], ['C', '43C6B0'], ['D', 'FFC857'], ['E', 'FF5470'], ['F', '1F8A7A'], ['G', 'C98A00']].map(([col, color]) => ({ nameRef: `${qc}!$${col}$1`, xRef: xr, yRef: yr(col), color }));
+  const vcol = { pmc: '7F8C8D', opp: 'FF7A50', ipp: 'B0B7C3', pme: '34495E' };
+  Object.keys(vcol).forEach(k => series.push({ nameRef: `${qs}!$A$${vl[k] + 1}`, xRef: `${qs}!$B$${vl[k] + 1}:$B$${vl[k] + 2}`, yRef: `${qs}!$C$${vl[k] + 1}:$C$${vl[k] + 2}`, color: vcol[k] }));
+  const charts = [XL.scatterChart({ title: 'Curvas de Van Westendorp', xTitle: `Precio (${unit})`, yTitle: 'Porcentaje acumulado de encuestados', yPct: true, series })];
+  const anchors = [{ chart: 0, c0: 0, r0: r + 1, w: 720, h: 420 }];
+  const blob = await XL.pack({ sheets: [{ name: SH, xml: S.xml(), drawing: 0 }, { name: DT, xml: D.xml(), drawing: null }, { name: CVN, xml: C.xml(), drawing: null }], charts, drawings: [{ anchors }] });
+  const pad = x => String(x).padStart(2, '0'), w = new Date();
+  return { blob, filename: `MonteCarloLab_VanWestendorp_${w.getFullYear()}${pad(w.getMonth() + 1)}${pad(w.getDate())}_${pad(w.getHours())}${pad(w.getMinutes())}.xlsx` };
 };
 
 /* =========================================================
@@ -6501,14 +6976,14 @@ function tsDraw(){
   for(let j = 0; j < h; j++){ lo = Math.min(lo, fc.p5[j]); hi = Math.max(hi, fc.p95[j]); }
   const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
   const X = i => ml + (i - start) / (n - 1 + h - start) * pw, Y = v => mt + ph - (v - lo) / (hi - lo) * ph;
-  g.font = '10.5px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(150,165,185,0.9)'; g.strokeStyle = 'rgba(120,135,155,0.2)'; g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
+  g.font = '10.5px "JetBrains Mono", monospace'; g.fillStyle = CV('text'); g.strokeStyle = CV('grid'); g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
   for(let i = 0; i <= 4; i++){ const v = lo + (hi - lo) * i / 4; g.beginPath(); g.moveTo(ml, Y(v) + 0.5); g.lineTo(ml + pw, Y(v) + 0.5); g.stroke(); g.fillText(fmt(+v.toPrecision(4)), ml - 6, Y(v)); }
   g.textAlign = 'center'; g.textBaseline = 'top';
   for(let i = 0; i <= 4; i++){ const idx = Math.round(start + (n - 1 + h - start) * i / 4); g.fillText(String(idx + 1), X(idx), mt + ph + 7); }
   const band = (a, b, col) => { g.beginPath(); g.moveTo(X(n - 1), Y(x[n - 1])); for(let j = 0; j < h; j++) g.lineTo(X(n + j), Y(b[j])); for(let j = h - 1; j >= 0; j--) g.lineTo(X(n + j), Y(a[j])); g.lineTo(X(n - 1), Y(x[n - 1])); g.closePath(); g.fillStyle = col; g.fill(); };
   band(fc.p5, fc.p95, 'rgba(255,122,80,0.16)'); band(fc.p25, fc.p75, 'rgba(255,122,80,0.30)');
-  g.setLineDash([4, 4]); g.strokeStyle = 'rgba(230,236,245,0.45)'; g.beginPath(); g.moveTo(X(n - 1), mt); g.lineTo(X(n - 1), mt + ph); g.stroke(); g.setLineDash([]);
-  g.lineJoin = 'round'; g.lineWidth = 1.8; g.strokeStyle = 'rgba(200,214,235,0.95)'; g.beginPath();
+  g.setLineDash([4, 4]); g.strokeStyle = CV('ref-soft'); g.beginPath(); g.moveTo(X(n - 1), mt); g.lineTo(X(n - 1), mt + ph); g.stroke(); g.setLineDash([]);
+  g.lineJoin = 'round'; g.lineWidth = 1.8; g.strokeStyle = CV('line'); g.beginPath();
   for(let i = start; i < n; i++) (i === start ? g.moveTo : g.lineTo).call(g, X(i), Y(x[i]));
   g.stroke();
   g.lineWidth = 2.4; g.strokeStyle = '#FF7A50'; g.beginPath(); g.moveTo(X(n - 1), Y(x[n - 1]));
