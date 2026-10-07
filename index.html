@@ -7842,17 +7842,27 @@ function rptTornado(rows){
   });
   return o.c;
 }
-function rptFitChart(res, best, fv){
-  const o = rptNew(1100, 520), m = { l: 110, r: 30, t: 34, b: 84 }, xs = res.xs, n = xs.length, mn = xs[0], mx = xs[n - 1];
+function rptFitChart(res, list, fv){
+  const o = rptNew(1100, 540), m = { l: 110, r: 30, t: 70, b: 84 }, xs = res.xs, n = xs.length, mn = xs[0], mx = xs[n - 1];
   const nb = Math.max(8, Math.min(40, Math.round(Math.sqrt(n)))), wdt = (mx - mn) / nb || 1, cnt = new Array(nb).fill(0);
   xs.forEach(x => { cnt[Math.min(nb - 1, Math.floor((x - mn) / wdt))]++; });
-  const dens = cnt.map(c => c / (n * wdt)), curve = [];
-  for(let k = 0; k <= 240; k++){ const x = mn + (mx - mn) * k / 240, y = Math.exp(best.model.logpdf(x)); curve.push([x, Number.isFinite(y) ? y : 0]); }
-  let ymax = 0; dens.forEach(v => { if(v > ymax) ymax = v; }); curve.forEach(([, y]) => { if(y > ymax && y < ymax * 4) ymax = y; }); ymax *= 1.1;
+  const dens = cnt.map(c => c / (n * wdt)), curves = list.map(best => { const pts = []; for(let k = 0; k <= 240; k++){ const x = mn + (mx - mn) * k / 240, y = Math.exp(best.model.logpdf(x)); pts.push([x, Number.isFinite(y) ? y : 0]); } return pts; });
+  let ymax = 0; dens.forEach(v => { if(v > ymax) ymax = v; }); curves.forEach(pts => pts.forEach(([, y]) => { if(y > ymax && y < ymax * 4) ymax = y; })); ymax *= 1.1;
   const f = rptFrame(o, m, mn, mx, 0, ymax, fv, v => v.toLocaleString('es-ES', { maximumSignificantDigits: 2 }), res.varName || 'Valor', 'Densidad'), g = o.g;
   g.fillStyle = '#9db4d6'; g.globalAlpha = 0.85; dens.forEach((v, i) => { const x1 = f.X(mn + i * wdt), x2 = f.X(mn + (i + 1) * wdt), y = f.Y(v); g.fillRect(x1 + 0.5, y, Math.max(1, x2 - x1 - 1), f.Y(0) - y); }); g.globalAlpha = 1;
-  g.strokeStyle = RC.accent; g.lineWidth = 4; g.lineJoin = 'round'; g.beginPath(); curve.forEach(([x, y], k) => { const px = f.X(x), py = Math.max(m.t, f.Y(y)); if(k) g.lineTo(px, py); else g.moveTo(px, py); }); g.stroke();
-  rptLegend(g, [['#9db4d6', 'Datos'], [RC.accent, best.name]], m.l + 14, m.t + 14);
+  curves.forEach((pts, i) => { g.strokeStyle = RC.pal[i % RC.pal.length]; g.lineWidth = i ? 3 : 4.5; g.lineJoin = 'round'; g.beginPath(); pts.forEach(([x, y], k) => { const px = f.X(x), py = Math.max(m.t, f.Y(y)); if(k) g.lineTo(px, py); else g.moveTo(px, py); }); g.stroke(); });
+  rptLegend(g, [['#9db4d6', 'Datos']].concat(list.map((b, i) => [RC.pal[i % RC.pal.length], b.name])), m.l, 26);
+  return o.c;
+}
+/* gráfico P–P: acumulada del modelo frente a la acumulada empírica de los datos */
+function rptPP(res, best){
+  const o = rptNew(700, 560), m = { l: 100, r: 30, t: 30, b: 84 }, xs = res.xs, n = xs.length;
+  const f = rptFrame(o, m, 0, 1, 0, 1, rptPctFmt, rptPctFmt, `Acumulada del modelo (${best.name})`, 'Acumulada de los datos'), g = o.g;
+  g.strokeStyle = RC.axis; g.lineWidth = 2.5; g.setLineDash([10, 8]); g.beginPath(); g.moveTo(f.X(0), f.Y(0)); g.lineTo(f.X(1), f.Y(1)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = RC.accent; g.globalAlpha = 0.75;
+  const step = Math.max(1, Math.floor(n / 400));
+  for(let i = 0; i < n; i += step){ const Fm = Math.min(1, Math.max(0, best.model.cdf(xs[i]))); g.beginPath(); g.arc(f.X(Fm), f.Y((i + 0.5) / n), 5, 0, Math.PI * 2); g.fill(); }
+  g.globalAlpha = 1;
   return o.c;
 }
 function rptBassChart(res, key){
@@ -7893,6 +7903,11 @@ function rptVWChart(res){
 /* ---------- contenido del informe (bloques que luego se dibujan en PDF o Word) ---------- */
 const rptDate = d => (d || new Date()).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
 const rptLab = l => String(l).replace(/\s*\(.*$/, '');
+const rptPct1 = v => (100 * v).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' %';
+const rptPct2 = v => (100 * v).toLocaleString('es-ES', { maximumFractionDigits: 2 }) + ' %';
+const rptFmtP = p => (p < 0.0001 ? '< 0,0001' : p.toLocaleString('es-ES', { maximumFractionDigits: 4 }));
+const rptPv = p => (p < 0.0001 ? '<0,0001' : p.toLocaleString('es-ES', { maximumFractionDigits: 4 }));
+const rptPtxt = (p, sym) => (p < 0.0001 ? 'p < 0,0001' : `p ${sym || '='} ${p.toLocaleString('es-ES', { maximumFractionDigits: 4 })}`);
 function rptParamRows(key, p){
   const d = DISTS[key], rows = [];
   if(key === 'const'){ rows.push(['Valor', fmt(p.value)]); return rows; }
@@ -7904,20 +7919,146 @@ function rptParamRows(key, p){
   return rows;
 }
 const rptParamText = (key, p) => rptParamRows(key, p).map(([a, b]) => `${a} ${b}`).join(', ');
-function rptStatsBlocks(st, f, nameForTitle){
-  const rows = [['Tamaño de muestra (n)', st.n.toLocaleString('es-ES')], ['Media', f(st.mean)], ['Mediana', f(st.median)], ['Desviación estándar', f(st.sd)], ['Mínimo', f(st.min)], ['Máximo', f(st.max)],
-    ['Rango', f(st.range)], ['Asimetría', fmt(st.skew)], ['Curtosis (exceso)', fmt(st.kurtosis)], ['Coef. de variación', Number.isNaN(st.cv) ? '—' : (st.cv * 100).toFixed(1).replace('.', ',') + ' %'],
-    ['Error estándar de la media', f(st.se)], ['Moda (aprox.)', f(st.mode)]];
-  const t4 = []; for(let i = 0; i < rows.length; i += 2) t4.push([rows[i][0], rows[i][1], rows[i + 1][0], rows[i + 1][1]]);
-  return [{ t: 'table', head: ['Estadístico', 'Valor', 'Estadístico', 'Valor'], rows: t4, align: ['l', 'r', 'l', 'r'] },
-    { t: 'label', text: 'Percentiles' },
-    { t: 'table', head: ['P5', 'P10', 'P25', 'P50', 'P75', 'P90', 'P95'], rows: [[st.p5, st.p10, st.p25, st.median, st.p75, st.p90, st.p95].map(f)], align: Array(7).fill('r') }];
+
+/* ===== herramientas estadísticas del informe ===== */
+const RZ = 1.959964;                                            // cuantil 97,5 % de la normal
+const rptQ = (a, p) => { const i = (a.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return a[lo] + (a[hi] - a[lo]) * (i - lo); };
+const rptTcrit = df => (df >= 200 ? RZ : RZ + (RZ ** 3 + RZ) / (4 * df) + (5 * RZ ** 5 + 16 * RZ ** 3 + 3 * RZ) / (96 * df * df));   // t de Student (aprox. de Cornish-Fisher)
+const rptOrderCI = (a, p) => { const n = a.length, se = Math.sqrt(n * p * (1 - p)); return [a[Math.max(0, Math.floor(n * p - RZ * se))], a[Math.min(n - 1, Math.ceil(n * p + RZ * se))]]; };   // IC de un percentil por estadísticos de orden
+const rptWilson = (k, n) => { const ph = k / n, d = 1 + RZ * RZ / n, c = ph + RZ * RZ / (2 * n), h = RZ * Math.sqrt(ph * (1 - ph) / n + RZ * RZ / (4 * n * n)); return [Math.max(0, (c - h) / d), Math.min(1, (c + h) / d)]; };
+const rptLB = (a, x) => { let lo = 0, hi = a.length; while(lo < hi){ const m = (lo + hi) >> 1; if(a[m] < x) lo = m + 1; else hi = m; } return lo; };
+const rptUB = (a, x) => { let lo = 0, hi = a.length; while(lo < hi){ const m = (lo + hi) >> 1; if(a[m] <= x) lo = m + 1; else hi = m; } return lo; };
+/* análisis completo de una variable: vals = valores finitos; raw = los mismos en orden de iteración (para convergencia) */
+function rptDescribe(vals, raw){
+  const a = Float64Array.from(vals).sort(), n = a.length, A = { n, a };
+  let sum = 0; for(let i = 0; i < n; i++) sum += a[i];
+  const mean = sum / n; let sq = 0, cu = 0, qt = 0;
+  for(let i = 0; i < n; i++){ const d = a[i] - mean, d2 = d * d; sq += d2; cu += d2 * d; qt += d2 * d2; }
+  const sd0 = Math.sqrt(sq / n), sd = n > 1 ? Math.sqrt(sq / (n - 1)) : 0;
+  Object.assign(A, { mean, sd, variance: sd * sd, min: a[0], max: a[n - 1], range: a[n - 1] - a[0], median: rptQ(a, 0.5), q1: rptQ(a, 0.25), q3: rptQ(a, 0.75) });
+  A.iqr = A.q3 - A.q1; A.se = sd / Math.sqrt(n); A.cv = mean !== 0 ? sd / Math.abs(mean) : NaN;
+  A.skew = sd0 > 0 ? (cu / n) / sd0 ** 3 : 0; A.kurt = sd0 > 0 ? (qt / n) / sd0 ** 4 - 3 : 0;
+  A.zSkew = A.skew / Math.sqrt(6 / n); A.zKurt = A.kurt / Math.sqrt(24 / n);
+  A.jb = n / 6 * (A.skew ** 2 + A.kurt ** 2 / 4); A.jbP = Math.exp(-A.jb / 2);                // Jarque-Bera: χ² con 2 g.l.
+  const tc = rptTcrit(n - 1); A.meanCI = [mean - tc * A.se, mean + tc * A.se];
+  const k5 = Math.max(1, Math.floor(0.05 * n)), lo5 = Math.floor(0.05 * n), tr = a.subarray(lo5, n - lo5); let ts = 0; for(let i = 0; i < tr.length; i++) ts += tr[i]; A.trimmed = tr.length ? ts / tr.length : mean;
+  const dev = new Float64Array(n); for(let i = 0; i < n; i++) dev[i] = Math.abs(a[i] - A.median); dev.sort(); A.mad = rptQ(dev, 0.5);
+  A.P = {}; [0.01, 0.05, 0.10, 0.25, 0.5, 0.75, 0.90, 0.95, 0.99].forEach(p => { A.P[p] = { v: rptQ(a, p), ci: rptOrderCI(a, p) }; });
+  let sL = 0, sU = 0; for(let i = 0; i < k5; i++){ sL += a[i]; sU += a[n - 1 - i]; } A.esLow = sL / k5; A.esHigh = sU / k5;                // pérdida esperada en la cola (CVaR) al 5 %
+  A.nNeg = rptLB(a, 0); A.pNeg = A.nNeg / n; A.pNegCI = rptWilson(A.nNeg, n); A.pBelowMean = rptUB(a, mean) / n;
+  A.signChange = a[0] < 0 && a[n - 1] > 0;
+  const bins = buildBins(a, false), cnt = bins.counts; let mi = 0; cnt.forEach((c, i) => { if(c > cnt[mi]) mi = i; }); A.mode = (bins.edges[mi] + bins.edges[mi + 1]) / 2;
+  if(raw){                                                                                 // convergencia: lotes y mitades en el orden de las iteraciones
+    const r = []; for(let i = 0; i < raw.length; i++) if(Number.isFinite(raw[i])) r.push(raw[i]);
+    const nb = 10, sz = Math.floor(r.length / nb), bm = [];
+    if(sz >= 20){
+      for(let b = 0; b < nb; b++){ let s = 0; for(let i = b * sz; i < (b + 1) * sz; i++) s += r[i]; bm.push(s / sz); }
+      const h = Math.floor(r.length / 2), h1 = Float64Array.from(r.slice(0, h)).sort(), h2 = Float64Array.from(r.slice(h)).sort();
+      A.conv = { batchMin: Math.min(...bm), batchMax: Math.max(...bm), halves: [0.05, 0.5, 0.95].map(p => [rptQ(h1, p), rptQ(h2, p)]) };
+    }
+  }
+  A.relPrec = mean !== 0 ? RZ * A.se / Math.abs(mean) : NaN; A.nFor1 = Number.isFinite(A.relPrec) && A.relPrec > 0.01 ? Math.ceil(n * (A.relPrec / 0.01) ** 2) : null;
+  return A;
+}
+const rptReadSkew = s => { const m = Math.abs(s); if(m < 0.5) return 'aproximadamente simétrica'; return (m < 1 ? 'moderadamente asimétrica ' : 'fuertemente asimétrica ') + (s > 0 ? 'hacia la derecha (cola larga de valores altos)' : 'hacia la izquierda (cola larga de valores bajos)'); };
+const rptReadKurt = k => (Math.abs(k) < 1 ? 'colas similares a las de una normal' : (k > 0 ? 'colas más pesadas que las de una normal (más valores extremos)' : 'colas más livianas que las de una normal (menos valores extremos)'));
+const rptReadCV = cv => (!Number.isFinite(cv) ? '' : (cv < 0.1 ? 'baja' : (cv < 0.3 ? 'moderada' : 'alta')));
+/* bloques de análisis de una variable */
+function rptVarBlocks(A, f, o, opt){
+  opt = opt || {}; const B = [], name = opt.name || 'la variable', showRisk = opt.risk !== false, pr = opt.precision !== false;
+  const ci = (lo, hi) => `${f(lo)} a ${f(hi)}`;
+  B.push({ t: 'label', text: 'Estadísticos descriptivos' });
+  const d = [['Tamaño de muestra (n)', A.n.toLocaleString('es-ES')], ['Media', f(A.mean)], ['Mediana', f(A.median)], ['Moda (aprox.)', f(A.mode)], ['Media recortada (5 %)', f(A.trimmed)], ['Desviación estándar (n−1)', f(A.sd)],
+    ['Varianza', fmt(A.variance)], ['Coef. de variación', Number.isFinite(A.cv) ? rptPct1(A.cv) : '—'], ['Mínimo', f(A.min)], ['Máximo', f(A.max)], ['Rango', f(A.range)], ['Rango intercuartílico', f(A.iqr)],
+    ['Desv. absoluta mediana (MAD)', f(A.mad)], ['Error estándar de la media', f(A.se)]];
+  const t4 = []; for(let i = 0; i < d.length; i += 2) t4.push([d[i][0], d[i][1], d[i + 1][0], d[i + 1][1]]);
+  B.push({ t: 'table', head: ['Estadístico', 'Valor', 'Estadístico', 'Valor'], rows: t4, align: ['l', 'r', 'l', 'r'] });
+  B.push({ t: 'label', text: 'Percentiles con intervalo de confianza del 95 %' });
+  B.push({ t: 'table', head: ['Percentil', 'Valor', 'Límite inferior', 'Límite superior'], align: ['l', 'r', 'r', 'r'], rows: [[0.01, 'P1'], [0.05, 'P5'], [0.1, 'P10'], [0.25, 'P25'], [0.5, 'P50 (mediana)'], [0.75, 'P75'], [0.9, 'P90'], [0.95, 'P95'], [0.99, 'P99']].map(([p, l]) => [l, f(A.P[p].v), f(A.P[p].ci[0]), f(A.P[p].ci[1])]) });
+  B.push({ t: 'p', text: `La media poblacional se encuentra, con 95 % de confianza, entre ${ci(A.meanCI[0], A.meanCI[1])}. Los intervalos de los percentiles se calculan con estadísticos de orden (sin suponer ninguna forma de la distribución).` });
+  B.push({ t: 'label', text: 'Forma de la distribución y prueba de normalidad' });
+  B.push({ t: 'table', head: ['Medida', 'Valor', 'Estadístico z / p', 'Lectura'], align: ['l', 'r', 'r', 'l'], rows: [
+    ['Asimetría', fmt(A.skew), 'z = ' + A.zSkew.toLocaleString('es-ES', { maximumFractionDigits: 2 }), rptReadSkew(A.skew)],
+    ['Curtosis (exceso)', fmt(A.kurt), 'z = ' + A.zKurt.toLocaleString('es-ES', { maximumFractionDigits: 2 }), rptReadKurt(A.kurt)],
+    ['Jarque–Bera', fmt(A.jb), rptPtxt(A.jbP), A.jbP < 0.05 ? 'Se rechaza la normalidad al 5 %' : 'No se rechaza la normalidad al 5 %']] });
+  if(showRisk){
+  B.push({ t: 'label', text: 'Riesgo y colas' });
+  const rk = [['Valor en riesgo inferior, P5 (VaR 5 %)', f(A.P[0.05].v), 'El 5 % de los valores queda por debajo'], ['Pérdida esperada inferior (CVaR 5 %)', f(A.esLow), 'Media del 5 % más bajo'], ['Valor en riesgo superior, P95', f(A.P[0.95].v), 'El 5 % de los valores queda por encima'], ['Exceso esperado superior (CVaR 95 %)', f(A.esHigh), 'Media del 5 % más alto'],
+    ['P(X < media)', rptPct1(A.pBelowMean), 'Probabilidad de quedar por debajo de la media']];
+  if(A.signChange || A.nNeg > 0) rk.unshift(['P(X < 0)', rptPct2(A.pNeg), `IC 95 %: ${rptPct2(A.pNegCI[0])} a ${rptPct2(A.pNegCI[1])} (Wilson)`]);
+  B.push({ t: 'table', head: ['Medida de riesgo', 'Valor', 'Lectura'], align: ['l', 'r', 'l'], rows: rk });
+  }
+  if(pr && A.conv){
+    B.push({ t: 'label', text: 'Precisión y estabilidad de la simulación' });
+    B.push({ t: 'table', head: ['Indicador', 'Valor', 'Lectura'], align: ['l', 'r', 'l'], rows: [
+      ['Error estándar de la media', f(A.se), Number.isFinite(A.relPrec) ? `Precisión relativa de ± ${rptPct2(A.relPrec)} de la media (95 %)` : 'La media es cercana a 0: la precisión relativa no aplica'],
+      ['Medias de 10 lotes (mín. a máx.)', ci(A.conv.batchMin, A.conv.batchMax), 'Si los lotes casi coinciden, la media ya se estabilizó'],
+      ['P5 en 1.ª / 2.ª mitad', `${f(A.conv.halves[0][0])} / ${f(A.conv.halves[0][1])}`, 'Estabilidad del percentil inferior'],
+      ['P50 en 1.ª / 2.ª mitad', `${f(A.conv.halves[1][0])} / ${f(A.conv.halves[1][1])}`, 'Estabilidad de la mediana'],
+      ['P95 en 1.ª / 2.ª mitad', `${f(A.conv.halves[2][0])} / ${f(A.conv.halves[2][1])}`, 'Estabilidad del percentil superior'],
+      ['Iteraciones para ± 1 % en la media', A.nFor1 ? A.nFor1.toLocaleString('es-ES') : 'Ya se cumple', A.nFor1 ? 'Estimación con la varianza observada' : 'La precisión actual es mejor que ± 1 %']] });
+  }
+  /* interpretación: solo afirma lo que sale de los números */
+  const I = [];
+  I.push(`${name}: la media es ${f(A.mean)} y la mediana ${f(A.median)}${Math.abs(A.mean - A.median) > 0.1 * (A.iqr || 1) ? ' (la diferencia entre ambas confirma asimetría)' : ''}; el 90 % central de los valores va de ${f(A.P[0.05].v)} a ${f(A.P[0.95].v)}.`);
+  I.push(`La distribución es ${rptReadSkew(A.skew)} (asimetría ${fmt(A.skew)}) y presenta ${rptReadKurt(A.kurt)} (curtosis ${fmt(A.kurt)}). ${A.jbP < 0.05 ? 'La prueba de Jarque–Bera rechaza la normalidad (' + rptPtxt(A.jbP) + '), por eso los percentiles son más confiables que la media ± desviaciones.' : 'La prueba de Jarque–Bera no rechaza la normalidad (' + rptPtxt(A.jbP) + ').'}`);
+  if(Number.isFinite(A.cv)) I.push(`La variabilidad relativa es ${rptReadCV(A.cv)} (coeficiente de variación ${rptPct1(A.cv)}).`);
+  if(showRisk){
+  if(A.signChange) I.push(`La probabilidad de obtener un valor negativo es ${rptPct2(A.pNeg)} (IC 95 %: ${rptPct2(A.pNegCI[0])} a ${rptPct2(A.pNegCI[1])}); en el 5 % peor de los casos el valor promedio es ${f(A.esLow)}.`);
+  else I.push(`En el 5 % más bajo de los casos el valor promedio es ${f(A.esLow)} y en el 5 % más alto, ${f(A.esHigh)}.`);
+  }
+  if(pr && A.conv){
+    const stable = A.conv.halves.every(([x, y]) => Math.abs(x - y) <= 0.02 * (A.range || 1));
+    I.push(Number.isFinite(A.relPrec) ? `La media se estimó con una precisión de ± ${rptPct2(A.relPrec)}${A.nFor1 ? `; para llegar a ± 1 % se necesitarían unas ${A.nFor1.toLocaleString('es-ES')} iteraciones.` : ', mejor que ± 1 %.'}` : 'La media es cercana a cero, por lo que la precisión se juzga con el error estándar absoluto.');
+    I.push(stable ? 'Los percentiles P5, P50 y P95 son prácticamente iguales en las dos mitades de la simulación: no hay señales de falta de convergencia.' : 'Los percentiles cambian de forma apreciable entre las dos mitades de la simulación: conviene aumentar las iteraciones antes de tomar decisiones.');
+  }
+  if(opt.specDist){ const nm = opt.specDist.key === 'normal'; I.push(nm ? `Esta variable se generó a propósito con una distribución Normal: la prueba de Jarque–Bera sirve como verificación del muestreo, y un rechazo aislado puede deberse al azar (ocurre en alrededor de 5 % de los casos).` : `Esta variable se generó con una distribución ${opt.specDist.name}, por lo que no se espera normalidad: el resultado de la prueba es coherente con el diseño.`); }
+  B.push({ t: 'label', text: 'Interpretación' }); B.push({ t: 'bul', items: I });
+  return B;
+}
+function rptHeat(r){ const t = Math.min(1, Math.abs(r)); const base = r >= 0 ? [14, 138, 118] : [229, 83, 42]; const c = base.map(v => Math.round(255 + (v - 255) * t * 0.85)); return `#${c.map(v => v.toString(16).padStart(2, '0')).join('')}`; }
+/* matriz de correlaciones de rangos (Spearman) entre variables, calculada sobre las primeras 20.000 iteraciones */
+function rptCorrMatrix(cols){
+  const n = Math.min(cols[0].data.length, 20000), m = cols.length, ok = [];
+  for(let i = 0; i < n; i++){ let good = true; for(let j = 0; j < m; j++) if(!Number.isFinite(cols[j].data[i])){ good = false; break; } if(good) ok.push(i); }
+  if(ok.length < 30) return null;
+  const R = cols.map(c => SP.ranks(Float64Array.from(ok, i => c.data[i]))), M = Array.from({ length: m }, () => new Array(m).fill(1));
+  for(let a = 0; a < m; a++) for(let b = a + 1; b < m; b++){ const r = SP.pearson(R[a], R[b]); M[a][b] = M[b][a] = r; }
+  return { M, n: ok.length };
 }
 function rptCommon(o, blocks){
-  if(o.notes) { blocks.push({ t: 'h1', text: 'Comentarios' }); String(o.notes).split(/\n+/).forEach(x => { if(x.trim()) blocks.push({ t: 'p', text: x.trim() }); }); }
-  blocks.push({ t: 'note', text: 'Informe generado con Monte Carlo Lab. Los resultados provienen de simulación aleatoria: dos corridas con las mismas entradas pueden diferir levemente.' });
+  if(o.notes) { blocks.push({ t: 'h1', text: 'Comentarios del autor' }); String(o.notes).split(/\n+/).forEach(x => { if(x.trim()) blocks.push({ t: 'p', text: x.trim() }); }); }
+  blocks.push({ t: 'note', text: 'Informe generado con Monte Carlo Lab. Los resultados provienen de simulación aleatoria: dos corridas con las mismas entradas pueden diferir levemente dentro de los márgenes de precisión indicados.' });
   return blocks;
 }
+function rptMethod(kind){
+  const B = [{ t: 'h1', text: 'Notas metodológicas' }], I = [];
+  if(kind === 'dist' || kind === 'model'){
+    I.push('Simulación Monte Carlo: en cada iteración se sortea un valor de cada variable de entrada según su distribución y se evalúan las fórmulas; el conjunto de iteraciones aproxima la distribución del resultado.');
+    if(kind === 'model') I.push('Correlaciones entre entradas: se imponen por el método de Iman–Conover (correlación de rangos), que conserva la distribución individual de cada variable. La tabla de correlaciones muestra el coeficiente de Spearman realizado en las primeras 20.000 iteraciones.');
+    I.push('Intervalo de la media: media ± t·EE, con EE = s/√n y s la desviación estándar muestral (n − 1). Percentiles: intervalo de confianza por estadísticos de orden. Probabilidades: intervalo de Wilson al 95 %.');
+    I.push('Normalidad: prueba de Jarque–Bera, JB = n/6 · (asimetría² + curtosis²/4), con distribución χ² de 2 grados de libertad bajo normalidad. Con muchas iteraciones la prueba rechaza desviaciones pequeñas; interprétala junto con la asimetría y la curtosis.');
+    I.push('Riesgo: VaR es un percentil de la cola; CVaR (pérdida esperada) es el promedio de los valores más allá de ese percentil.');
+    I.push('Convergencia: se comparan las medias de 10 lotes consecutivos y los percentiles P5, P50 y P95 de la primera y la segunda mitad de las iteraciones.');
+    if(kind === 'model') I.push('Sensibilidad: correlación de rangos de Spearman entre cada entrada y el resultado (primeras 20.000 iteraciones); el porcentaje de la varianza reparte la suma de los cuadrados de esas correlaciones.');
+  } else if(kind === 'fit'){
+    I.push('Estimación: máxima verosimilitud para cada familia de distribuciones. k es el número de parámetros estimados.');
+    I.push('AIC = 2k − 2·lnL y BIC = k·ln(n) − 2·lnL; menores valores indican mejor equilibrio entre ajuste y complejidad. ΔAIC es la diferencia con el mejor modelo y el peso de Akaike w = exp(−Δ/2)/Σ exp(−Δ/2) se interpreta como la probabilidad relativa de que ese modelo sea el mejor del conjunto.');
+    I.push('Anderson–Darling (A-D) pesa más las colas; Kolmogorov–Smirnov (K-S) mide la mayor distancia entre la distribución acumulada de los datos y la del modelo. Como los parámetros se estiman con los mismos datos, los valores p de K-S y de χ² son aproximados y optimistas.');
+    I.push('χ²: los datos se reparten en tramos de igual probabilidad bajo cada modelo (con al menos 5 datos esperados por tramo) y se comparan los conteos con los esperados; los grados de libertad son tramos − 1 − k.');
+    I.push('Los intervalos de la media usan la t de Student; los de los percentiles, estadísticos de orden. Las medidas de convergencia no se muestran porque los datos no provienen de una simulación.');
+  } else if(kind === 'bass'){
+    I.push('Modelo de difusión de Bass: S(t+1) = p·N + (q − p)·Q(t) − (q/N)·Q(t)², con ventas no negativas y acumuladas limitadas a N. El instante teórico del pico en tiempo continuo es t* = ln(q/p)/(p + q) (solo si q > p).');
+    I.push('Referencia: en estudios de metaanálisis de modelos de Bass los valores medios reportados son p ≈ 0,03 y q ≈ 0,38; sirven solo como orientación y varían mucho por producto y mercado.');
+    I.push('Cuando se indica incertidumbre, N, p y q se sortean con distribución triangular alrededor de cada valor y las bandas son los percentiles P5 y P95 de las simulaciones.');
+  } else if(kind === 'vw'){
+    I.push('Van Westendorp: para cada precio se calcula el porcentaje acumulado de encuestados que lo considera muy barato, barato, caro o muy caro. Los puntos son los cruces de esas curvas por interpolación lineal.');
+    I.push('Las bandas P5–P95 provienen de repetir el cálculo con encuestados remuestreados al azar (bootstrap). Una banda ancha indica que el punto depende mucho de quiénes respondieron.');
+    I.push('La media de cada pregunta usa la t de Student y los percentiles, estadísticos de orden; la normalidad se contrasta con Jarque–Bera.');
+  }
+  B.push({ t: 'bul', items: I }); return B;
+}
+
 function rptModelVersionText(){
   try{
     const name = ($('mmName').value || '').trim(); if(!name) return '';
@@ -7926,118 +8067,262 @@ function rptModelVersionText(){
     return `${it.name} · versión v${last.v} (${mmFechaHora(last.when)})${mmSame(last.model, mdlSnapshot()) ? '' : ' · con cambios sin guardar'}`;
   } catch(e){ return ''; }
 }
-function rptBuild(kind, o){
+
+const rptSt = A => ({ sorted: A.a, mean: A.mean, n: A.n });
+const rptShort = (s, n) => (String(s).length > n ? String(s).slice(0, n - 1) + '…' : String(s));
+function rptSensBlocks(sens, outName, o, B){
+  B.push({ t: 'label', text: `Sensibilidad de «${outName}» a cada variable de entrada` });
+  B.push({ t: 'table', head: ['Variable', 'Correlación de rangos (ρ)', '% de la varianza', 'Efecto'], align: ['l', 'r', 'r', 'l'],
+    rows: sens.map(r => [r.name, (r.rho >= 0 ? '+' : '−') + Math.abs(r.rho).toFixed(3).replace('.', ','), rptPct1(r.contrib), Math.abs(r.rho) < 0.05 ? 'Prácticamente nulo' : (r.rho > 0 ? 'Directo: si sube la variable, sube el resultado' : 'Inverso: si sube la variable, baja el resultado')]) });
+  if(o.charts && sens.length) B.push({ t: 'img', canvas: rptTornado(sens), caption: `Qué variables mueven «${outName}» (correlación de rangos de Spearman).` });
+  const top = sens.filter(r => r.contrib > 0);
+  if(top.length){
+    const b = [`La variable que más influye es «${top[0].name}» (ρ = ${top[0].rho.toFixed(2).replace('.', ',')}); explica ${rptPct1(top[0].contrib)} de la variación explicada.`];
+    if(top.length > 1) b.push(`Las dos primeras variables («${top[0].name}» y «${top[1].name}») concentran ${rptPct1(top[0].contrib + top[1].contrib)}.`);
+    const nul = sens.filter(r => Math.abs(r.rho) < 0.05); if(nul.length) b.push(`Casi no influyen: ${nul.map(r => '«' + r.name + '»').join(', ')}; podrían fijarse en un valor sin cambiar mucho el resultado.`);
+    B.push({ t: 'bul', items: b });
+  }
+}
+async function rptBuild(kind, o, prog){
+  prog = prog || (() => {}); const tick = async m => { prog(m); await runYield(); };
   const B = [], sub = [rptDate(), o.author ? 'Preparado por ' + o.author : ''].filter(Boolean).join(' · ');
   if(kind === 'dist'){
-    const s = simData, d = DISTS[s.distKey], st = s.stats, f = fmt;
+    const s = simData, d = DISTS[s.distKey], f = fmt;
+    await tick('Analizando la variable…');
+    const A = rptDescribe(Array.from(s.raw), s.raw);
+    B.push({ t: 'h1', text: 'Resumen ejecutivo' });
+    const ex = [`Se simularon ${s.n.toLocaleString('es-ES')} iteraciones de una distribución ${d.name}.`, `La media simulada es ${f(A.mean)} (IC 95 %: ${f(A.meanCI[0])} a ${f(A.meanCI[1])}) y la mediana ${f(A.median)}.`, `El 90 % central de los valores va de ${f(A.P[0.05].v)} a ${f(A.P[0.95].v)}.`];
+    if(A.signChange) ex.push(`La probabilidad de un valor negativo es ${rptPct2(A.pNeg)}.`);
+    ex.push(Number.isFinite(A.relPrec) ? `La media tiene una precisión de ± ${rptPct2(A.relPrec)}.` : 'La media es cercana a cero; la precisión se mide con el error estándar absoluto.');
+    B.push({ t: 'bul', items: ex });
     B.push({ t: 'h1', text: 'Supuestos' });
     const kv = [['Distribución', `${d.name}${d.tag ? ' (' + d.tag + ')' : ''}`], ['Iteraciones', s.n.toLocaleString('es-ES')], ['Fecha de la simulación', rptDate(s.when)]];
     if(s.distKey === 'mezcla'){
-      kv.push(['Método de la mezcla', s.params.method === 'sumproduct' ? 'Promedio ponderado (SUMAPRODUCTO)' : 'Mezcla al azar']);
-      B.push({ t: 'kv', rows: kv });
+      kv.push(['Método de la mezcla', s.params.method === 'sumproduct' ? 'Promedio ponderado (SUMAPRODUCTO)' : 'Mezcla al azar']); B.push({ t: 'kv', rows: kv });
       const tw = s.params.components.reduce((a, c) => a + c.weight, 0) || 1;
       B.push({ t: 'h2', text: 'Componentes de la mezcla' });
-      B.push({ t: 'table', head: ['#', 'Distribución', 'Peso', 'Parámetros'], align: ['c', 'l', 'r', 'l'], rows: s.params.components.map((c, i) => [i + 1, DISTS[c.dist].name, (100 * c.weight / tw).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' %', rptParamText(c.dist, c.params)]) });
-    } else {
-      rptParamRows(s.distKey, s.params).forEach(r => kv.push(r));
-      B.push({ t: 'kv', rows: kv });
-    }
-    B.push({ t: 'h1', text: 'Resultados' });
-    rptStatsBlocks(st, f).forEach(b => B.push(b));
-    const th = parseFloat(($('threshold') || {}).value);
-    if(Number.isFinite(th)){ B.push({ t: 'kv', rows: [['Valor de referencia (X)', f(th)], ['P(X ≤ valor)', rptPctFmt(probLE(st.sorted, th))], ['P(X ≥ valor)', rptPctFmt(probGE(st.sorted, th))]] }); }
+      B.push({ t: 'table', head: ['#', 'Distribución', 'Peso', 'Parámetros'], align: ['c', 'l', 'r', 'l'], rows: s.params.components.map((c, i) => [i + 1, DISTS[c.dist].name, rptPct1(c.weight / tw), rptParamText(c.dist, c.params)]) });
+    } else { rptParamRows(s.distKey, s.params).forEach(r => kv.push(r)); B.push({ t: 'kv', rows: kv }); }
+    B.push({ t: 'h1', text: 'Análisis de la variable simulada' });
+    rptVarBlocks(A, f, o, { name: 'La variable simulada', risk: true, precision: true }).forEach(b => B.push(b));
     if(o.charts){
-      B.push({ t: 'img', canvas: rptHist(st, !!s.discrete, f), caption: 'Figura 1. Histograma de frecuencias relativas de la simulación.' });
-      B.push({ t: 'img', canvas: rptCDF(st, f), caption: 'Figura 2. Probabilidad acumulada con los percentiles P5, P50 y P95.' });
+      B.push({ t: 'img', canvas: rptHist(rptSt(A), !!s.discrete, f), caption: 'Figura 1. Histograma de frecuencias relativas de la simulación.' });
+      B.push({ t: 'img', canvas: rptCDF(rptSt(A), f), caption: 'Figura 2. Probabilidad acumulada con los percentiles P5, P50 y P95.' });
     }
+    const th = parseFloat(($('threshold') || {}).value);
+    if(Number.isFinite(th)){ B.push({ t: 'label', text: 'Calculadora de probabilidad (valor de referencia de la pantalla)' }); B.push({ t: 'kv', rows: [['Valor de referencia (X)', f(th)], ['P(X ≤ valor)', rptPct2(rptUB(A.a, th) / A.n)], ['P(X ≥ valor)', rptPct2(1 - rptLB(A.a, th) / A.n)]] }); }
+    rptMethod('dist').forEach(b => B.push(b));
     return { title: o.title || `Simulación Monte Carlo · ${d.name}`, sub, blocks: rptCommon(o, B) };
   }
   if(kind === 'model'){
-    const def = MDL.runDef, res = MDL.res, B2 = B, ver = rptModelVersionText();
+    const def = MDL.runDef, res = MDL.res, ver = rptModelVersionText(), nIn = def.vars.length;
+    const outA = [], sensAll = [];
+    for(let idx = 0; idx < res.outputs.length; idx++){
+      await tick(`Analizando el resultado «${res.outputs[idx].name}»…`);
+      const out = res.outputs[idx], valid = []; for(let i = 0; i < res.n; i++){ const x = out.data[i]; if(Number.isFinite(x)) valid.push(x); }
+      const od = def.outs.find(q => q.id === MDL.runOutIds[idx]) || def.outs[idx];
+      outA.push({ out, valid, f: FMTS[od && od.format] || FMTS.num, A: valid.length > 1 ? rptDescribe(valid, out.data) : null });
+      let sens = []; try{ sens = MODEL.sensitivity(res, idx); } catch(e){ /* sin sensibilidad */ } sensAll.push(sens);
+    }
+    B.push({ t: 'h1', text: 'Resumen ejecutivo' });
+    const ex = [`El modelo tiene ${nIn} variable${nIn === 1 ? '' : 's'} de entrada y ${res.outputs.length} resultado${res.outputs.length === 1 ? '' : 's'}, simulados con ${res.n.toLocaleString('es-ES')} iteraciones.`];
+    outA.forEach((r, i) => {
+      if(!r.A){ ex.push(`«${r.out.name}» no se pudo calcular (revisa la fórmula).`); return; }
+      const A = r.A, f = r.f; let t = `«${r.out.name}»: media ${f(A.mean)} (IC 95 %: ${f(A.meanCI[0])} a ${f(A.meanCI[1])}); el 90 % central va de ${f(A.P[0.05].v)} a ${f(A.P[0.95].v)}.`;
+      if(A.signChange) t += ` Probabilidad de valor negativo: ${rptPct2(A.pNeg)}.`;
+      const s0 = sensAll[i][0]; if(s0 && s0.contrib > 0) t += ` Principal variable: «${s0.name}» (${rptPct1(s0.contrib)} de la variación explicada).`;
+      ex.push(t);
+    });
+    const worst = outA.filter(r => r.A && Number.isFinite(r.A.relPrec)).sort((a, b) => b.A.relPrec - a.A.relPrec)[0];
+    if(worst) ex.push(worst.A.relPrec <= 0.01 ? `Precisión: todas las medias se estiman con ± 1 % o mejor (la menos precisa es «${worst.out.name}» con ± ${rptPct2(worst.A.relPrec)}).` : `Precisión: la media menos precisa es la de «${worst.out.name}» (± ${rptPct2(worst.A.relPrec)}); para ± 1 % se necesitarían unas ${worst.A.nFor1.toLocaleString('es-ES')} iteraciones.`);
+    B.push({ t: 'bul', items: ex });
     B.push({ t: 'h1', text: 'Supuestos' });
     const kv = [['Iteraciones', res.n.toLocaleString('es-ES')], ['Fecha de la simulación', rptDate(def.when)]]; if(ver) kv.push(['Modelo guardado', ver]);
     B.push({ t: 'kv', rows: kv });
     B.push({ t: 'h2', text: 'Variables de entrada' });
     B.push({ t: 'table', head: ['Variable', 'Distribución', 'Parámetros', 'Límites'], align: ['l', 'l', 'l', 'l'], rows: def.vars.map(v => [v.name, v.dist === 'const' ? 'Valor fijo' : DISTS[v.dist].name, rptParamText(v.dist, v.params), (v.lo != null || v.hi != null) ? `${v.lo != null ? fmt(v.lo) : '−∞'} a ${v.hi != null ? fmt(v.hi) : '+∞'}` : '—']) });
     if(def.corr.length){
-      B.push({ t: 'h2', text: 'Correlaciones entre variables' });
+      B.push({ t: 'h2', text: 'Correlaciones impuestas entre variables' });
       B.push({ t: 'table', head: ['Variable A', 'Variable B', 'Objetivo', 'Lograda'], align: ['l', 'l', 'r', 'r'], rows: def.corr.map(c => { const ap = (res.applied || []).find(a => a.a === c.a && a.b === c.b); return [def.vars[c.a].name, def.vars[c.b].name, fmt(c.rho), ap ? fmt(ap.achieved) : '—']; }) });
     }
     B.push({ t: 'h2', text: 'Resultados calculados (fórmulas)' });
     B.push({ t: 'table', head: ['Resultado', 'Fórmula', 'Formato'], align: ['l', 'l', 'l'], mono: true, rows: def.outs.map(q => [q.name, q.formula, ({ num: 'Número', pct: 'Porcentaje', cur: 'Moneda' })[q.format] || 'Número']) });
-    B.push({ t: 'h1', text: 'Resultados' });
-    res.outputs.forEach((out, idx) => {
-      const valid = []; for(let i = 0; i < res.n; i++){ const x = out.data[i]; if(Number.isFinite(x)) valid.push(x); }
-      const od = def.outs.find(q => q.id === MDL.runOutIds[idx]) || def.outs[idx], f = FMTS[od && od.format] || FMTS.num;
-      B.push({ t: 'h2', text: out.name });
-      if(valid.length < 2){ B.push({ t: 'p', text: 'Este resultado no se pudo calcular en ninguna iteración (revisa la fórmula).' }); return; }
-      if(valid.length < res.n) B.push({ t: 'note', text: `En ${((res.n - valid.length) / res.n * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })} % de las iteraciones el resultado no está definido; se excluyeron de las estadísticas.` });
-      const st = computeStats(valid, false);
-      rptStatsBlocks(st, f).forEach(b => B.push(b));
-      if(o.charts && idx === MDL.outIdx){
-        B.push({ t: 'img', canvas: rptHist(st, false, f, out.name), caption: `Figura 1. Histograma de «${out.name}».` });
-        B.push({ t: 'img', canvas: rptCDF(st, f, out.name), caption: `Figura 2. Probabilidad acumulada de «${out.name}».` });
+    /* ---- análisis de cada variable de entrada ---- */
+    B.push({ t: 'h1', text: 'Análisis de las variables de entrada' });
+    const fixed = def.vars.map((v, j) => ({ v, j })).filter(x => x.v.dist === 'const'), live = def.vars.map((v, j) => ({ v, j })).filter(x => x.v.dist !== 'const');
+    if(fixed.length) B.push({ t: 'p', text: 'Valores fijos (no aportan incertidumbre): ' + fixed.map(x => `${x.v.name} = ${fmt(x.v.params.value)}`).join('; ') + '.' });
+    const compact = live.length > 8;
+    for(let k = 0; k < live.length; k++){
+      const { v, j } = live[k]; await tick(`Analizando la variable de entrada «${v.name}» (${k + 1} de ${live.length})…`);
+      const A = rptDescribe(res.inputs[j], res.inputs[j]);
+      B.push({ t: 'h2', text: `${v.name} · ${DISTS[v.dist].name}` });
+      B.push({ t: 'p', text: 'Especificada como ' + rptParamText(v.dist, v.params) + ((v.lo != null || v.hi != null) ? ` con límites de ${v.lo != null ? fmt(v.lo) : '−∞'} a ${v.hi != null ? fmt(v.hi) : '+∞'}.` : '.') });
+      const mv = MDL.vars.find(q => q.name === v.name), st = mv && MDL.trunc[mv.id];
+      if(st && st.tries && st.rej / st.tries >= 0.001) B.push({ t: 'note', text: `Se descartó el ${rptPct1(st.rej / st.tries)} de los valores sorteados por quedar fuera de los límites: la distribución efectiva es la original truncada.` });
+      rptVarBlocks(A, fmt, o, { name: `«${v.name}»`, risk: !compact, precision: !compact, compact, specDist: { key: v.dist, name: DISTS[v.dist].name } }).forEach(b => B.push(b));
+      if(o.charts) B.push({ t: 'img', canvas: rptHist(rptSt(A), !!(DISTS[v.dist] && DISTS[v.dist].discrete), fmt, v.name), caption: `Histograma de la variable de entrada «${v.name}».` });
+    }
+    /* ---- correlaciones realizadas entre todas las variables ---- */
+    const cols = live.map(x => ({ name: x.v.name, data: res.inputs[x.j] })).concat(outA.filter(r => r.A).map(r => ({ name: r.out.name, data: r.out.data })));
+    if(cols.length >= 2){
+      await tick('Calculando la matriz de correlaciones…');
+      const cm = rptCorrMatrix(cols);
+      if(cm){
+        let idxs = cols.map((_, i) => i);
+        if(idxs.length > 14){ const nOut = outA.filter(r => r.A).length, inIdx = idxs.slice(0, idxs.length - nOut).sort((a, b) => Math.abs(cm.M[b][idxs.length - nOut]) - Math.abs(cm.M[a][idxs.length - nOut])).slice(0, 14 - nOut); idxs = inIdx.concat(idxs.slice(idxs.length - nOut)); }
+        B.push({ t: 'h1', text: 'Matriz de correlaciones realizadas' });
+        B.push({ t: 'p', text: `Coeficiente de correlación de rangos de Spearman entre las variables de entrada y los resultados, calculado con ${cm.n.toLocaleString('es-ES')} iteraciones. Verde: relación directa; naranja: relación inversa; cuanto más intenso el color, más fuerte.` });
+        B.push({ t: 'table', head: [''].concat(idxs.map(i => rptShort(cols[i].name, 11))), align: ['l'].concat(idxs.map(() => 'c')), rows: idxs.map(a => [cols[a].name].concat(idxs.map(b => ({ v: cm.M[a][b].toFixed(2).replace('.', ','), fill: a === b ? '#E3E8EF' : rptHeat(cm.M[a][b]) })))) });
+        if(idxs.length < cols.length) B.push({ t: 'note', text: `Se muestran ${idxs.length} de ${cols.length} variables (las entradas más relacionadas con el primer resultado y todos los resultados).` });
       }
-      if(idx === MDL.outIdx){
-        let sens = []; try{ sens = MODEL.sensitivity(res, idx); } catch(e){ /* sin sensibilidad */ }
-        if(sens.length){
-          B.push({ t: 'h2', text: `Sensibilidad de «${out.name}»` });
-          B.push({ t: 'table', head: ['Variable', 'Correlación de rangos', '% de la varianza'], align: ['l', 'r', 'r'], rows: sens.map(r => [r.name, (r.rho >= 0 ? '+' : '−') + Math.abs(r.rho).toFixed(2).replace('.', ','), (r.contrib * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' %']) });
-          if(o.charts) B.push({ t: 'img', canvas: rptTornado(sens), caption: 'Figura 3. Qué variables mueven el resultado (correlación de rangos de Spearman).' });
-        }
+    }
+    /* ---- análisis de cada resultado ---- */
+    B.push({ t: 'h1', text: 'Análisis de los resultados' });
+    for(let idx = 0; idx < outA.length; idx++){
+      const r = outA[idx]; await tick(`Armando el análisis de «${r.out.name}»…`);
+      B.push({ t: 'h2', text: r.out.name });
+      if(!r.A){ B.push({ t: 'p', text: 'Este resultado no se pudo calcular en ninguna iteración (revisa la fórmula).' }); continue; }
+      const def2 = def.outs.find(q => q.id === MDL.runOutIds[idx]) || def.outs[idx];
+      B.push({ t: 'p', text: `Fórmula: ${def2 ? def2.formula : '—'}` });
+      if(r.valid.length < res.n) B.push({ t: 'note', text: `En ${rptPct1((res.n - r.valid.length) / res.n)} de las iteraciones el resultado no está definido; se excluyeron de las estadísticas.` });
+      rptVarBlocks(r.A, r.f, o, { name: `«${r.out.name}»`, risk: true, precision: true }).forEach(b => B.push(b));
+      if(o.charts){
+        B.push({ t: 'img', canvas: rptHist(rptSt(r.A), false, r.f, r.out.name), caption: `Histograma de «${r.out.name}».` });
+        B.push({ t: 'img', canvas: rptCDF(rptSt(r.A), r.f, r.out.name), caption: `Probabilidad acumulada de «${r.out.name}».` });
       }
-    });
-    return { title: o.title || 'Modelo de simulación Monte Carlo', sub, blocks: rptCommon(o, B2) };
+      if(sensAll[idx].length) rptSensBlocks(sensAll[idx], r.out.name, o, B);
+    }
+    rptMethod('model').forEach(b => B.push(b));
+    return { title: o.title || 'Modelo de simulación Monte Carlo', sub, blocks: rptCommon(o, B) };
   }
   if(kind === 'bass'){
-    const res = BS.res, U = res.unit.toLowerCase();
+    const res = BS.res, U = res.unit.toLowerCase(), T = res.T, hasBand = res.unc > 0 && res.items[0].bandS;
+    B.push({ t: 'h1', text: 'Resumen ejecutivo' });
+    const ex = [`Se proyectó la demanda de ${res.items.length} escenario${res.items.length === 1 ? '' : 's'} durante ${T} ${U === 'mes' ? 'meses' : U + 's'}.`];
+    res.items.forEach(it => ex.push(`${it.name}: el pico de ventas llega en el ${U} ${it.st.pk} con ${bsES(it.st.pkVal)} unidades; al ${U} ${T} se acumulan ${bsES(it.st.qT)} (${bsPct(it.st.pct)} de N = ${bsES(it.N)}).`));
+    if(res.items.length > 1){ const by = [...res.items].sort((a, b) => b.st.qT - a.st.qT); ex.push(`Mayor demanda acumulada al ${U} ${T}: ${by[0].name}; menor: ${by[by.length - 1].name}.`); }
+    B.push({ t: 'bul', items: ex });
     B.push({ t: 'h1', text: 'Supuestos' });
     B.push({ t: 'p', text: 'Modelo de difusión de Bass: S(t+1) = p·N + (q−p)·Q(t) − (q/N)·Q(t)². N es el mercado potencial, p el coeficiente de innovación y q el de imitación.' });
-    B.push({ t: 'kv', rows: [['Períodos', `${res.T} (${res.unit})`], ['Incertidumbre en N, p y q', res.unc > 0 ? `± ${res.unc.toLocaleString('es-ES')} % (distribución triangular; bandas P5–P95)` : 'Sin incertidumbre']] });
-    B.push({ t: 'table', head: ['Escenario', 'Habitantes', 'Mercado potencial', 'N', 'p', 'q'], align: ['l', 'r', 'r', 'r', 'r', 'r'], rows: res.items.map(it => [it.name, bsES(it.hab), it.mer.toLocaleString('es-ES') + ' %', bsES(it.N), it.p.toLocaleString('es-ES') + ' %', it.q.toLocaleString('es-ES') + ' %']) });
-    B.push({ t: 'h1', text: 'Resultados' });
-    B.push({ t: 'table', head: ['Escenario', `Pico (${U})`, 'Ventas en el pico', `Acumuladas al ${U} ${res.T}`, '% de N', '50 % de N', '90 % de N'], align: ['l', 'r', 'r', 'r', 'r', 'r', 'r'],
-      rows: res.items.map(it => [it.name, it.st.pk, bsES(it.st.pkVal), bsES(it.st.qT), bsPct(it.st.pct), it.st.t50 || '—', it.st.t90 || '—']) });
-    if(o.charts){
-      B.push({ t: 'img', canvas: rptBassChart(res, 'S'), caption: `Figura 1. Ventas por ${U}.` });
-      B.push({ t: 'img', canvas: rptBassChart(res, 'Q'), caption: 'Figura 2. Ventas acumuladas.' });
+    B.push({ t: 'kv', rows: [['Períodos', `${T} (${res.unit})`], ['Incertidumbre en N, p y q', res.unc > 0 ? `± ${res.unc.toLocaleString('es-ES')} % (triangular; bandas P5–P95)` : 'Sin incertidumbre (cálculo determinista)']] });
+    B.push({ t: 'table', head: ['Escenario', 'Habitantes', 'Mercado potencial', 'N', 'p', 'q', 'q / p'], align: ['l', 'r', 'r', 'r', 'r', 'r', 'r'], rows: res.items.map(it => [it.name, bsES(it.hab), bsPct(it.mer), bsES(it.N), bsPct(it.p, 2), bsPct(it.q, 2), (it.q / it.p).toLocaleString('es-ES', { maximumFractionDigits: 2 })]) });
+    B.push({ t: 'h1', text: 'Resultados comparados' });
+    B.push({ t: 'table', head: ['Escenario', `Pico (${U})`, 'Ventas en el pico', `Acumuladas al ${U} ${T}`, '% de N', '50 % de N', '90 % de N', '99 % de N'], align: ['l', 'r', 'r', 'r', 'r', 'r', 'r', 'r'], rows: res.items.map(it => [it.name, it.st.pk, bsES(it.st.pkVal), bsES(it.st.qT), bsPct(it.st.pct), it.st.t50 || '—', it.st.t90 || '—', it.st.t99 || '—']) });
+    if(o.charts){ B.push({ t: 'img', canvas: rptBassChart(res, 'S'), caption: `Figura 1. Ventas por ${U}.` }); B.push({ t: 'img', canvas: rptBassChart(res, 'Q'), caption: 'Figura 2. Ventas acumuladas.' }); }
+    B.push({ t: 'h1', text: 'Análisis de cada escenario' });
+    for(let i = 0; i < res.items.length; i++){
+      const it = res.items[i]; await tick(`Analizando el escenario «${it.name}»…`);
+      const p = it.p, q = it.q, tstar = q > p ? Math.log(q / p) / (p + q) : null, sumS = it.S.reduce((a, b) => a + b, 0);
+      B.push({ t: 'h2', text: it.name });
+      B.push({ t: 'kv', rows: [['Mercado potencial N', `${bsES(it.N)} (${bsES(it.hab)} habitantes × ${bsPct(it.mer)})`], ['Innovación p / imitación q', `${bsPct(p, 2)} / ${bsPct(q, 2)}`], ['Razón q / p', (q / p).toLocaleString('es-ES', { maximumFractionDigits: 2 })],
+        ['Pico teórico t* = ln(q/p)/(p+q)', tstar != null ? `${tstar.toLocaleString('es-ES', { maximumFractionDigits: 1 })} ${U}s (tiempo continuo)` : 'No existe (q ≤ p): las ventas máximas son las del primer período'], ['Pico observado', `${U} ${it.st.pk}: ${bsES(it.st.pkVal)} unidades`], [`Acumuladas al ${U} ${T}`, `${bsES(it.st.qT)} (${bsPct(it.st.pct)} de N)`],
+        ['Tiempos de penetración', `50 %: ${it.st.t50 || 'no se alcanza'} · 90 %: ${it.st.t90 || 'no se alcanza'} · 99 %: ${it.st.t99 || 'no se alcanza'}`]] });
+      const chk = [`Las ventas acumuladas no superan el mercado potencial: ${it.st.qT <= it.N * (1 + 1e-9) ? 'se cumple' : 'NO se cumple'}.`, `La suma de las ventas por ${U} coincide con las acumuladas: ${Math.abs(sumS - it.st.qT) <= 1e-6 * Math.max(1, it.st.qT) ? 'se cumple' : 'diferencia de ' + bsES(Math.abs(sumS - it.st.qT))}.`];
+      const pl = [], ql = []; if(p < 0.005 || p > 0.05) pl.push('p'); if(q < 0.2 || q > 0.6) ql.push('q');
+      if(pl.length || ql.length) chk.push(`Valores fuera de lo habitual en la literatura (p ≈ 1–5 %, q ≈ 20–60 %): ${[...pl, ...ql].join(' y ')}; conviene respaldar esos supuestos.`);
+      chk.push(q / p > 1 ? `La difusión está dominada por la imitación (q/p = ${(q / p).toLocaleString('es-ES', { maximumFractionDigits: 1 })}): las ventas crecen hasta un pico y luego decrecen.` : 'La difusión está dominada por la innovación (q ≤ p): las ventas son máximas al inicio y decrecen.');
+      B.push({ t: 'label', text: 'Verificaciones e interpretación' }); B.push({ t: 'bul', items: chk });
+      B.push({ t: 'label', text: `Detalle de todos los períodos (${U})` });
+      if(hasBand && it.bandS){
+        B.push({ t: 'table', head: [U.charAt(0).toUpperCase() + U.slice(1), 'Ventas P5', 'Ventas P50', 'Ventas P95', 'Acum. P5', 'Acum. P50', 'Acum. P95'], align: Array(7).fill('r'), rows: Array.from({ length: T }, (_, t) => [t + 1, bsES(it.bandS.lo[t]), bsES(it.bandS.mid[t]), bsES(it.bandS.hi[t]), bsES(it.bandQ.lo[t]), bsES(it.bandQ.mid[t]), bsES(it.bandQ.hi[t])]) });
+      } else {
+        B.push({ t: 'table', head: [U.charAt(0).toUpperCase() + U.slice(1), 'Ventas', 'Acumuladas', '% de N', 'Variación de ventas'], align: Array(5).fill('r'), rows: Array.from({ length: T }, (_, t) => [t + 1, bsES(it.S[t]), bsES(it.Q[t]), bsPct(it.Q[t] / it.N), t ? (it.S[t - 1] > 0 ? ((it.S[t] / it.S[t - 1] - 1) * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' %' : '—') : '—']) });
+      }
     }
     const an = $('bsAnalysis');
-    if(an && an.children.length){
-      B.push({ t: 'h1', text: 'Análisis' });
-      Array.from(an.children).forEach(el => { if(el.tagName === 'H4') B.push({ t: 'h2', text: el.textContent }); else if(el.tagName === 'UL') B.push({ t: 'bul', items: Array.from(el.children).map(li => li.textContent) }); });
-    }
+    if(an && an.children.length){ B.push({ t: 'h1', text: 'Análisis automático de la app' }); Array.from(an.children).forEach(el => { if(el.tagName === 'H4') B.push({ t: 'h2', text: el.textContent }); else if(el.tagName === 'UL') B.push({ t: 'bul', items: Array.from(el.children).map(li => li.textContent) }); }); }
+    rptMethod('bass').forEach(b => B.push(b));
     return { title: o.title || 'Proyección de demanda · modelo de Bass', sub, blocks: rptCommon(o, B) };
   }
   if(kind === 'vw'){
-    const res = VW.res, f = v => vwFmt(v, res), P = res.pts, ci = res.ci;
+    const res = VW.res, f = v => vwFmt(v, res), P = res.pts, ci = res.ci, names = ['Muy barato', 'Barato', 'Caro', 'Muy caro'];
+    const cols = vwSortedCols(res.rows);
+    B.push({ t: 'h1', text: 'Resumen ejecutivo' });
+    const ex = [`Se analizaron ${res.n.toLocaleString('es-ES')} encuestas válidas de ${res.nAll.toLocaleString('es-ES')} recibidas.`];
+    if(Number.isFinite(P.opp)) ex.push(`Precio óptimo (OPP): ${f(P.opp)}${ci && Number.isFinite(ci.opp[0]) ? ` (banda P5–P95: ${f(ci.opp[0])} a ${f(ci.opp[1])})` : ''}.`);
+    if(Number.isFinite(P.pmc) && Number.isFinite(P.pme)) ex.push(`Rango de precios aceptables: de ${f(P.pmc)} (PMC) a ${f(P.pme)} (PME).`);
+    if(Number.isFinite(P.ipp)) ex.push(`Precio de indiferencia (IPP): ${f(P.ipp)}.`);
+    B.push({ t: 'bul', items: ex });
     B.push({ t: 'h1', text: 'Supuestos' });
     B.push({ t: 'p', text: 'Medidor de sensibilidad al precio de Van Westendorp: cada encuestado indica a partir de qué precio le parece muy barato, barato, caro y muy caro. Se cruzan las curvas acumuladas de respuestas.' });
     B.push({ t: 'kv', rows: [['Respuestas usadas', `${res.n.toLocaleString('es-ES')} de ${res.nAll.toLocaleString('es-ES')}`], ['Excluidas por incoherentes', res.excluded.toLocaleString('es-ES')], ['Moneda', res.unit], ['Bandas P5–P95', ci ? `Bootstrap con ${res.B} remuestreos de los encuestados` : 'No calculadas']] });
+    let cons = null; try{ const pr = vwParse($('vwData').value); if(pr.rows.length === res.nAll) cons = pr.rows; }catch(e){ /* sin detalle */ }
+    if(cons){
+      const c1 = cons.filter(r => r[0] > r[1]).length, c2 = cons.filter(r => r[1] > r[2]).length, c3 = cons.filter(r => r[2] > r[3]).length, bad = cons.filter(r => !(r[0] <= r[1] && r[1] <= r[2] && r[2] <= r[3])).length;
+      B.push({ t: 'h2', text: 'Consistencia de las respuestas' });
+      B.push({ t: 'table', head: ['Condición que deben cumplir', 'Respuestas que la incumplen', '% del total'], align: ['l', 'r', 'r'], rows: [['Muy barato ≤ Barato', c1, rptPct1(c1 / cons.length)], ['Barato ≤ Caro', c2, rptPct1(c2 / cons.length)], ['Caro ≤ Muy caro', c3, rptPct1(c3 / cons.length)], ['Alguna condición (respuesta incoherente)', bad, rptPct1(bad / cons.length)]] });
+    }
     B.push({ t: 'h1', text: 'Resultados' });
     const rows = [['PMC', 'Precio mínimo aceptable', 'pmc'], ['OPP', 'Precio óptimo', 'opp'], ['IPP', 'Precio de indiferencia', 'ipp'], ['PME', 'Precio máximo aceptable', 'pme']];
     B.push({ t: 'table', head: ['Punto', 'Significado', 'Precio', 'P5 – P95'], align: ['l', 'l', 'r', 'r'], rows: rows.map(([a, b, k]) => [a, b, f(P[k]), ci && Number.isFinite(ci[k][0]) ? f(ci[k][0]) + ' – ' + f(ci[k][1]) : '—']) });
     if(o.charts) B.push({ t: 'img', canvas: rptVWChart(res), caption: 'Figura 1. Curvas de Van Westendorp con los cuatro puntos marcados.' });
+    const pts = rows.filter(([, , k]) => Number.isFinite(P[k]));
+    if(pts.length){
+      B.push({ t: 'label', text: 'Porcentaje acumulado de encuestados en cada punto' });
+      B.push({ t: 'table', head: ['Punto', 'Precio', 'Muy barato', 'Barato', 'Caro', 'Muy caro', 'Ni muy barato ni muy caro'], align: ['l', 'r', 'r', 'r', 'r', 'r', 'r'], rows: pts.map(([a, , k]) => { const c = vwCurves(cols, [P[k]]); return [a, f(P[k]), rptPct1(c.tc[0]), rptPct1(c.ch[0]), rptPct1(c.ex[0]), rptPct1(c.te[0]), rptPct1(Math.max(0, 1 - c.tc[0] - c.te[0]))]; }) });
+    }
+    const dv = [];
+    if(Number.isFinite(P.pmc) && Number.isFinite(P.pme)){ dv.push(`Amplitud del rango aceptable: ${f(P.pme - P.pmc)} (${rptPct1((P.pme - P.pmc) / P.opp)} del precio óptimo).`); if(Number.isFinite(P.opp)) dv.push(`El precio óptimo se ubica al ${rptPct1((P.opp - P.pmc) / (P.pme - P.pmc))} del recorrido entre el PMC y el PME.`); }
+    if(Number.isFinite(P.ipp) && Number.isFinite(P.opp)) dv.push(`Distancia entre el precio de indiferencia y el óptimo: ${f(P.ipp - P.opp)}${P.ipp >= P.opp ? ' (el IPP es mayor)' : ' (el IPP es menor)'}.`);
+    if(ci && Number.isFinite(ci.opp[0])) dv.push(`La banda P5–P95 del precio óptimo mide ${f(ci.opp[1] - ci.opp[0])} (${rptPct1((ci.opp[1] - ci.opp[0]) / P.opp)} del valor): ${(ci.opp[1] - ci.opp[0]) / P.opp < 0.1 ? 'el resultado es estable ante cambios en la muestra' : 'el resultado es sensible a quiénes respondieron'}.`);
+    if(res.n < 100) dv.push('Con menos de 100 respuestas válidas los puntos pueden variar bastante.');
+    if(dv.length){ B.push({ t: 'label', text: 'Indicadores derivados' }); B.push({ t: 'bul', items: dv }); }
+    B.push({ t: 'h1', text: 'Análisis de cada pregunta de la encuesta' });
+    B.push({ t: 'p', text: 'Cada pregunta se analiza como una variable: su distribución entre los encuestados indica cuánto varían las percepciones de precio.' });
+    for(let k = 0; k < 4; k++){
+      await tick(`Analizando la pregunta «${names[k]}»…`);
+      const col = Float64Array.from(res.rows, r => r[k]), A = rptDescribe(col, null);
+      B.push({ t: 'h2', text: `Pregunta «${names[k]}»` });
+      rptVarBlocks(A, f, o, { name: `El precio «${names[k].toLowerCase()}»`, risk: false, precision: false }).forEach(b => B.push(b));
+      if(o.charts) B.push({ t: 'img', canvas: rptHist(rptSt(A), false, f, 'Precio (' + res.unit + ')'), caption: `Distribución de las respuestas «${names[k]}».` });
+    }
     const an = $('vwAnalysis');
-    if(an){ const items = Array.from(an.querySelectorAll('li')).map(li => li.textContent); if(items.length){ B.push({ t: 'h1', text: 'Análisis' }); B.push({ t: 'bul', items }); } }
+    if(an){ const items = Array.from(an.querySelectorAll('li')).map(li => li.textContent); if(items.length){ B.push({ t: 'h1', text: 'Análisis automático de la app' }); B.push({ t: 'bul', items }); } }
     B.push({ t: 'note', text: 'PMC = «muy barato» con «no barato» (1 − barato). OPP = «muy barato» con «muy caro». IPP = «barato» con «caro». PME = «muy caro» con «no caro» (1 − caro).' });
+    rptMethod('vw').forEach(b => B.push(b));
     return { title: o.title || 'Sensibilidad al precio · Van Westendorp', sub, blocks: rptCommon(o, B) };
   }
   if(kind === 'fit'){
     const all = FITUI.all, crit = FITUI.crit, lab = FIT_CRIT_LABEL[crit] || crit;
+    const bestOf = (r, c) => FIT.sortBy(r.results, c)[0];
+    B.push({ t: 'h1', text: 'Resumen ejecutivo' });
+    const ex = [`Se ajustaron ${all.length} variable${all.length === 1 ? '' : 's'}, cada una con ${all[0].results.length + all[0].skipped.length} familias de distribuciones; el criterio de orden es ${lab}.`];
+    all.forEach(r => { const b = bestOf(r, crit), aics = r.results.map(q => q.aic), mn = Math.min(...aics), ws = aics.map(a => Math.exp(-(a - mn) / 2)), sw = ws.reduce((x, y) => x + y, 0), wb = ws[r.results.indexOf(b)] / sw; ex.push(`«${r.varName || 'Datos'}»: mejor ajuste ${b.name} (${paramText(b.key, b.params)}); K-S ${rptPtxt(b.ksP, '≈')}${Number.isFinite(b.chi2P) ? `, χ² ${rptPtxt(b.chi2P, '≈')}` : ''}.`); });
+    B.push({ t: 'bul', items: ex });
     B.push({ t: 'h1', text: 'Supuestos' });
-    B.push({ t: 'p', text: `Se ajustaron ${all[0].results.length + all[0].skipped.length} familias de distribuciones por máxima verosimilitud a ${all.length === 1 ? 'la variable' : 'cada variable'}. Las distribuciones se ordenan por ${lab} (menor es mejor).` });
+    B.push({ t: 'p', text: `Estimación por máxima verosimilitud de ${all[0].results.length + all[0].skipped.length} familias de distribuciones para ${all.length === 1 ? 'la variable' : 'cada variable'}. Las distribuciones se ordenan por ${lab} (menor es mejor).` });
     B.push({ t: 'table', head: ['Variable', 'Datos', 'Media', 'Desv. est.', 'Mínimo', 'Máximo'], align: ['l', 'r', 'r', 'r', 'r', 'r'], rows: all.map(r => [r.varName || 'Datos', r.n.toLocaleString('es-ES'), fmt(r.mean), fmt(r.sd), fmt(r.min), fmt(r.max)]) });
-    B.push({ t: 'h1', text: 'Resultados' });
-    B.push({ t: 'table', head: ['Variable', 'Mejor distribución', 'Parámetros', lab], align: ['l', 'l', 'l', 'r'], rows: all.map(r => { const b = FIT.sortBy(r.results, crit)[0]; return [r.varName || 'Datos', b.name, paramText(b.key, b.params), fmt(b[crit])]; }) });
-    all.forEach((r, i) => {
-      const sorted = FIT.sortBy(r.results, crit), best = sorted[0];
-      B.push({ t: 'h2', text: r.varName ? `Variable «${r.varName}»` : 'Datos' });
+    B.push({ t: 'h1', text: 'Resultados del ajuste' });
+    B.push({ t: 'table', head: ['Variable', 'Mejor distribución', 'Parámetros', lab], align: ['l', 'l', 'l', 'r'], rows: all.map(r => { const b = bestOf(r, crit); return [r.varName || 'Datos', b.name, paramText(b.key, b.params), fmt(b[crit])]; }) });
+    B.push({ t: 'h1', text: 'Análisis de cada variable' });
+    for(let i = 0; i < all.length; i++){
+      const r = all[i], nm = r.varName || 'Datos'; await tick(`Analizando la variable «${nm}» (${i + 1} de ${all.length})…`);
+      const sorted = FIT.sortBy(r.results, crit), best = sorted[0], A = rptDescribe(r.raw, null);
+      B.push({ t: 'h2', text: `Variable «${nm}»` });
+      rptVarBlocks(A, fmt, o, { name: `«${nm}»`, risk: false, precision: false }).forEach(b => B.push(b));
+      B.push({ t: 'label', text: 'Distribución elegida' });
       const rk = XL.risk(best.key, best.params);
       B.push({ t: 'kv', rows: [['Mejor distribución', best.name], ['Parámetros', paramText(best.key, best.params)], ['Función de @RISK', rk.fn ? '=' + rk.fn : '—']] });
-      if(o.charts) B.push({ t: 'img', canvas: rptFitChart(r, best, fmt), caption: `Figura ${i + 1}. Datos de «${r.varName || 'la variable'}» y distribución con mejor ajuste.` });
-      B.push({ t: 'table', head: ['Puesto', 'Distribución', 'AIC', 'BIC', 'A-D', 'K-S', 'χ²'], align: ['c', 'l', 'r', 'r', 'r', 'r', 'r'], rows: sorted.slice(0, 5).map((q, j) => [j + 1, q.name, fmt(q.aic), fmt(q.bic), fmt(q.ad), fmt(q.ks), fmt(q.chi2)]) });
-    });
+      if(o.charts){
+        B.push({ t: 'img', canvas: rptFitChart(r, sorted.slice(0, 3), fmt), caption: `Datos de «${nm}» y las tres distribuciones con mejor ajuste según ${lab}.` });
+        B.push({ t: 'img', canvas: rptPP(r, best), caption: `Gráfico P–P de ${best.name}: si los puntos siguen la diagonal, el modelo reproduce bien la distribución de los datos.` });
+      }
+      B.push({ t: 'label', text: 'Comparación de todas las distribuciones ajustadas' });
+      const mn = Math.min(...r.results.map(q => q.aic)), ws = r.results.map(q => Math.exp(-(q.aic - mn) / 2)), sw = ws.reduce((x, y) => x + y, 0), wOf = q => ws[r.results.indexOf(q)] / sw;
+      B.push({ t: 'table', head: ['#', 'Distribución', 'k', 'lnL', 'AIC', 'ΔAIC', 'Peso', 'BIC', 'A-D', 'K-S (p)', 'χ² (p)'], align: ['c', 'l', 'c', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r'],
+        rows: sorted.map((q, j) => [j + 1, q.name, q.k, fmt(q.ll), fmt(q.aic), fmt(q.aic - mn), rptPct1(wOf(q)), fmt(q.bic), fmt(q.ad), `${fmt(q.ks)} (${rptPv(q.ksP)})`, Number.isFinite(q.chi2P) ? `${fmt(q.chi2)} (${rptPv(q.chi2P)})` : fmt(q.chi2)]) });
+      B.push({ t: 'label', text: 'Mejor distribución según cada criterio' });
+      B.push({ t: 'table', head: ['Criterio', 'Mejor distribución', 'Valor'], align: ['l', 'l', 'r'], rows: ['aic', 'bic', 'ad', 'ks', 'chi2'].map(c => { const b = bestOf(r, c); return [FIT_CRIT_LABEL[c], b.name, fmt(b[c])]; }) });
+      const I = [], b0 = sorted[0], near = sorted.filter(q => q !== b0 && Math.abs(q.aic - b0.aic) < 2);
+      const byAic = bestOf(r, 'aic'); const agree = ['aic', 'bic', 'ad', 'ks', 'chi2'].filter(c => bestOf(r, c) === byAic).length;
+      I.push(`Según el AIC, el mejor modelo es ${byAic.name} con un peso de Akaike de ${rptPct1(wOf(byAic))}; ${agree === 5 ? 'los cinco criterios coinciden en elegirlo.' : `${agree} de los 5 criterios lo eligen.`}`);
+      I.push(near.length ? `Hay ${near.length} modelo${near.length === 1 ? '' : 's'} con ΔAIC < 2 respecto al mejor (${near.map(q => q.name).join(', ')}): estadísticamente no se distinguen, y la elección puede apoyarse en la teoría o en el uso previsto.` : 'Ningún otro modelo está a menos de 2 puntos de AIC del mejor: la elección es clara según este criterio.');
+      I.push(`Bondad de ajuste de ${b0.name}: K-S ${rptPtxt(b0.ksP, '≈')}${b0.ksP < 0.05 ? ' (se rechaza el ajuste al 5 %)' : ' (no se rechaza el ajuste)'}${Number.isFinite(b0.chi2P) ? `; χ² ${rptPtxt(b0.chi2P, '≈')}${b0.chi2P < 0.05 ? ' (se rechaza al 5 %)' : ' (no se rechaza)'}` : ''}. Los valores p son aproximados porque los parámetros se estimaron con los mismos datos.`);
+      if(r.n < 30) I.push('Con menos de 30 datos el ajuste es poco confiable: varios modelos distintos pueden describir igual de bien una muestra tan pequeña.');
+      B.push({ t: 'label', text: 'Interpretación del ajuste' }); B.push({ t: 'bul', items: I });
+      if(r.skipped && r.skipped.length){ B.push({ t: 'label', text: 'Familias no aplicables a estos datos' }); B.push({ t: 'table', head: ['Distribución', 'Motivo'], align: ['l', 'l'], rows: r.skipped.map(s => [s.name, s.reason]) }); }
+    }
+    rptMethod('fit').forEach(b => B.push(b));
     return { title: o.title || 'Ajuste de distribuciones', sub, blocks: rptCommon(o, B) };
   }
   throw new Error('No hay un análisis para el informe.');
@@ -8049,11 +8334,11 @@ const RW = {
   run(t, o){ o = o || {}; return `<w:r><w:rPr>${o.font ? `<w:rFonts w:ascii="${o.font}" w:hAnsi="${o.font}" w:cs="${o.font}"/>` : ''}${o.b ? '<w:b/>' : ''}${o.i ? '<w:i/>' : ''}${o.color ? `<w:color w:val="${o.color}"/>` : ''}${o.sz ? `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>` : ''}</w:rPr><w:t xml:space="preserve">${RW.esc(t)}</w:t></w:r>`; },
   para(inner, o){ o = o || {}; return `<w:p><w:pPr>${o.style ? `<w:pStyle w:val="${o.style}"/>` : ''}${o.keep ? '<w:keepNext/>' : ''}${o.spacing ? `<w:spacing w:before="${o.spacing[0]}" w:after="${o.spacing[1]}"/>` : ''}${o.jc ? `<w:jc w:val="${o.jc}"/>` : ''}</w:pPr>${inner}</w:p>`; },
   table(head, rows, align, mono, total, firstBold){
-    const nc = (head || rows[0]).length, text = r => r.map(c => String(c == null ? '' : c).length);
-    const wts = Array.from({ length: nc }, (_, i) => Math.max(6, Math.min(40, Math.max(head ? String(head[i]).length : 0, ...rows.map(r => String(r[i] == null ? '' : r[i]).length)))));
+    const nc = (head || rows[0]).length, tx = c => (c && typeof c === 'object' ? c.v : c);
+    const wts = Array.from({ length: nc }, (_, i) => Math.max(6, Math.min(40, Math.max(head ? String(head[i]).length : 0, ...rows.map(r => String(tx(r[i]) == null ? '' : tx(r[i])).length)))));
     const sum = wts.reduce((a, b) => a + b, 0), ws = wts.map(w => Math.max(700, Math.round(total * w / sum)));
     const fix = total / ws.reduce((a, b) => a + b, 0), w2 = ws.map(w => Math.round(w * fix));
-    const cell = (t, i, o) => `<w:tc><w:tcPr><w:tcW w:w="${w2[i]}" w:type="dxa"/>${o.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>` : ''}<w:vAlign w:val="center"/></w:tcPr>${RW.para(RW.run(String(t == null ? '' : t), { b: o.b, color: o.color, sz: 18, font: mono && !o.head ? 'Consolas' : null }), { jc: (align && align[i] === 'r') ? 'right' : ((align && align[i] === 'c') ? 'center' : 'left'), spacing: [30, 30] })}</w:tc>`;
+    const cell = (t0, i, o) => { const t = tx(t0), cf = (t0 && typeof t0 === 'object' && t0.fill) ? t0.fill.replace('#', '').toUpperCase() : o.fill; return `<w:tc><w:tcPr><w:tcW w:w="${w2[i]}" w:type="dxa"/>${cf ? `<w:shd w:val="clear" w:color="auto" w:fill="${cf}"/>` : ''}<w:vAlign w:val="center"/></w:tcPr>${RW.para(RW.run(String(t == null ? '' : t), { b: o.b, color: o.color, sz: 18, font: mono && !o.head ? 'Consolas' : null }), { jc: (align && align[i] === 'r') ? 'right' : ((align && align[i] === 'c') ? 'center' : 'left'), spacing: [30, 30] })}</w:tc>`; };
     const bd = '<w:tblBorders><w:top w:val="single" w:sz="4" w:color="D9DEE5"/><w:left w:val="single" w:sz="4" w:color="D9DEE5"/><w:bottom w:val="single" w:sz="4" w:color="D9DEE5"/><w:right w:val="single" w:sz="4" w:color="D9DEE5"/><w:insideH w:val="single" w:sz="4" w:color="D9DEE5"/><w:insideV w:val="single" w:sz="4" w:color="D9DEE5"/></w:tblBorders>';
     let x = `<w:tbl><w:tblPr><w:tblW w:w="${total}" w:type="dxa"/>${bd}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${w2.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>`;
     if(head) x += `<w:tr><w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>${head.map((h, i) => cell(h, i, { fill: '1F2631', color: 'FFFFFF', b: true, head: true })).join('')}</w:tr>`;
@@ -8136,17 +8421,17 @@ class RptPdf {
     g.strokeStyle = RC.accent; g.lineWidth = 4; g.beginPath(); g.moveTo(x, y); g.lineTo(x + this.cw, y); g.stroke();
     this.y = y + 34;
   }
-  h1(t){ this.ensure(150); const g = this.g; this.y += 22; g.fillStyle = '#1F2631'; g.font = '700 33px "Space Grotesk", sans-serif'; g.textBaseline = 'alphabetic'; g.fillText(t, this.mx, this.y + 30); g.strokeStyle = RC.accent; g.lineWidth = 3; g.beginPath(); g.moveTo(this.mx, this.y + 46); g.lineTo(this.mx + this.cw, this.y + 46); g.stroke(); this.y += 74; }
-  h2(t){ this.ensure(120); const g = this.g; this.y += 10; g.fillStyle = RC.teal; g.font = '700 25px "Space Grotesk", sans-serif'; g.textBaseline = 'alphabetic'; g.fillText(t, this.mx, this.y + 24); this.y += 46; }
+  h1(t){ this.ensure(300); const g = this.g; this.y += 22; g.fillStyle = '#1F2631'; g.font = '700 33px "Space Grotesk", sans-serif'; g.textBaseline = 'alphabetic'; g.fillText(t, this.mx, this.y + 30); g.strokeStyle = RC.accent; g.lineWidth = 3; g.beginPath(); g.moveTo(this.mx, this.y + 46); g.lineTo(this.mx + this.cw, this.y + 46); g.stroke(); this.y += 74; }
+  h2(t){ this.ensure(250); const g = this.g; this.y += 10; g.fillStyle = RC.teal; g.font = '700 25px "Space Grotesk", sans-serif'; g.textBaseline = 'alphabetic'; g.fillText(t, this.mx, this.y + 24); this.y += 46; }
   p(t, o){ o = o || {}; const font = o.font || '400 22px Inter, sans-serif', lh = o.lh || 32; const lines = this.wrap(t, font, this.cw - (o.indent || 0));
     lines.forEach(l => { this.ensure(lh); const g = this.g; g.font = font; g.fillStyle = o.color || '#232c3a'; g.textBaseline = 'alphabetic'; g.fillText(l, this.mx + (o.indent || 0), this.y + 24); this.y += lh; }); this.y += o.after == null ? 10 : o.after; }
   note(t){ this.p(t, { font: 'italic 400 18px Inter, sans-serif', color: '#7b8798', lh: 26, after: 12 }); }
-  label(t){ this.ensure(110); this.y += 6; this.p(t, { font: '700 19px Inter, sans-serif', color: '#6b7789', lh: 28, after: 4 }); }
+  label(t){ this.ensure(230); this.y += 6; this.p(t, { font: '700 19px Inter, sans-serif', color: '#6b7789', lh: 28, after: 4 }); }
   bullets(items){ items.forEach(it => { const lines = this.wrap(it, '400 22px Inter, sans-serif', this.cw - 36); lines.forEach((l, i) => { this.ensure(32); const g = this.g; g.font = '400 22px Inter, sans-serif'; g.fillStyle = '#232c3a'; g.textBaseline = 'alphabetic'; if(i === 0){ g.fillStyle = RC.accent; g.fillText('•', this.mx + 6, this.y + 24); g.fillStyle = '#232c3a'; } g.fillText(l, this.mx + 36, this.y + 24); this.y += 32; }); this.y += 6; }); this.y += 6; }
   table(head, rows, align, mono, firstBold){
-    const cw = this.cw, pad = 12, nc = (head || rows[0]).length, gm = this.g;      // gm solo se usa para medir texto
-    const fB = '700 19px Inter, sans-serif', fC = mono ? '500 17px "JetBrains Mono", monospace' : '400 19px Inter, sans-serif', fF = '700 19px Inter, sans-serif';
-    const nat = Array.from({ length: nc }, (_, i) => { let w = 0; if(head){ gm.font = fB; w = gm.measureText(String(head[i])).width; } rows.forEach(r => { gm.font = (firstBold && i === 0) ? fF : fC; w = Math.max(w, Math.min(gm.measureText(String(r[i] == null ? '' : r[i])).width, 700)); }); return w + 2 * pad; });
+    const cw = this.cw, nc = (head || rows[0]).length, pad = nc >= 8 ? 8 : 12, gm = this.g;      // gm solo se usa para medir texto
+    const dense = nc >= 8, fs = dense ? 16 : 19, fB = `700 ${fs}px Inter, sans-serif`, fC = mono ? `500 ${dense ? 15 : 17}px "JetBrains Mono", monospace` : `400 ${fs}px Inter, sans-serif`, fF = `700 ${fs}px Inter, sans-serif`;
+    const nat = Array.from({ length: nc }, (_, i) => { let w = 0; if(head){ gm.font = fB; w = gm.measureText(String(head[i])).width; } rows.forEach(r => { const v = r[i] && typeof r[i] === 'object' ? r[i].v : r[i]; gm.font = (firstBold && i === 0) ? fF : fC; w = Math.max(w, Math.min(gm.measureText(String(v == null ? '' : v)).width, 700)); }); return w + 2 * pad; });
     const tot = nat.reduce((a, b) => a + b, 0); let widths;
     if(tot <= cw) widths = nat.map(w => w * cw / tot);
     else { const mins = nat.map(w => Math.min(w, 120)), left = cw - mins.reduce((a, b) => a + b, 0), extra = nat.map((w, i) => w - mins[i]), se = extra.reduce((a, b) => a + b, 0) || 1; widths = mins.map((m, i) => m + left * extra[i] / se); }
@@ -8158,15 +8443,21 @@ class RptPdf {
     const paint = (row, x0) => {
       const g = this.g; let x = x0 == null ? this.mx : x0; const y = this.y;
       if(row.fill){ g.fillStyle = row.fill; g.fillRect(this.mx, y, cw, row.rh); }
+      if(row.cellFills){ let cx = this.mx; row.cellFills.forEach((cf, i) => { if(cf){ g.fillStyle = cf; g.fillRect(cx, y, widths[i], row.rh); } cx += widths[i]; }); }
       row.cl.forEach((lines, i) => { g.font = (row.boldFirst && i === 0) ? fF : row.font; g.fillStyle = row.color; g.textBaseline = 'alphabetic';
         lines.forEach((l, k) => { const tw = g.measureText(l).width, a = align && align[i]; const px = a === 'r' ? x + widths[i] - pad - tw : (a === 'c' ? x + (widths[i] - tw) / 2 : x + pad); g.fillText(l, px, y + 9 + lh * (k + 1) - 6); }); x += widths[i]; });
       g.strokeStyle = '#e3e8ef'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(this.mx, y + row.rh); g.lineTo(this.mx + cw, y + row.rh); g.stroke();
       this.y += row.rh;
     };
     const hdr = head ? draw(head.map(String), '#1F2631', fB, '#ffffff', false) : null;
+    /* una tabla que cabe en menos de dos tercios de página se mueve completa a la siguiente si no entra */
+    const pre = rows.map(r => draw(r.map(c => { const v = c && typeof c === 'object' ? c.v : c; return String(v == null ? '' : v); }), null, fC, '#232c3a', !!firstBold).rh);
+    const totalH = (hdr ? hdr.rh : 0) + pre.reduce((a, b) => a + b, 0), usable = this.H - this.top - this.bottom;
+    if(totalH <= usable * 0.66 && this.y + totalH > this.H - this.bottom) this.newPage();
     this.ensure((hdr ? hdr.rh : 0) + 60); if(hdr) paint(hdr);
     rows.forEach((r, k) => {
-      const row = draw(r.map(c => String(c == null ? '' : c)), (firstBold) ? (k % 2 ? '#F6F8FB' : '#ffffff') : (k % 2 ? '#F6F8FB' : '#ffffff'), fC, '#232c3a', !!firstBold);
+      const row = draw(r.map(c => { const v = c && typeof c === 'object' ? c.v : c; return String(v == null ? '' : v); }), (k % 2 ? '#F6F8FB' : '#ffffff'), fC, '#232c3a', !!firstBold);
+      row.cellFills = r.map(c => (c && typeof c === 'object' ? c.fill : null));
       if(this.ensure(row.rh) && hdr) paint(hdr);
       if(firstBold){ const gx = this.mx; this.g.fillStyle = '#EEF1F6'; this.g.fillRect(gx, this.y, widths[0], row.rh); }
       paint(row);
@@ -8270,7 +8561,7 @@ async function rptGenerate(fmtKind){
   try{
     Persist.set('mcl_rpt_author', o.author);
     msg.textContent = 'Armando el informe…'; await runYield();
-    const rep = rptBuild(RPT.kind, o);
+    const rep = await rptBuild(RPT.kind, o, m => { msg.textContent = m; });
     msg.textContent = fmtKind === 'pdf' ? 'Dibujando las páginas del PDF…' : 'Armando el documento de Word…'; await runYield();
     const blob = fmtKind === 'pdf' ? await rptPdf(rep, o.author) : await rptDocx(rep, o.author);
     const base = (rep.title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '') || 'informe').slice(0, 60), w = new Date();
