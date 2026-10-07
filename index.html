@@ -8462,6 +8462,7 @@ async function rptBuild(kind, o, prog){
     rptVarBlocks(AR, f, o, { name: 'Los residuos', risk: false, precision: false }).forEach(b => B.push(b));
     B.push({ t: 'kv', rows: [['Prueba de Ljung–Box', `Q = ${f(r.lb.Q)} con ${r.lb.df} grados de libertad (${r.lb.L} rezagos)`], ['Resultado', `${rptPtxt(r.lb.p)}: ${r.lb.p < 0.05 ? 'hay autocorrelación en los residuos' : 'no hay evidencia de autocorrelación'}`]] });
     if(o.charts){ B.push({ t: 'img', canvas: rptFCRes(r), caption: 'Figura 2. Residuos de un paso adelante.' }); B.push({ t: 'img', canvas: rptFCAcf(r), caption: 'Figura 3. Autocorrelación de los residuos.' }); }
+    { const rd = fcRobData(r); B.push({ t: 'h1', text: 'Análisis de robustez' }); B.push({ t: 'bul', items: rd.bul }); rd.T.forEach(t => { B.push({ t: 'label', text: t.title }); B.push({ t: 'table', head: t.head, rows: t.rows, align: t.align }); }); }
     B.push({ t: 'h1', text: 'Comparación de métodos' });
     B.push({ t: 'p', text: `Los cuatro métodos con parámetros optimizados, evaluados con ${r.cmpBasis}.` });
     B.push({ t: 'table', head: ['Método', 'Parámetros', 'RMSE', 'MAE', 'MAPE', 'Sesgo'], align: ['l', 'l', 'r', 'r', 'r', 'r'], rows: r.cmp.map(c => [FC.names[c.m2] + (c === best ? ' ★' : ''), fcParamText(c.m2, c.p, r.st.m, r.st.mult), c.met ? f(c.met.rmse) : '—', c.met ? f(c.met.mae) : '—', c.met ? fcPct(c.met.mape) : '—', c.met ? f(c.met.bias) : '—']) });
@@ -9241,7 +9242,7 @@ XL.buildFC = async r => {
   ['Método', 'RMSE', 'Error medio abs.', 'MAPE', 'Sesgo'].forEach((h, c) => AN.set(c, ar, h, 2)); ar++;
   r.cmp.forEach(c => { AN.set(0, ar, FC.names[c.m2], 3); if(c.met){ AN.set(1, ar, c.met.rmse, 4); AN.set(2, ar, c.met.mae, 4); AN.set(3, ar, c.met.mape, 5); AN.set(4, ar, c.met.bias, 4); } ar++; });
   /* ---- Resumen ---- */
-  const RS = new XL.Sheet(SR); RS.widths = [40, 20, 20, 20]; let rr = 0;
+  const RS = new XL.Sheet(SR); RS.widths = [40, 27, 27, 22]; let rr = 0;
   RS.set(0, rr++, 'Monte Carlo Lab — Previsión de series de tiempo', 1);
   RS.set(0, rr++, `${r.name} · ${FC.names[mth]} · ${rptDate(r.when)}`, 7); rr++;
   rr = XL.band(RS, rr, 'DATOS Y CONFIGURACIÓN', 4);
@@ -9260,7 +9261,7 @@ XL.buildFC = async r => {
   for(let j = 0; j < H; j++, rr++){ const row = FIRST + n + j + 1; RS.set(0, rr, lab(n + j), 9); RS.setF(1, rr, `${qa}!${A.L('fut')}${row}`, r.point[j], 4); RS.set(2, rr, r.p5[j], 4); RS.set(3, rr, r.p95[j], 4); }
   rr++;
   ['La banda P5–P95 sale de 3.000 trayectorias simuladas que remuestrean los residuos; es un valor fijo (no se recalcula en Excel).',
-   'Para volver a optimizar los parámetros: Datos → Solver; celda objetivo = RMSE de entrenamiento (celda B' + (rr - H - 12 > 0 ? '' : '') + 'de esta hoja, fila «RMSE»), Mín.; cambiando las celdas azules de la hoja Ajuste; restricciones: 0 ≤ parámetro ≤ 1.',
+   'Para volver a optimizar los parámetros: Datos → Solver; celda objetivo = el RMSE de entrenamiento de la tabla «Medidas de error» de esta hoja, mínimo; cambiando las celdas azules de parámetros de la hoja Ajuste; restricciones: cada parámetro entre 0 y 1.',
    'El ciclo estacional (Winters) y la extensión del promedio móvil usados en el análisis de residuos corresponden a los valores exportados.'].forEach(t => RS.set(0, rr++, t, 7));
   /* ---- gráficas ---- */
   const xr = `${qa}!$A$${FIRST + 1}:$A$${FIRST + n + H}`, yr = k => `${qa}!$${A.L(k)}$${FIRST + 1}:$${A.L(k)}$${FIRST + n + H}`, nm = c => `${qa}!$${c}$13`;
