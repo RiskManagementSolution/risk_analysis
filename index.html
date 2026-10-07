@@ -294,6 +294,8 @@
     font-family:var(--font-display); font-weight:600; font-size:12.5px;}
   .chip:active{border-color:var(--accent); color:var(--accent);}
   .chip.accent{border-color:var(--accent-2); color:var(--accent-2);}
+  .cmp-table tr.cur td, .cmp-table tr.cur td:first-child{background:color-mix(in srgb, var(--accent-2) 12%, var(--surface));}
+  .chip.sel{background:var(--accent-2); border-color:var(--accent-2); color:var(--on-accent-2);}
   .data-info{font-size:12px; color:var(--text-faint); margin-top:10px; line-height:1.5; min-height:18px;}
   .data-info.err{color:var(--err);}
   .hint-line{font-size:11.5px; color:var(--text-faint); line-height:1.5; margin:8px 2px 12px;}
@@ -468,6 +470,8 @@
     transition:all .15s;
   }
   .segmented button.active{background:var(--accent-2); color:var(--on-accent-2);}
+  .crit-group-label{font-family:var(--font-mono); font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-faint); margin:10px 2px 6px;}
+  .crit-group-label:first-child{margin-top:0;}
   #mdlMode button{font-size:11px; padding:9px 2px; letter-spacing:-0.02em; white-space:nowrap;}
 
   /* Run button */
@@ -839,7 +843,7 @@
   <button type="button" data-m="ts">Series de tiempo</button>
 </div>
 <div id="fitDist">
-<p class="view-intro">Pega tus datos históricos (uno por línea o copiados desde Excel). La app prueba 15 distribuciones, las ordena según qué tan bien se ajustan y te deja usar la mejor en el simulador.</p>
+<p class="view-intro">Pega tus datos históricos (uno por línea o copiados desde Excel) o carga un archivo. Si trae varias columnas con títulos, elige la variable que quieres analizar. La app prueba 15 distribuciones, las ordena según qué tan bien se ajustan y te deja usar la mejor en el simulador.</p>
 <div class="section-label"><span class="n">01</span> Tus datos</div>
 <div class="card">
   <textarea id="fitData" class="data-area" rows="6" placeholder="Pega aquí tus datos…&#10;12,5&#10;13,1&#10;9,8" spellcheck="false" autocomplete="off"></textarea>
@@ -850,22 +854,49 @@
     <input type="file" id="fitFileInput" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden>
   </div>
   <div class="data-info" id="fitInfo"></div>
+  <div id="fitVars" style="display:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:12px; margin-bottom:6px;">
+      <div class="crit-group-label" style="margin:0;">Variables a analizar</div>
+      <div style="display:flex; gap:6px;">
+        <button type="button" class="chip accent" id="fitVarAll" style="padding:4px 10px; font-size:11.5px;">Todas</button>
+        <button type="button" class="chip" id="fitVarNone" style="padding:4px 10px; font-size:11.5px;">Ninguna</button>
+      </div>
+    </div>
+    <div class="data-tools" id="fitVarList" style="margin-top:0;"></div>
+  </div>
 </div>
 <div class="section-label"><span class="n">02</span> Ordenar por</div>
-<div class="segmented" id="fitCrit">
-  <button type="button" data-c="aic" class="active">AIC</button>
-  <button type="button" data-c="bic">BIC</button>
-  <button type="button" data-c="ad">A-D</button>
-  <button type="button" data-c="ks">K-S</button>
+<div id="fitCrit">
+  <div class="crit-group-label">Criterios de información</div>
+  <div class="segmented">
+    <button type="button" data-c="aic" class="active">AIC</button>
+    <button type="button" data-c="bic">BIC</button>
+  </div>
+  <div class="crit-group-label">Pruebas de bondad de ajuste</div>
+  <div class="segmented">
+    <button type="button" data-c="ad">A-D</button>
+    <button type="button" data-c="ks">K-S</button>
+    <button type="button" data-c="chi2">χ²</button>
+  </div>
 </div>
 <div class="hint-line" id="fitCritHelp"></div>
 <button type="button" class="run-btn" id="fitRunBtn">Ajustar distribuciones →</button>
 <div id="fitOut" style="display:none;">
-  <div class="section-label"><span class="n">03</span> Resultado</div>
+  <div class="section-label"><span class="n">03</span> Resultado<span id="fitResVar" style="text-transform:none; letter-spacing:0; color:var(--text-dim);"></span></div>
+  <div id="fitMulti" style="display:none;">
+    <div class="crit-group-label">Variable que estás viendo</div>
+    <div class="data-tools" id="fitVarTabs" style="margin:0 0 12px;"></div>
+    <div class="card" style="padding:6px 0; margin-bottom:12px;"><div class="cmp-scroll"><table class="cmp-table" id="fitSummary"></table></div></div>
+  </div>
+  <div class="action-row" style="margin:0 0 6px;">
+    <button type="button" class="action-btn" id="fitExport"><span>Exportar a Excel (@RISK)</span></button>
+    <button type="button" class="action-btn" id="fitToModel"><span>Enviar al modelo libre</span></button>
+  </div>
+  <div class="hint-line" id="fitActHint" style="margin-top:0;"></div>
   <div class="stat-grid" id="fitStats"></div>
   <div class="card" style="margin-top:12px;">
-    <div class="chart-title">Datos y mejores ajustes</div>
-    <div class="chart-sub">Barras: tus datos. Líneas: distribuciones ajustadas. Toca una de la lista para mostrarla u ocultarla.</div>
+    <div class="chart-title">Datos y mejor ajuste</div>
+    <div class="chart-sub">Barras: tus datos. Línea: la distribución con mejor ajuste. Toca otras de la lista para compararlas (hasta 5).</div>
     <canvas id="fitCanvas" height="240" style="width:100%; display:block;"></canvas>
     <div class="legend" id="fitLegend"></div>
   </div>
@@ -4067,6 +4098,46 @@ FIT.parse = text => {
   return { values, ignored };
 };
 
+/* ---- tablas con varias columnas (CSV, TSV, pegado desde Excel) ---- */
+FIT.parseTable = text => {
+  const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if(lines.length < 2) return null;
+  const unq = c => c.trim().replace(/^["']|["']$/g, '').trim();
+  const numTok = c => isFinite(FIT.parseNumber(c));
+  let delim = null;
+  if(lines.some(l => l.includes('\t'))) delim = '\t';
+  else if(lines.some(l => l.includes(';'))) delim = ';';
+  else {
+    const first = lines[0].split(',').map(unq);
+    const hasHeader = first.length >= 2 && first.every(c => c !== '' && !numTok(c));
+    const dotDec = lines.slice(0, 20).some(l => /\d\.\d/.test(l) && l.includes(','));
+    if(hasHeader || (first.length >= 2 && dotDec && lines.every(l => l.split(',').length === first.length))) delim = ',';
+    else { const w = lines.map(l => l.split(/\s+/).length); if(w[0] >= 2 && w.every(x => x === w[0])) delim = 'ws'; }
+  }
+  if(!delim){
+    /* una sola columna con título: «Ventas» y debajo los datos */
+    const h = unq(lines[0]);
+    if(h && !numTok(h) && lines.slice(1).every(l => numTok(unq(l)))) return { cols: [{ name: h, values: lines.slice(1).map(l => FIT.parseNumber(unq(l))), ignored: 0 }], skipped: [], rows: lines.length - 1, header: true };
+    return null;
+  }
+  const split = l => (delim === 'ws' ? l.split(/\s+/) : l.split(delim));
+  const rows = lines.map(l => split(l).map(unq));
+  let width = 0; rows.forEach(r => { if(r.length > width) width = r.length; });
+  if(width < 2) return null;
+  const head = rows[0].some(c => c !== '') && rows[0].every(c => c === '' || !numTok(c));
+  const dataRows = head ? rows.slice(1) : rows;
+  const cols = [], skipped = [];
+  for(let j = 0; j < width; j++){
+    const name = (head && rows[0][j]) ? rows[0][j] : `Columna ${j + 1}`;
+    const values = []; let bad = 0;
+    dataRows.forEach(r => { const c = r[j]; if(c === undefined || c === '') return; const v = FIT.parseNumber(c); if(isFinite(v)) values.push(v); else bad++; });
+    if(values.length && values.length >= bad) cols.push({ name, values, ignored: bad });
+    else if(values.length + bad > 0) skipped.push(name);
+  }
+  if(!cols.length || (cols.length === 1 && !head)) return null;
+  return { cols, skipped, rows: dataRows.length, header: head };
+};
+
 /* ---- utilidades ---- */
 const _sum = (a, f) => { let s = 0; for(let i = 0; i < a.length; i++) s += f(a[i], i); return s; };
 const _softplus = x => x > 30 ? x : (x < -30 ? Math.exp(x) : Math.log1p(Math.exp(x)));
@@ -4240,7 +4311,13 @@ FIT.gof = (xs, m) => {
   }
   for(let i = 0; i < n; i++) ad += (2 * i + 1) * (Math.log(F[i]) + Math.log(1 - F[n - 1 - i]));
   ad = -n - ad / n;
-  return { ll, ks, ad };
+  /* chi-cuadrado: tramos de igual probabilidad bajo el modelo (esperado = n / tramos en cada uno) */
+  const bins = Math.max(4, Math.min(30, Math.floor(n / 5))), obs = new Array(bins).fill(0), exp = n / bins;
+  for(let i = 0; i < n; i++) obs[Math.min(bins - 1, Math.floor(F[i] * bins))]++;
+  let chi2 = 0; for(let j = 0; j < bins; j++) chi2 += (obs[j] - exp) * (obs[j] - exp) / exp;
+  const chi2df = bins - 1 - m.k;
+  const chi2P = chi2df >= 1 ? Math.min(1, Math.max(0, 1 - SP.gammaP(chi2df / 2, chi2 / 2))) : NaN;
+  return { ll, ks, ad, chi2, chi2df, chi2P, bins };
 };
 FIT.ksPValue = (D, n) => {                // aproximación asintótica (orientativa: los parámetros se estimaron con los mismos datos)
   const t = (Math.sqrt(n) + 0.12 + 0.11 / Math.sqrt(n)) * D;
@@ -4268,8 +4345,8 @@ FIT.run = values => {
       const g = FIT.gof(xs, m);
       if(!g) throw new Error('la densidad es nula en algún dato');
       const aic = 2 * m.k - 2 * g.ll, bic = m.k * Math.log(n) - 2 * g.ll;
-      if(![aic, bic, g.ad, g.ks].every(isFinite)) throw new Error('no se pudo evaluar');
-      results.push({ key: fam.key, name: fam.name, params: m.params, k: m.k, ll: g.ll, aic, bic, ad: g.ad, ks: g.ks, ksP: FIT.ksPValue(g.ks, n), model: m });
+      if(![aic, bic, g.ad, g.ks, g.chi2].every(isFinite)) throw new Error('no se pudo evaluar');
+      results.push({ key: fam.key, name: fam.name, params: m.params, k: m.k, ll: g.ll, aic, bic, ad: g.ad, ks: g.ks, ksP: FIT.ksPValue(g.ks, n), chi2: g.chi2, chi2df: g.chi2df, chi2P: g.chi2P, bins: g.bins, model: m });
     } catch(e){ skipped.push({ key: fam.key, name: fam.name, reason: e.message }); }
   }
   return { n, mean, sd, min, max, xs: d.xs, results, skipped };
@@ -4277,40 +4354,77 @@ FIT.run = values => {
 FIT.sortBy = (results, crit) => results.slice().sort((a, b) => a[crit] - b[crit]);
 
 /* ---- Interfaz de la vista «Ajuste» ---- */
-const FITUI = { res: null, crit: 'aic', visible: new Set(), sorted: [] };
+const FITUI = { res: null, crit: 'aic', visible: new Set(), sorted: [], table: null, sel: new Set([0]), sig: '', all: [] };
 const FIT_COLORS = ['#43C6B0', '#FF7A50', '#A78BFA', '#F5C451', '#5AA9FF'];
 const FIT_CRIT_HELP = {
   aic: 'AIC: equilibra ajuste y simplicidad. Es el criterio más usado para comparar distribuciones.',
   bic: 'BIC: parecido al AIC, pero penaliza más a las distribuciones con más parámetros.',
   ad: 'Anderson-Darling: mide el ajuste dando más peso a las colas de la distribución.',
-  ks: 'Kolmogorov-Smirnov: la mayor distancia entre la curva acumulada de los datos y la del modelo.'
+  ks: 'Kolmogorov-Smirnov: la mayor distancia entre la curva acumulada de los datos y la del modelo.',
+  chi2: 'χ² (chi-cuadrado): reparte los datos en tramos de igual probabilidad según cada modelo y compara cuántos caen en cada uno con los que el modelo esperaría. Menor es mejor.'
 };
 const PSHORT = { mean: 'media', sd: 'desv.', shape: 'forma', scale: 'escala', min: 'mín', max: 'máx', mode: 'moda', alpha: 'α', beta: 'β', loc: 'ubic.', x0: 'x₀', gamma: 'γ' };
 const sig4 = v => String(+Number(v).toPrecision(4)).replace('.', ',');
 const paramText = (key, p) => Object.keys(p).map(k => `${PSHORT[k] || k} = ${sig4(p[k])}`).join(' · ');
 
 function fitInfo(msg, isErr){ const el = $('fitInfo'); el.textContent = msg; el.classList.toggle('err', !!isErr); }
+function fitRunLabel(){ const k = FITUI.table ? FITUI.sel.size : 1; return k > 1 ? `Ajustar ${k} variables →` : 'Ajustar distribuciones →'; }
+function fitVarsRender(){
+  const tb = FITUI.table, box = $('fitVars');
+  if(!tb || tb.cols.length < 2){ box.style.display = 'none'; $('fitVarList').innerHTML = ''; if(!$('fitRunBtn').disabled) $('fitRunBtn').textContent = fitRunLabel(); return; }
+  box.style.display = '';
+  const list = $('fitVarList'); list.innerHTML = '';
+  tb.cols.forEach((c, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (FITUI.sel.has(i) ? ' sel' : '');
+    b.textContent = `${c.name} (${c.values.length.toLocaleString('es-ES')})`;
+    b.onclick = () => { if(FITUI.sel.has(i)) FITUI.sel.delete(i); else FITUI.sel.add(i); fitParseNow(); };
+    list.appendChild(b);
+  });
+  if(!$('fitRunBtn').disabled) $('fitRunBtn').textContent = fitRunLabel();
+}
 function fitParseNow(){
-  const { values, ignored } = FIT.parse($('fitData').value);
-  if(!$('fitData').value.trim()){ fitInfo(''); return values; }
+  const txt = $('fitData').value;
+  if(!txt.trim()){ fitInfo(''); FITUI.table = null; fitVarsRender(); return []; }
+  const tb = FIT.parseTable(txt);
+  FITUI.table = tb;
+  if(tb){
+    const k = tb.cols.length, sig = k + '|' + tb.cols.map(c => c.name).join('\u0001');
+    if(FITUI.sig !== sig){ FITUI.sig = sig; FITUI.sel = new Set([0]); }
+    FITUI.sel = new Set([...FITUI.sel].filter(i => i < k));
+    if(k === 1) FITUI.sel = new Set([0]);
+    const chosen = [...FITUI.sel].sort((a, b) => a - b).map(i => tb.cols[i]);
+    let m = (k > 1 ? `Se detectaron ${k} variables en ${tb.rows.toLocaleString('es-ES')} filas. ` : '');
+    if(!chosen.length) m += 'Elige al menos una variable.';
+    else if(chosen.length === 1){ const c = chosen[0]; m += `Analizando «${c.name}»: ${c.values.length.toLocaleString('es-ES')} datos válidos` + (c.ignored ? ` · ${c.ignored} valores ignorados (no son números)` : '') + '.'; }
+    else m += `Seleccionadas ${chosen.length}: ` + chosen.map(c => `«${c.name}» (${c.values.length.toLocaleString('es-ES')})`).join(', ') + '.';
+    if(tb.skipped.length) m += ` Columnas no numéricas omitidas: ${tb.skipped.join(', ')}.`;
+    if(chosen.some(c => c.values.length >= 5 && c.values.length < 30)) m += ' Con menos de 30 datos el ajuste es poco confiable.';
+    fitInfo(m, !chosen.length || chosen.every(c => c.values.length < 5)); fitVarsRender();
+    return chosen.length ? chosen[0].values : [];
+  }
+  FITUI.sig = '';
+  const { values, ignored } = FIT.parse(txt);
   let m = `Se leyeron ${values.length.toLocaleString('es-ES')} datos válidos` + (ignored ? ` · ${ignored} valores ignorados (no son números)` : '') + '.';
   if(values.length >= 5 && values.length < 30) m += ' Con menos de 30 datos el ajuste es poco confiable.';
-  fitInfo(m, values.length < 5);
+  fitInfo(m, values.length < 5); fitVarsRender();
   return values;
 }
 $('fitData').addEventListener('input', () => { clearTimeout(FITUI.t); FITUI.t = setTimeout(fitParseNow, 200); });
-$('fitClearBtn').onclick = () => { $('fitData').value = ''; fitInfo(''); $('fitOut').style.display = 'none'; FITUI.res = null; };
+$('fitClearBtn').onclick = () => { $('fitData').value = ''; FITUI.sel = new Set([0]); FITUI.sig = ''; FITUI.table = null; fitInfo(''); fitVarsRender(); $('fitOut').style.display = 'none'; FITUI.res = null; FITUI.all = []; };
 $('fitSampleBtn').onclick = () => {
+  FITUI.sel = new Set([0]); FITUI.sig = '';
   const smp = DISTS.weibull.makeSampler ? DISTS.weibull.makeSampler({ shape: 2.5, scale: 40 }) : (() => DISTS.weibull.sample({ shape: 2.5, scale: 40 }));
   $('fitData').value = Array.from({ length: 150 }, () => smp().toFixed(1).replace('.', ',')).join('\n');
   fitParseNow();
   fitInfo($('fitInfo').textContent + ' Ejemplo generado con una Weibull (forma 2,5; escala 40): ¿la reconoce el ajuste?');
 };
 $('fitFileBtn').onclick = () => $('fitFileInput').click();
+$('fitVarAll').onclick = () => { if(FITUI.table) FITUI.sel = new Set(FITUI.table.cols.map((_, i) => i)); fitParseNow(); };
+$('fitVarNone').onclick = () => { FITUI.sel = new Set(); fitParseNow(); };
 $('fitFileInput').onchange = e => {
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = () => { $('fitData').value = String(r.result); fitParseNow(); };
+  r.onload = () => { $('fitData').value = String(r.result); FITUI.sel = new Set([0]); FITUI.sig = ''; fitParseNow(); };
   r.readAsText(f); e.target.value = '';
 };
 $('fitCritHelp').textContent = FIT_CRIT_HELP.aic;
@@ -4318,29 +4432,95 @@ document.querySelectorAll('#fitCrit button').forEach(b => {
   b.onclick = () => {
     document.querySelectorAll('#fitCrit button').forEach(x => x.classList.remove('active')); b.classList.add('active');
     FITUI.crit = b.dataset.c; $('fitCritHelp').textContent = FIT_CRIT_HELP[FITUI.crit];
-    if(FITUI.res) fitRender(true);
+    if(FITUI.res) fitRender(false);
   };
 });
 
-$('fitRunBtn').onclick = () => {
+async function fitRunNow(scroll){
   clearTimeout(FITUI.t);
-  const values = fitParseNow(), btn = $('fitRunBtn');
-  btn.disabled = true; btn.textContent = 'Ajustando…';
-  setTimeout(() => {
-    try{
-      FITUI.res = FIT.run(values);
-      fitRender(false);
-      $('fitOut').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch(e){ fitInfo(e.message, true); $('fitOut').style.display = 'none'; FITUI.res = null; }
-    btn.disabled = false; btn.textContent = 'Ajustar distribuciones →';
-  }, 30);
+  const first = fitParseNow(), btn = $('fitRunBtn'), tb = FITUI.table;
+  const jobs = tb ? [...FITUI.sel].sort((a, b) => a - b).map(i => ({ name: tb.cols[i].name, values: tb.cols[i].values, idx: i })) : [{ name: '', values: first, idx: 0 }];
+  if(!jobs.length){ fitInfo('Elige al menos una variable para ajustar.', true); return; }
+  btn.disabled = true;
+  const all = [], errors = [];
+  for(let j = 0; j < jobs.length; j++){
+    btn.textContent = jobs.length > 1 ? `Ajustando ${j + 1}/${jobs.length}…` : 'Ajustando…';
+    await new Promise(r => setTimeout(r, 30));
+    try{ const r = FIT.run(jobs[j].values); r.varName = jobs[j].name; r.varIdx = jobs[j].idx; r.raw = jobs[j].values.slice(); all.push(r); }
+    catch(e){ errors.push(jobs[j].name ? `«${jobs[j].name}»: ${e.message}` : e.message); }
+  }
+  btn.disabled = false; btn.textContent = fitRunLabel();
+  if(!all.length){ fitInfo(errors.join(' · '), true); $('fitOut').style.display = 'none'; FITUI.res = null; FITUI.all = []; return; }
+  if(errors.length) fitInfo($('fitInfo').textContent + ' No se pudo ajustar ' + errors.join(' · '), true);
+  FITUI.all = all; FITUI.res = all[0];
+  fitRender(false);
+  if(scroll) $('fitOut').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('fitRunBtn').onclick = () => fitRunNow(true);
+
+const FIT_CRIT_LABEL = { aic: 'AIC', bic: 'BIC', ad: 'A-D', ks: 'K-S', chi2: 'χ²' };
+function fitMultiRender(){
+  const all = FITUI.all || [], box = $('fitMulti');
+  if(all.length < 2){ box.style.display = 'none'; return; }
+  box.style.display = '';
+  const tabs = $('fitVarTabs'); tabs.innerHTML = '';
+  all.forEach(r => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (r === FITUI.res ? ' sel' : ''); b.textContent = r.varName;
+    b.onclick = () => { FITUI.res = r; fitRender(false); };
+    tabs.appendChild(b);
+  });
+  const crit = FITUI.crit, lab = FIT_CRIT_LABEL[crit] || crit;
+  $('fitSummary').innerHTML = `<thead><tr><th>Variable</th><th>Datos</th><th>Mejor ajuste</th><th>${lab}</th></tr></thead><tbody>` +
+    all.map((r, i) => { const best = FIT.sortBy(r.results, crit)[0]; return `<tr data-i="${i}" class="${r === FITUI.res ? 'cur' : ''}" style="cursor:pointer;"><td class="sc">${escH(r.varName)}</td><td>${r.n.toLocaleString('es-ES')}</td><td>${escH(best.name)}</td><td>${fmt(best[crit])}</td></tr>`; }).join('') + '</tbody>';
+  $('fitSummary').querySelectorAll('tbody tr').forEach(tr => { tr.onclick = () => { FITUI.res = all[+tr.dataset.i]; fitRender(false); }; });
+}
+
+/* =========================================================
+   AJUSTE → EXCEL (@RISK) Y → MODELO LIBRE
+   Para cada variable ajustada se toma la mejor distribución según el criterio activo.
+========================================================= */
+function fitBestPerVar(){
+  const crit = FITUI.crit;
+  return (FITUI.all || []).map(r => ({ r, best: FIT.sortBy(r.results, crit)[0] }));
+}
+function fitSafeName(raw, used, idx){
+  let base = String(raw || '').trim().replace(/[^\p{L}\p{N}_.]+/gu, '_').replace(/^_+|_+$/g, '');
+  if(!base) base = 'Variable' + (idx + 1);
+  if(!/^[\p{L}_]/u.test(base)) base = 'V_' + base;
+  base = base.slice(0, 36);
+  let n = base, i = 2; while(used.has(MODEL.normName(n))) n = base + (i++);
+  used.add(MODEL.normName(n)); return n;
+}
+function fitActHintUpdate(){
+  const el = $('fitActHint'); if(!el) return;
+  const k = (FITUI.all || []).length, lab = FIT_CRIT_LABEL[FITUI.crit] || FITUI.crit;
+  el.textContent = k > 1
+    ? `Se usa la mejor distribución de cada una de las ${k} variables según ${lab}. Al cambiar el criterio, cambian las elegidas.`
+    : `Se usa la mejor distribución según ${lab}.`;
+}
+$('fitToModel').onclick = () => {
+  const items = fitBestPerVar(); if(!items.length) return;
+  const used = new Set(), vars = items.map(({ r, best }, i) => ({ name: fitSafeName(r.varName, used, i), dist: best.key, params: Object.fromEntries(Object.entries(best.params).map(([k, x]) => [k, typeof x === 'number' ? +x.toPrecision(8) : x])), lo: null, hi: null }));
+  const res = mdlSanitize({ vars, corr: [], outs: [{ name: 'Resultado', formula: vars[0].name, format: 'num' }], iterations: 10000 });
+  if(!res.model){ toast(res.error); return; }
+  mdlApply(res.model); mdlAutosave(); setView('model'); mdlSetMode('free'); window.scrollTo({ top: 0 });
+  toast(vars.length > 1 ? `${vars.length} variables enviadas al modelo con su mejor distribución. Edita «Resultado» para combinarlas.` : `«${vars[0].name}» enviada al modelo con su mejor distribución. Edita «Resultado» para operar con ella.`);
+};
+$('fitExport').onclick = async () => {
+  const btn = $('fitExport'), span = btn.querySelector('span'); btn.disabled = true; span.textContent = 'Generando Excel…';
+  await new Promise(r => setTimeout(r, 30));
+  try{ const { blob, filename } = await XL.buildFit(fitBestPerVar(), FITUI.crit); await XL.download(blob, filename); span.textContent = 'Excel generado ✓'; }
+  catch(e){ console.error(e); span.textContent = 'No se pudo generar el Excel'; }
+  setTimeout(() => { span.textContent = 'Exportar a Excel (@RISK)'; btn.disabled = false; }, 2500);
 };
 
 function fitRender(keepVisible){
   const r = FITUI.res, crit = FITUI.crit;
   FITUI.sorted = FIT.sortBy(r.results, crit);
-  if(!keepVisible) FITUI.visible = new Set(FITUI.sorted.slice(0, 3).map(x => x.key));
+  if(!keepVisible) FITUI.visible = new Set(FITUI.sorted.slice(0, 1).map(x => x.key));
   $('fitOut').style.display = 'block';
+  $('fitResVar').textContent = r.varName ? ` · «${r.varName}»` : '';
+  fitMultiRender(); fitActHintUpdate();
   const box = (v, l) => `<div class="stat-box"><div class="v">${v}</div><div class="l">${l}</div></div>`;
   $('fitStats').innerHTML = box(r.n.toLocaleString('es-ES'), 'Datos') + box(fmt(r.mean), 'Media') + box(fmt(r.sd), 'Desv. est.') +
     box(fmt(r.min), 'Mínimo') + box(fmt(r.max), 'Máximo') + box(FITUI.sorted[0].name, 'Mejor ajuste');
@@ -4353,7 +4533,8 @@ function fitRender(keepVisible){
     row.innerHTML = `<div class="fit-rank">${i + 1}</div><div class="fit-body">
       <div class="fit-name"><span class="fit-dot" style="background:${colorOf[f.key] || 'var(--border)'}"></span>${f.name}${i === 0 ? '<span class="fit-badge">mejor</span>' : ''}</div>
       <div class="fit-params">${paramText(f.key, f.params)}</div>
-      <div class="fit-metrics"><b>AIC</b> ${fmt(f.aic)} · <b>BIC</b> ${fmt(f.bic)} · <b>A-D</b> ${fmt(f.ad)} · <b>K-S</b> ${fmt(f.ks)} (p≈${f.ksP.toFixed(2).replace('.', ',')})</div></div>
+      <div class="fit-metrics"><b>AIC</b> ${fmt(f.aic)} · <b>BIC</b> ${fmt(f.bic)}</div>
+      <div class="fit-metrics"><b>A-D</b> ${fmt(f.ad)} · <b>K-S</b> ${fmt(f.ks)} (p≈${f.ksP.toFixed(2).replace('.', ',')}) · <b>χ²</b> ${fmt(f.chi2)}${Number.isFinite(f.chi2P) ? ` (gl ${f.chi2df}, p≈${f.chi2P.toFixed(2).replace('.', ',')})` : ''}</div></div>
       <button type="button" class="chip accent">Usar</button>`;
     row.querySelector('.fit-body').onclick = () => {
       if(FITUI.visible.has(f.key)) FITUI.visible.delete(f.key);
@@ -6569,6 +6750,62 @@ XL.buildVW = async res => {
   const blob = await XL.pack({ sheets: [{ name: SH, xml: S.xml(), drawing: 0 }, { name: DT, xml: D.xml(), drawing: null }, { name: CVN, xml: C.xml(), drawing: null }], charts, drawings: [{ anchors }] });
   const pad = x => String(x).padStart(2, '0'), w = new Date();
   return { blob, filename: `MonteCarloLab_VanWestendorp_${w.getFullYear()}${pad(w.getMonth() + 1)}${pad(w.getDate())}_${pad(w.getHours())}${pad(w.getMinutes())}.xlsx` };
+};
+
+/* =========================================================
+   EXPORTAR EL AJUSTE DE DISTRIBUCIONES A EXCEL EN FORMATO @RISK
+   Hoja «Ajuste @RISK» (mejor distribución por variable, con fórmula viva), «Todas las distribuciones» y «Datos».
+========================================================= */
+XL.buildFit = async (items, crit) => {
+  const textMode = XL.mode; XL.mode = XL.FORMATS.semi;
+  try{
+    const asStd = fn => { const m = XL.mode; XL.mode = XL.FORMATS.std; try { return fn(); } finally { XL.mode = m; } };
+    const lab = FIT_CRIT_LABEL[crit] || crit, heavy = k => k === 'cauchy' || k === 'levy';
+    const named = (fn, name, sep) => fn.replace(/\)$/, (sep || XL.mode.sep) + 'RiskName("' + String(name).replace(/"/g, "''") + '"))');
+    const median = a => { const z = a.slice().sort((x, y) => x - y), n = z.length; return n % 2 ? z[(n - 1) / 2] : (z[n / 2 - 1] + z[n / 2]) / 2; };
+    const used = new Set(), names = items.map(({ r }, i) => (r.varName ? r.varName : 'Variable ' + (i + 1)));
+    const pTxt = p => Object.keys(p).map(k => `${PSHORT[k] || k} = ${sig4(p[k])}`).join(' · ');
+    /* --- hoja 1: mejor distribución por variable --- */
+    const A = new XL.Sheet('Ajuste @RISK'); A.grid = true; A.widths = [22, 9, 24, 34, 64, 36, 12, 12, 12, 12, 12, 52];
+    ['Variable', 'Datos', 'Distribución', 'Celda de @RISK (fórmula viva)', 'Función (texto, para leer)', 'Parámetros', 'AIC', 'BIC', 'A-D', 'K-S', 'χ²', 'Nota'].forEach((h, c) => A.set(c, 0, h, 2));
+    items.forEach(({ r, best }, i) => {
+      const row = i + 1, rk = XL.risk(best.key, best.params), live = asStd(() => XL.risk(best.key, best.params));
+      const cached = heavy(best.key) ? median(r.raw) : r.mean;
+      A.set(0, row, names[i], 13); A.set(1, row, r.n, 8); A.set(2, row, best.name, 13);
+      if(rk.fn){ A.setF(3, row, named(live.fn, names[i], ','), cached, 14); A.set(4, row, '=' + named(rk.fn, names[i]), 12); }
+      else { A.set(3, row, '', 13); A.set(4, row, 'Sin equivalente definido en @RISK.', 13); }
+      A.set(5, row, pTxt(best.params), 13);
+      A.set(6, row, best.aic, 14); A.set(7, row, best.bic, 14); A.set(8, row, best.ad, 14); A.set(9, row, best.ks, 14); A.set(10, row, best.chi2, 14);
+      A.set(11, row, rk.note || '', 13);
+      A.rowHeights.set(row, XL.rowHeight([[names[i], 20], ['=' + named(rk.fn || '', names[i]), 60], [pTxt(best.params), 34], [rk.note || '', 50]]));
+    });
+    let nr = items.length + 2;
+    [ 'La columna D son fórmulas reales de @RISK (con RiskName): con @RISK cargado funcionan sin copiar nada. Abre @RISK antes que este archivo; si lo abriste después, presiona Ctrl+Alt+F9.',
+      `Para cada variable se exporta la mejor distribución según ${lab}. La hoja «Todas las distribuciones» trae el resto, ordenadas con el mismo criterio.`,
+      'Sin @RISK, Excel muestra como valor guardado la media de los datos (la mediana en distribuciones de cola muy pesada).',
+      'La columna E es el mismo texto con separadores en español (punto y coma, coma decimal) para leerlo o copiarlo.' ].forEach(t => A.set(0, nr++, t, 7));
+    /* --- hoja 2: todas las distribuciones --- */
+    const T = new XL.Sheet('Todas las distribuciones'); T.grid = true; T.widths = [22, 8, 24, 66, 6, 12, 12, 12, 12, 10, 12, 6, 10, 40];
+    ['Variable', 'Puesto', 'Distribución', 'Función @RISK (texto)', 'k', 'AIC', 'BIC', 'A-D', 'K-S', 'p K-S', 'χ²', 'gl', 'p χ²', 'Parámetros'].forEach((h, c) => T.set(c, 0, h, 2));
+    let tr = 1;
+    items.forEach(({ r }, i) => {
+      FIT.sortBy(r.results, crit).forEach((f, j) => {
+        const rk = XL.risk(f.key, f.params);
+        T.set(0, tr, names[i], 9); T.set(1, tr, j + 1, 8); T.set(2, tr, f.name, 3); T.set(3, tr, rk.fn ? '=' + named(rk.fn, names[i]) : 'Sin equivalente definido', 12);
+        T.set(4, tr, f.k, 8); T.set(5, tr, f.aic, 4); T.set(6, tr, f.bic, 4); T.set(7, tr, f.ad, 4); T.set(8, tr, f.ks, 4); T.set(9, tr, f.ksP, 4); T.set(10, tr, f.chi2, 4);
+        T.set(11, tr, Number.isFinite(f.chi2df) ? f.chi2df : '', 8); T.set(12, tr, Number.isFinite(f.chi2P) ? f.chi2P : '', 4); T.set(13, tr, pTxt(f.params), 3);
+        T.rowHeights.set(tr, XL.rowHeight([['=' + named(rk.fn || '', names[i]), 62]])); tr++;
+      });
+    });
+    T.set(0, tr + 1, `Cada variable está ordenada por ${lab} (menor es mejor). El puesto 1 es la que se usó en la hoja «Ajuste @RISK».`, 7);
+    /* --- hoja 3: datos --- */
+    const D = new XL.Sheet('Datos'); D.grid = true; D.widths = names.map(() => 16);
+    names.forEach((nm, c) => D.set(c, 0, nm, 2));
+    items.forEach(({ r }, c) => r.raw.forEach((v, k) => D.set(c, k + 1, v, 11)));
+    const blob = await XL.pack({ sheets: [{ name: 'Ajuste @RISK', xml: A.xml(), drawing: null }, { name: 'Todas las distribuciones', xml: T.xml(), drawing: null }, { name: 'Datos', xml: D.xml(), drawing: null }], charts: [], drawings: [] });
+    const pad = x => String(x).padStart(2, '0'), w = new Date();
+    return { blob, filename: `MonteCarloLab_AjusteRISK_${w.getFullYear()}${pad(w.getMonth() + 1)}${pad(w.getDate())}_${pad(w.getHours())}${pad(w.getMinutes())}.xlsx` };
+  } finally { XL.mode = textMode; }
 };
 
 /* =========================================================
