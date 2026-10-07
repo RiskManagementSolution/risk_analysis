@@ -1,5 +1,5 @@
 /* Monte Carlo Lab: modo sin conexión. Sube VERSION cada vez que cambies index.html para que los dispositivos se actualicen. */
-const VERSION = 'mcl-v5';
+const VERSION = 'mcl-v6';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
